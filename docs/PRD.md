@@ -118,9 +118,10 @@ The soul carries from v0.1's "intentional," sharpened: Orbit *embraces* discover
 ## 6. Information architecture
 
 ```
-Discover (home)
-├── This week: events + everyday openings from your people
-├── Social proof on each (who you know is going / who's free)
+Home  ·  view switcher: Discover / Week / Month
+├── Discover: this week's events + everyday openings from your people, with social proof
+├── Week:  your time grid (Chronos) — color-coded by type, open evenings celebrated
+├── Month: overview grid — type-coded dots, days your circle converges → tap a day for its agenda
 └── Join → soft-RSVP → lands on your calendar & profile
 
 Profile (your identity surface)
@@ -154,7 +155,7 @@ You
 **F1 — Profile (calendar-as-identity).** Public-by-link, future-tense profile: upcoming (by visibility tier) + bio + scenes. Account-free viewable; screenshot-worthy; the primary share/growth surface.
 *Acceptance:* a stranger opens your link, grasps who you are *by where you're going*, and can follow or join a public event with no account.
 
-**F2 — Discover (home).** This week's events *and* everyday openings from your people, chronological, each with social proof ("who you know is going / who's free"). Bounded, not an infinite feed.
+**F2 — Discover (home) + Week/Month views.** This week's events *and* everyday openings from your people, chronological, each with social proof ("who you know is going / who's free"). Bounded, not an infinite feed. The home toggles between three views: **Discover** (the social default), **Week** (a Chronos time grid that celebrates open evenings), and **Month** (an overview grid that flags the days your circle is converging).
 *Acceptance:* with ≥3 connections, the user finds one real thing to do *and* sees who they'd know there, in under 15 seconds.
 
 **F3 — Create events (Orbit-native) + Google seed/import.** Anyone can create an event in Orbit in under a minute (title, when, where, cover, visibility) — events live in Orbit and are the shareable social layer. Connecting Google **imports** existing commitments to seed your week and availability; it is not the source of truth for social events.
@@ -191,6 +192,7 @@ You
 |---|---|---|---|
 | Profile (calendar-as-identity) | ● | ● | ● |
 | Discover (home, social proof) | ● | ● | ● |
+| Week & Month calendar views | ● | ● | ● |
 | Create Orbit-native events | ● | ● | ● |
 | Intention / Status (everyday) | ● | ● | ● |
 | Plans + standing plans | ● | ● | ● |
