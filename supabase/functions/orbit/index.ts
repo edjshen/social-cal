@@ -4,7 +4,7 @@
 // Frontend assets are streamed from a pinned commit of the public repo.
 import postgres from "https://deno.land/x/postgresjs@v3.4.4/mod.js";
 
-const ASSET_REF = Deno.env.get("ORBIT_ASSET_REF") || "2c6cdeae9b7c40b2a06278310329cda90922da21";
+const ASSET_REF = Deno.env.get("ORBIT_ASSET_REF") || "508b4cbba86e380c3111d2a037a281abc1350979";
 const RAW = `https://raw.githubusercontent.com/edjshen/social-cal/${ASSET_REF}/public`;
 // C1: the signing key must NEVER be committed (this repo is public). Prefer a
 // dedicated secret; fall back to the auto-injected service-role key / DB URL so
