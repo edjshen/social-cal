@@ -1,0 +1,113 @@
+/* Mayfly chrome — dark, minimal, full-bleed. Deliberately its own visual
+   language, not the marketing crimson. */
+
+.shell {
+  --mf-bg: #0a0a0f;
+  --mf-surface: #14141c;
+  --mf-surface-2: #1d1d29;
+  --mf-border: #2a2a3a;
+  --mf-text: #ececf2;
+  --mf-muted: #8a8aa0;
+  --mf-accent: #7c5cff;
+  --mf-accent-soft: rgba(124, 92, 255, 0.16);
+  --mf-good: #3ddc97;
+  --mf-warn: #ffb454;
+  --mf-bad: #ff5c7c;
+
+  position: relative;
+  min-height: 100dvh;
+  width: 100%;
+  background: radial-gradient(120% 80% at 50% -10%, #15131f 0%, var(--mf-bg) 60%);
+  color: var(--mf-text);
+  font-family: var(--font-body, system-ui, sans-serif);
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 1.1rem;
+}
+
+.brandDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mf-accent);
+  box-shadow: 0 0 14px var(--mf-accent);
+}
+
+.muted {
+  color: var(--mf-muted);
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--mf-border);
+  background: var(--mf-surface-2);
+  color: var(--mf-text);
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.btn:hover {
+  border-color: var(--mf-accent);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btnPrimary {
+  background: var(--mf-accent);
+  border-color: var(--mf-accent);
+  color: #0a0a0f;
+}
+
+.btnGhost {
+  background: transparent;
+}
+
+.card {
+  background: var(--mf-surface);
+  border: 1px solid var(--mf-border);
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--mf-border);
+  background: var(--mf-surface-2);
+  color: var(--mf-text);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--mf-accent);
+}
