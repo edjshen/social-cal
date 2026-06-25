@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#0C0B10">
+  <title>Orbit</title>
+  <link rel="icon" href="../public/icon.svg">
+  <link rel="stylesheet" href="../public/orbit.css">
+  <script>
+    // Static shell hosted on a CDN; data/auth come from the Supabase Edge Function.
+    window.ORBIT_API = "https://bpqtjfdiwifvrnkzldwg.supabase.co/functions/v1/orbit";
+    window.ORBIT_BASE = "";
+  </script>
+</head>
+<body>
+  <div id="app"><div class="shell"><div class="main"><div class="empty">Loading…</div></div></div></div>
+  <script src="../public/app.js"></script>
+</body>
+</html>

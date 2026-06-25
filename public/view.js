@@ -1,6 +1,7 @@
 /* Account-free page: a shared profile (/u/:handle) or event (/e/:id). View + nudge. */
 const app = document.getElementById('app');
 const BASE = window.ORBIT_BASE || '';
+const API = window.ORBIT_API || BASE;
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const avatar = (u, size = 'sm') => `<span class="av ${size}" style="background:linear-gradient(135deg,${u.avatar})">${esc(u.initials)}</span>`;
 const timeLabel = (iso) => new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -13,9 +14,12 @@ function shell(inner) { app.innerHTML = `<div class="shell"><div class="main">${
 
 async function load() {
   const parts = location.pathname.slice(BASE.length).split('/').filter(Boolean);
+  const q = new URLSearchParams(location.search);
+  const kind = parts[0] || (q.get('u') ? 'u' : q.get('e') ? 'e' : '');
+  const id = (parts[0] ? parts[1] : null) || q.get('u') || q.get('e');
   try {
-    if (parts[0] === 'u') return renderProfile(parts[1]);
-    if (parts[0] === 'e') return renderEvent(parts[1]);
+    if (kind === 'u') return renderProfile(id);
+    if (kind === 'e') return renderEvent(id);
     location.href = BASE + '/';
   } catch (e) {
     shell(`<div class="empty">This link isn't available.<br><a style="color:var(--accent)" href="${BASE || '/'}">Go to Orbit →</a></div>`);
@@ -23,7 +27,7 @@ async function load() {
 }
 
 async function renderProfile(handle) {
-  const r = await fetch(BASE + '/api/profile/' + encodeURIComponent(handle));
+  const r = await fetch(API + '/api/profile/' + encodeURIComponent(handle));
   if (!r.ok) throw new Error();
   const { user: u, upcoming } = await r.json();
   const chips = (u.scenes || []).map((s) => `<span class="chip">${esc(s)}</span>`).join('');
@@ -37,7 +41,7 @@ async function renderProfile(handle) {
 }
 
 async function renderEvent(id) {
-  const r = await fetch(BASE + '/api/events/' + encodeURIComponent(id));
+  const r = await fetch(API + '/api/events/' + encodeURIComponent(id));
   if (!r.ok) throw new Error();
   const e = await r.json();
   const who = (e.attendees || []).slice(0, 6).map((a) => avatar(a)).join('');

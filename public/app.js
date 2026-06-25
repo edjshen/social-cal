@@ -1,6 +1,7 @@
 /* Orbit — mobile-first SPA. Talks to the API in server/index.js. */
 const app = document.getElementById('app');
 const BASE = window.ORBIT_BASE || '';
+const API = window.ORBIT_API || BASE; // API origin (e.g. a Supabase function); defaults to same-origin
 const state = { token: localStorage.getItem('orbit_token'), me: null, tab: 'discover', homeView: 'discover', selDay: null, authMode: 'login', err: '' };
 
 /* ---------- helpers ---------- */
@@ -8,7 +9,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': 
 async function api(path, opts = {}) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (state.token) headers.Authorization = 'Bearer ' + state.token;
-  const r = await fetch(BASE + path, Object.assign({}, opts, { headers }));
+  const r = await fetch(API + path, Object.assign({}, opts, { headers }));
   const body = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(body.error || 'Error'), { status: r.status, body });
   return body;
@@ -268,7 +269,7 @@ async function renderProfile() {
       <span class="vis">${I[vc]} ${vl}</span></div>`;
   }).join('') : `<div class="empty" style="padding:24px">Nothing upcoming yet.</div>`;
   const s = p.stats || {};
-  const link = location.origin + BASE + '/u/' + u.handle;
+  const link = window.ORBIT_API ? (location.origin + location.pathname) : (location.origin + BASE + '/u/' + u.handle);
   return `<div class="banner"></div>
     <div class="pf-head">
       ${avatar(u, 'xl pf-av')}
