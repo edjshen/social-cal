@@ -21,7 +21,12 @@ export const connections = sqliteTable('connections', {
   status: text('status', { enum: ['pending', 'accepted'] }).notNull(),
   requestedBy: text('requested_by').notNull().references(() => users.id),
   createdAt: text('created_at').notNull(),
-}, (t) => ({ pair: index('conn_pair').on(t.aId, t.bId) }));
+}, (t) => ({
+  // Non-unique by design: connection uniqueness (including the reverse pair
+  // (b,a)) is enforced at the application layer via connectionStatus(), matching
+  // the original app. A DB unique index on the ordered pair would be incomplete.
+  pair: index('conn_pair').on(t.aId, t.bId),
+}));
 
 export const placements = sqliteTable('placements', {
   id: text('id').primaryKey(),
@@ -56,5 +61,6 @@ export const attendance = sqliteTable('attendance', {
 export type User = typeof users.$inferSelect;
 export type Connection = typeof connections.$inferSelect;
 export type Placement = typeof placements.$inferSelect;
-export type Event = typeof events.$inferSelect;
+// Named OrbitEvent (not Event) to avoid shadowing the global DOM/Workers `Event`.
+export type OrbitEvent = typeof events.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;
