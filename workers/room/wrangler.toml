@@ -1,0 +1,44 @@
+# Mayfly room relay — a SEPARATE Cloudflare Worker, deployed independently of
+# the plur.nyc Next site (which is the OpenNext worker `plur-nyc`). This relay
+# only ever handles ciphertext + routing metadata.
+#
+# Deploy (from this directory):
+#   npm install
+#   npx wrangler login
+#   npm run deploy        # -> `wrangler deploy -c ./wrangler.toml`
+#
+# Use `npm run deploy` (NOT bare `npx wrangler deploy`): wrangler's config
+# discovery walks UP the tree and would otherwise pick the repo-root
+# wrangler.jsonc (the Next/OpenNext worker). The npm scripts pin `-c
+# ./wrangler.toml`. `wrangler deploy` prints the *.workers.dev URL — put it in
+# the Next app's NEXT_PUBLIC_ROOM_API_BASE env. Later attach room.plur.nyc as a
+# custom domain.
+
+name = "mayfly-room"
+main = "src/worker.js"
+# Initial production deploy: 2026-06-23 (account worker/cron caps cleared; retry).
+# Pin the account so CI deploys land on the same account as the main site
+# (matches account_id in the repo-root wrangler.jsonc). The GH secret
+# CLOUDFLARE_ACCOUNT_ID points at a different account, so we don't rely on it.
+account_id = "1fb5ac4e609c1d4f4b9171e62d5127c1"
+# SQLite-in-DO is GA well before this date; bump freely when adopting newer
+# runtime behavior.
+compatibility_date = "2025-06-01"
+
+# Page origins allowed to open WebSocket upgrades / hit /health with CORS.
+# Comma-separated. Read at request time in src/worker.js. Override per-env as
+# needed; add room.plur.nyc's PAGE origin (https://plur.nyc) — not the worker
+# host — when launching.
+[vars]
+ALLOWED_ORIGINS = "https://plur.nyc,https://www.plur.nyc,https://mysettimes.com,http://localhost:3000"
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "RoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RoomDO"]
+
+[observability]
+enabled = true

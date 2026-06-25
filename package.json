@@ -13,6 +13,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:mayfly": "node --test \"lib/mayfly/shared/*.test.js\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply orbit-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply orbit-db --remote",
@@ -28,7 +29,13 @@
     "iron-session": "^8.0.4",
     "@noble/hashes": "^1.6.0",
     "motion": "^12.41.0",
-    "@base-ui-components/react": "1.0.0-rc.0"
+    "@base-ui-components/react": "1.0.0-rc.0",
+    "tweetnacl": "^1.0.3",
+    "zod": "^3.25.76",
+    "idb": "^8.0.3",
+    "jsqr": "^1.4.0",
+    "nanoid": "^5.1.15",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.9",
