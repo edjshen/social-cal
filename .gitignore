@@ -13,3 +13,5 @@ prisma/dev.db
 drizzle/seed.sql
 cloudflare-env.d.ts
 tsconfig.tsbuildinfo
+public/sw.js
+public/swe-worker-*.js

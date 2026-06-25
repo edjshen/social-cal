@@ -3,6 +3,7 @@ import { timeLabel } from '@/lib/format';
 import Pill from './primitives/Pill';
 import Avatar from './primitives/Avatar';
 import RsvpButtons from './RsvpButtons';
+import MotionAvatarStack from './MotionAvatarStack';
 
 export default function EventCard({ ev, meId }: { ev: any; meId: string }) {
   if (ev.busy) return (
@@ -10,7 +11,7 @@ export default function EventCard({ ev, meId }: { ev: any; meId: string }) {
       <div className="ev-title faint" style={{ marginBottom: 0 }}>A friend is busy</div></div>
   );
   const proof = ev.proof?.count
-    ? <div className="proof"><div className="stack">{ev.proof.sample.map((u: any) => <Avatar key={u.id} user={u} />)}</div><span>{ev.proof.count} going</span></div>
+    ? <div className="proof"><MotionAvatarStack users={ev.proof.sample} /><span>{ev.proof.count} going</span></div>
     : <div className="proof"><span className="faint">be the first in</span></div>;
   return (
     <div className="card">
