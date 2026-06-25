@@ -4,6 +4,15 @@
 
 Orbit is a personal social calendar built around **community through repeated exposure** — full product thinking in [`docs/PRD.md`](docs/PRD.md), screen designs in [`docs/mocks/`](docs/mocks).
 
+## Live deployment
+
+Deployed as the **partygoer side of the `every-party` Supabase project**:
+
+- **Backend — live & verified.** An isolated `orbit` Postgres schema + an `orbit` Edge Function (`supabase/functions/orbit/index.ts`). API base: `https://bpqtjfdiwifvrnkzldwg.supabase.co/functions/v1/orbit`. Custom PBKDF2 + HMAC auth, tiered-visibility enforcement, and the Regulars co-presence engine all run here against Postgres. Verified end-to-end (auth, Discover, Regulars, public-visibility). Demo login: **`ed` / `orbit`**.
+- **Frontend — one toggle away.** Supabase, GitHub raw, and jsDelivr all force `text/html` → `text/plain` (anti-phishing), so the SPA shell is published to **GitHub Pages** via `.github/workflows/deploy-pages.yml`, with `window.ORBIT_API` pointed at the function. Pages needs a one-time enable by the repo owner: **Settings → Actions → General → Workflow permissions → "Read and write"**, then re-run the workflow. It then serves at `https://edjshen.github.io/social-cal/`.
+
+Local dev is unaffected (`npm install && npm run seed && npm start`); the frontend defaults to same-origin when `window.ORBIT_API` is unset.
+
 ## Run it
 
 ```bash
