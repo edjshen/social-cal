@@ -7,3 +7,8 @@ data/
 dist/
 build/
 prisma/dev.db
+.dev.vars
+.open-next/
+.wrangler/
+drizzle/seed.sql
+cloudflare-env.d.ts

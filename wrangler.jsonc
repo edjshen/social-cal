@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "orbit",
+  "account_id": "1fb5ac4e609c1d4f4b9171e62d5127c1",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-05-28",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "orbit" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "orbit-db",
+      // PLACEHOLDER for local dev. Replace with the real id from
+      // `wrangler d1 create orbit-db` before any --remote use / deploy (Milestone M6).
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "observability": { "enabled": true }
+}
