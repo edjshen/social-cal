@@ -4,10 +4,41 @@
 // Frontend assets are streamed from a pinned commit of the public repo.
 import postgres from "https://deno.land/x/postgresjs@v3.4.4/mod.js";
 
-const SHA = "2c6cdeae9b7c40b2a06278310329cda90922da21";
-const RAW = `https://raw.githubusercontent.com/edjshen/social-cal/${SHA}/public`;
-const SECRET = "orbit-edge-hmac-v1-7f3a9c";
-const sql = postgres(Deno.env.get("SUPABASE_DB_URL"), { prepare: false });
+const ASSET_REF = Deno.env.get("ORBIT_ASSET_REF") || "508b4cbba86e380c3111d2a037a281abc1350979";
+const RAW = `https://raw.githubusercontent.com/edjshen/social-cal/${ASSET_REF}/public`;
+// C1: the signing key must NEVER be committed (this repo is public). Prefer a
+// dedicated secret; fall back to the auto-injected service-role key / DB URL so
+// the function is secure-by-default even before ORBIT_HMAC_SECRET is set.
+const SECRET = Deno.env.get("ORBIT_HMAC_SECRET")
+  || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+  || Deno.env.get("SUPABASE_DB_URL");
+if (!SECRET) throw new Error("No signing secret available (set ORBIT_HMAC_SECRET)");
+// H1: drop to a least-privilege DB role so a bug here can't reach the rest of the
+// shared project. Requires the orbit_least_privilege_role migration applied
+// (creates `orbit_app`, scoped to the orbit schema). Override via ORBIT_DB_ROLE;
+// the fail-closed default is orbit_app — the function errors rather than run with
+// full privileges if the role is somehow missing.
+const DB_ROLE = Deno.env.get("ORBIT_DB_ROLE") || "orbit_app";
+const sql = postgres(Deno.env.get("SUPABASE_DB_URL"), { prepare: false, ...(DB_ROLE ? { connection: { role: DB_ROLE } } : {}) });
+// L1: CORS allow-list — comma-separated origins, or "*" (default, unchanged).
+const ALLOWED_ORIGINS = (Deno.env.get("ORBIT_ALLOWED_ORIGINS") || "*").split(",").map((s) => s.trim()).filter(Boolean);
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin") || "";
+  const h: Record<string, string> = { "Access-Control-Allow-Headers": "authorization, content-type", "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS", "Vary": "Origin" };
+  const allow = ALLOWED_ORIGINS.includes("*") ? "*" : (ALLOWED_ORIGINS.includes(origin) ? origin : "");
+  if (allow) h["Access-Control-Allow-Origin"] = allow;
+  return h;
+}
+// L3: best-effort per-isolate auth throttle. Edge isolates are ephemeral and
+// plural, so this is defense-in-depth, not a hard guarantee.
+const _hits = new Map<string, number[]>();
+function rateLimited(key: string, limit = 10, windowMs = 60000): boolean {
+  const now = Date.now();
+  const arr = (_hits.get(key) || []).filter((t) => now - t < windowMs);
+  arr.push(now); _hits.set(key, arr);
+  return arr.length > limit;
+}
+const clientIp = (req: Request) => (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -28,7 +59,7 @@ async function hkey() {
   return _key;
 }
 async function makeToken(uid: string) {
-  const p = b64u(enc.encode(JSON.stringify({ uid, exp: Date.now() + 30 * 864e5 })));
+  const p = b64u(enc.encode(JSON.stringify({ uid, exp: Date.now() + 7 * 864e5 })));
   const sig = await crypto.subtle.sign("HMAC", await hkey(), enc.encode(p));
   return p + "." + b64u(sig);
 }
@@ -148,7 +179,7 @@ Deno.serve(async (req: Request) => {
   const base = i >= 0 ? url.pathname.slice(0, i + 6) : "";
   let path = i >= 0 ? url.pathname.slice(i + 6) : url.pathname;
   if (!path) path = "/";
-  const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type", "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS" };
+  const cors = corsFor(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   const json = (o: any, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...cors, "content-type": "application/json" } });
   if (!path.startsWith("/api/")) return await serveFrontend(path, base, cors);
@@ -160,11 +191,18 @@ Deno.serve(async (req: Request) => {
     const uid = await readToken(req);
     const need = () => { if (!uid) throw { status: 401, message: "Unauthorized" }; return uid; };
 
+    // L3: throttle auth attempts (best-effort; fails open when client IP is unknown).
+    if (seg[1] === "auth" && method === "POST") {
+      const ip = clientIp(req);
+      if (ip !== "unknown" && rateLimited("auth:" + ip)) return json({ error: "Too many attempts, try again shortly" }, 429);
+    }
+
     if (seg[1] === "health") { const D = await loadD(); return json({ ok: true, users: D.users.length, events: D.events.length }); }
 
     if (seg[1] === "auth" && seg[2] === "register" && method === "POST") {
       const handle = String(body.username || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
       if (!handle || !body.password) return json({ error: "Username and password required" }, 400);
+      if (String(body.password).length < 8) return json({ error: "Password must be at least 8 characters" }, 400);
       if ((await sql`select 1 from orbit.users where handle=${handle}`).length) return json({ error: "Username taken" }, 400);
       const ph = await hashPassword(body.password);
       const u = (await sql`insert into orbit.users(handle,display_name,password_hash,avatar,share_id) values(${handle},${body.displayName || body.username},${ph},${PAL[hashStr(handle) % PAL.length]},${crypto.randomUUID().slice(0, 8)}) returning *`)[0];

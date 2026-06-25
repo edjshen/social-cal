@@ -5,7 +5,9 @@ const API = window.ORBIT_API || BASE; // API origin (e.g. a Supabase function); 
 const state = { token: localStorage.getItem('orbit_token'), me: null, tab: 'discover', homeView: 'discover', selDay: null, authMode: 'login', err: '' };
 
 /* ---------- helpers ---------- */
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// Escapes &<>" and ' so values are safe in text, double-quoted attributes, AND
+// single-quoted JS-string contexts like onclick="fn('...')" (M1).
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 async function api(path, opts = {}) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (state.token) headers.Authorization = 'Bearer ' + state.token;
@@ -245,8 +247,8 @@ async function renderRegulars() {
     <div style="margin:12px 2px 0"><span class="priv">${I.inner} Only you can see this</span></div>`;
   if (!regulars.length && !rising.length) return head + `<div class="empty">No regulars yet.<br>The more you show up, the more the people you keep seeing surface here.</div>`;
   const top = regulars[0];
-  const insight = top ? `<div class="insight"><p>You &amp; <b>${esc(top.user.displayName.split(' ')[0])}</b> have overlapped <b>${top.count}×</b> — make it a ritual?</p><button class="btn solid block" onclick="makeStanding('${esc(top.user.displayName.split(' ')[0])}')">${I.standing} Suggest a standing plan</button></div>` : '';
-  const row = (r, rising) => `<div class="reg">${avatar(r.user, 'lg')}<div class="info"><div class="nm">${esc(r.user.displayName)} ${rising ? '<span class="trend">↑ trending</span>' : `<span class="ct">${r.count}× this month</span>`}</div><div class="sub">${r.contexts.length ? 'usually ' + r.contexts.map(esc).join(' + ') : 'seen recently'}${r.last ? ' · last ' + relTime(r.last) : ''}</div></div><button class="btn sm" onclick="makeStanding('${esc(r.user.displayName.split(' ')[0])}')">${rising ? 'Say hi' : 'Standing plan'}</button></div>`;
+  const insight = top ? `<div class="insight"><p>You &amp; <b>${esc(top.user.displayName.split(' ')[0])}</b> have overlapped <b>${top.count}×</b> — make it a ritual?</p><button class="btn solid block" data-name="${esc(top.user.displayName.split(' ')[0])}" onclick="makeStanding(this.dataset.name)">${I.standing} Suggest a standing plan</button></div>` : '';
+  const row = (r, rising) => `<div class="reg">${avatar(r.user, 'lg')}<div class="info"><div class="nm">${esc(r.user.displayName)} ${rising ? '<span class="trend">↑ trending</span>' : `<span class="ct">${r.count}× this month</span>`}</div><div class="sub">${r.contexts.length ? 'usually ' + r.contexts.map(esc).join(' + ') : 'seen recently'}${r.last ? ' · last ' + relTime(r.last) : ''}</div></div><button class="btn sm" data-name="${esc(r.user.displayName.split(' ')[0])}" onclick="makeStanding(this.dataset.name)">${rising ? 'Say hi' : 'Standing plan'}</button></div>`;
   return head + insight + regulars.map((r) => row(r, false)).join('') +
     (rising.length ? `<div class="sub-h">Becoming regulars</div>` + rising.map((r) => row(r, true)).join('') : '') +
     `<div class="footnote">Private to you. Counts &amp; faces — never a behavioral dossier.</div>`;
@@ -277,7 +279,7 @@ async function renderProfile() {
       <div class="pf-handle">@${esc(u.handle)}</div>
       ${u.bio ? `<div class="pf-bio">${esc(u.bio)}</div>` : ''}
       ${chips ? `<div class="chips" style="margin-top:13px">${chips}</div>` : ''}
-      <div class="linkrow"><div class="linkbox">${I.link} ${esc(link.replace(/^https?:\/\//, ''))}</div><button class="btn solid" onclick="copyLink('${esc(link)}')">Share</button></div>
+      <div class="linkrow"><div class="linkbox">${I.link} ${esc(link.replace(/^https?:\/\//, ''))}</div><button class="btn solid" data-link="${esc(link)}" onclick="copyLink(this.dataset.link)">Share</button></div>
       <div class="row" style="gap:10px;margin-top:10px"><button class="btn sm" onclick="openEdit()">Edit profile</button><button class="btn sm" onclick="go('circles')">Circles</button><button class="btn sm" onclick="logout()" style="margin-left:auto">Log out</button></div>
       <div class="kicker" style="margin:22px 0 6px">What I'm going to</div>
       ${upcoming}

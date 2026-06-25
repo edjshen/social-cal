@@ -2,7 +2,8 @@
 const app = document.getElementById('app');
 const BASE = window.ORBIT_BASE || '';
 const API = window.ORBIT_API || BASE;
-const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// Escapes &<>" and ' (safe in text, attributes, and single-quoted JS strings) — M1.
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const avatar = (u, size = 'sm') => `<span class="av ${size}" style="background:linear-gradient(135deg,${u.avatar})">${esc(u.initials)}</span>`;
 const timeLabel = (iso) => new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
