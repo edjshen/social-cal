@@ -1,294 +1,369 @@
-const API = window.location.origin;
-let token = localStorage.getItem('token');
-let user = null;
+/* Orbit — mobile-first SPA. Talks to the API in server/index.js. */
+const app = document.getElementById('app');
+const state = { token: localStorage.getItem('orbit_token'), me: null, tab: 'discover', homeView: 'discover', selDay: null, authMode: 'login', err: '' };
 
-// Auth
-async function register(username, password, displayName) {
-  const res = await fetch(`${API}/api/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, displayName })
-  });
-  const data = await res.json();
-  if (data.token) {
-    token = data.token;
-    user = data.user;
-    localStorage.setItem('token', token);
-    showDashboard();
+/* ---------- helpers ---------- */
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function api(path, opts = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (state.token) headers.Authorization = 'Bearer ' + state.token;
+  const r = await fetch(path, Object.assign({}, opts, { headers }));
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(body.error || 'Error'), { status: r.status, body });
+  return body;
+}
+const avatar = (u, size = 'sm') => `<span class="av ${size}" style="background:linear-gradient(135deg,${u.avatar})">${esc(u.initials)}</span>`;
+const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const timeLabel = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+function dayLabel(iso) {
+  const diff = Math.round((startOfDay(iso) - startOfDay(new Date())) / 864e5);
+  const wd = new Date(iso).toLocaleDateString('en-US', { weekday: 'short' });
+  if (diff === 0) return 'Today · ' + wd;
+  if (diff === 1) return 'Tomorrow · ' + wd;
+  return new Date(iso).toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+const I = {
+  discover: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg>',
+  plans: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>',
+  create: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  regulars: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)"/><circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none"/></svg>',
+  you: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>',
+  free: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  standing: '<svg viewBox="0 0 24 24"><path d="M17 3l3 3-3 3"/><path d="M20 6H8a4 4 0 0 0-4 4"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h12a4 4 0 0 0 4-4"/></svg>',
+  event: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>',
+  scene: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/></svg>',
+  inner: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  orbit: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 6.5a3 3 0 0 1 0 5.5M21 19a6 6 0 0 0-4-5.6"/></svg>',
+  public: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+  link: '<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+};
+const PILL = { intention: ['free', 'Free'], plan: ['standing', 'Plan'], event: ['event', 'Event'], scene: ['scene', 'Scene'], busy: ['busy', 'Busy'] };
+const VIS = { inner: ['inner', 'Inner'], orbit: ['orbit', 'Circle'], public: ['public', 'Public'] };
+
+/* ---------- shell ---------- */
+function navHTML() {
+  const t = (id, label) => `<button class="${state.tab === id ? 'on' : ''}" onclick="go('${id}')">${I[id]}${label}</button>`;
+  return `<nav class="nav">${t('discover', 'Discover')}${t('plans', 'Plans')}<button onclick="openCreate()"><span class="create">${I.create}</span></button>${t('regulars', 'Regulars')}${t('you', 'You')}</nav>`;
+}
+function mount(inner, withNav) {
+  app.innerHTML = withNav ? `<div class="shell"><div class="main">${inner}</div></div>${navHTML()}` : inner;
+}
+
+async function refresh() {
+  try {
+    if (!state.token) return mount(renderAuth(), false);
+    if (!state.me) state.me = await api('/api/me');
+    let html = '';
+    if (state.tab === 'discover') html = await renderHome();
+    else if (state.tab === 'plans') html = await renderPlans();
+    else if (state.tab === 'regulars') html = await renderRegulars();
+    else if (state.tab === 'you') html = await renderProfile();
+    else if (state.tab === 'circles') html = await renderCircles();
+    mount(html, true);
+  } catch (e) {
+    if (e.status === 401) { logout(); return; }
+    mount(`<div class="shell"><div class="main"><div class="empty">Something went wrong.<br>${esc(e.message)}</div></div></div>` + navHTML(), false);
   }
-  return data;
 }
+window.go = (tab) => { state.tab = tab; refresh(); };
 
-async function login(username, password) {
-  const res = await fetch(`${API}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  const data = await res.json();
-  if (data.token) {
-    token = data.token;
-    user = data.user;
-    localStorage.setItem('token', token);
-    showDashboard();
+/* ---------- auth ---------- */
+function renderAuth() {
+  const reg = state.authMode === 'register';
+  return `<div class="auth">
+    <div class="logo"><span class="mark"></span> Orbit</div>
+    <p class="tag">Your social calendar is your profile.</p>
+    <div class="field"><label>Username</label><input id="u" type="text" autocapitalize="off" placeholder="ed"></div>
+    ${reg ? '<div class="field"><label>Display name</label><input id="dn" type="text" placeholder="Ed Shen"></div>' : ''}
+    <div class="field"><label>Password</label><input id="p" type="password" placeholder="••••••••"></div>
+    <button class="btn solid block" onclick="${reg ? 'doRegister()' : 'doLogin()'}">${reg ? 'Create account' : 'Log in'}</button>
+    ${state.err ? `<div class="error">${esc(state.err)}</div>` : ''}
+    <div class="toggle-link" onclick="toggleAuth()">${reg ? 'Have an account? <b>Log in</b>' : 'New here? <b>Create account</b>'}</div>
+    ${reg ? '' : '<div class="toggle-link faint" style="margin-top:22px">demo · <b>ed</b> / <b>orbit</b></div>'}
+  </div>`;
+}
+window.toggleAuth = () => { state.authMode = state.authMode === 'login' ? 'register' : 'login'; state.err = ''; refresh(); };
+async function auth(path, payload) {
+  try {
+    const r = await api(path, { method: 'POST', body: JSON.stringify(payload) });
+    state.token = r.token; localStorage.setItem('orbit_token', r.token); state.me = r.user; state.err = ''; state.tab = 'discover';
+    refresh();
+  } catch (e) { state.err = e.message; refresh(); }
+}
+window.doLogin = () => auth('/api/auth/login', { username: val('u'), password: val('p') });
+window.doRegister = () => auth('/api/auth/register', { username: val('u'), password: val('p'), displayName: val('dn') });
+window.logout = () => { state.token = null; state.me = null; localStorage.removeItem('orbit_token'); refresh(); };
+const val = (id) => (document.getElementById(id) || {}).value || '';
+
+/* ---------- discover ---------- */
+function eventCard(ev) {
+  if (ev.busy) {
+    return `<div class="card"><div class="row between"><span class="pill busy">${I.event} Busy</span><span class="meta">${timeLabel(ev.startTime)}</span></div><div class="ev-title faint" style="margin-bottom:0">A friend is busy</div></div>`;
   }
-  return data;
+  const [pc, pl] = PILL[ev.type] || PILL.event;
+  const proof = ev.proof && ev.proof.count
+    ? `<div class="proof"><div class="stack">${ev.proof.sample.map((u) => avatar(u)).join('')}</div><span>${ev.proof.count} going</span></div>`
+    : `<div class="proof"><span class="faint">be the first in</span></div>`;
+  let action;
+  if (ev.creator.id === state.me.id) action = `<span class="btn sm in">Hosting</span>`;
+  else action = `<div class="row" style="gap:6px;margin-left:auto">${['down', 'maybe', 'cant'].map((v) =>
+    `<button class="btn sm ${ev.myRsvp === v ? (v === 'cant' ? '' : 'in') : ''}" onclick="rsvp('${ev.id}','${v}')">${({ down: "I'm down", maybe: 'Maybe', cant: "Can't" })[v]}</button>`).join('')}</div>`;
+  return `<div class="card">
+    <div class="row between"><span class="pill ${pc}">${I[pc] || I.event} ${pl}${ev.recurring ? ' ·↻' : ''}</span><span class="meta">${timeLabel(ev.startTime)}</span></div>
+    <div class="ev-title">${esc(ev.title)}</div>
+    <div class="meta">${esc(ev.creator.displayName)}${ev.location ? '<span class="dot"></span>' + esc(ev.location) : ''}</div>
+    <div class="row between" style="margin-top:12px">${proof}${action}</div>
+  </div>`;
+}
+async function renderHome() {
+  const seg = `<div class="seg">${['discover', 'week', 'month'].map((v) => `<button class="${state.homeView === v ? 'on' : ''}" onclick="setHome('${v}')">${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}</div>`;
+  if (state.homeView === 'week') return seg + (await renderWeek());
+  if (state.homeView === 'month') return seg + (await renderMonth());
+  const { events } = await api('/api/discover');
+  let body = '';
+  if (!events.length) body = `<div class="empty">Nothing on the radar this week.<br>Tap ＋ to start something.</div>`;
+  let lastDay = '';
+  for (const ev of events) {
+    const dl = dayLabel(ev.startTime);
+    if (dl !== lastDay) { body += `<div class="daylabel">${dl}</div>`; lastDay = dl; }
+    body += eventCard(ev);
+  }
+  const head = `<div class="topbar"><div><div class="kicker">Discover</div><div class="h-title">This week</div></div></div>`;
+  return head + seg + body + (events.length ? `<div class="footnote">— that's your week —</div>` : '');
+}
+window.setHome = (v) => { state.homeView = v; refresh(); };
+window.rsvp = async (id, v) => { await api(`/api/events/${id}/rsvp`, { method: 'POST', body: JSON.stringify({ rsvp: v }) }); refresh(); };
+
+/* ---------- week ---------- */
+function mondayOf(d) { const x = startOfDay(d); const wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); return x; }
+async function renderWeek() {
+  const ws = mondayOf(new Date()); const we = new Date(ws); we.setDate(we.getDate() + 7);
+  const { events } = await api(`/api/calendar?start=${ws.toISOString()}&end=${we.toISOString()}`);
+  const days = [...Array(7)].map((_, i) => { const d = new Date(ws); d.setDate(d.getDate() + i); return d; });
+  const today = startOfDay(new Date()).getTime();
+  const headDays = days.map((d) => {
+    const on = startOfDay(d).getTime() === today;
+    return `<div class="${on ? 'today' : ''}"><div class="wd">${d.toLocaleDateString('en-US', { weekday: 'short' })}</div><div class="dt">${d.getDate()}</div></div>`;
+  }).join('');
+  const PXH = 29, BASE = 8;
+  const cols = days.map((d) => {
+    const on = startOfDay(d).getTime() === today;
+    const evs = events.filter((e) => startOfDay(e.startTime).getTime() === startOfDay(d).getTime());
+    const blocks = evs.map((e) => {
+      const s = new Date(e.startTime); const hrs = s.getHours() + s.getMinutes() / 60;
+      const top = Math.max(0, (hrs - BASE) * PXH);
+      const dur = e.endTime ? (new Date(e.endTime) - s) / 36e5 : 1;
+      const h = Math.max(16, dur * PXH);
+      const cls = e.busy ? 'busy' : e.type;
+      const label = e.busy ? '' : esc(e.title.split(' ').slice(0, 2).join(' '));
+      return `<div class="ev ${cls}" style="top:${top}px;height:${h}px">${label}</div>`;
+    }).join('');
+    return `<div class="wk-col ${on ? 'today' : ''}">${blocks}</div>`;
+  }).join('');
+  // open evenings: weekdays with no event starting >= 17:00 that I'm in
+  const mineEve = new Set(events.filter((e) => !e.busy && new Date(e.startTime).getHours() >= 17).map((e) => startOfDay(e.startTime).getTime()));
+  const open = days.filter((d) => !mineEve.has(startOfDay(d).getTime())).length;
+  const times = [['8 AM', 0], ['12 PM', 116], ['4 PM', 232], ['8 PM', 348], ['12 AM', 462]];
+  return `<div class="cal-h"><div class="mo">${ws.toLocaleDateString('en-US', { month: 'long' })} <span>${ws.getFullYear()}</span></div><div class="note">${open} open<br>evening${open === 1 ? '' : 's'}</div></div>
+    <div class="wk-days">${headDays}</div>
+    <div class="wk-grid">
+      <div class="wk-times">${times.map(([t, y]) => `<span style="top:${y}px">${t}</span>`).join('')}</div>
+      ${[116, 232, 348].map((y) => `<div class="wk-line" style="top:${y}px"></div>`).join('')}
+      <div class="wk-cols">${cols}</div>
+    </div>`;
 }
 
-function logout() {
-  token = null;
-  user = null;
-  localStorage.removeItem('token');
-  showAuth();
+/* ---------- month ---------- */
+async function renderMonth() {
+  const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
+  const first = new Date(y, m, 1); const next = new Date(y, m + 1, 1);
+  const { events } = await api(`/api/calendar?start=${first.toISOString()}&end=${next.toISOString()}`);
+  if (!state.selDay) state.selDay = startOfDay(new Date()).toISOString();
+  const byDay = {};
+  for (const e of events) { const k = startOfDay(e.startTime).getTime(); (byDay[k] = byDay[k] || []).push(e); }
+  const gridStart = new Date(first); gridStart.setDate(1 - first.getDay());
+  const today = startOfDay(new Date()).getTime();
+  const sel = startOfDay(state.selDay).getTime();
+  let rows = '';
+  for (let w = 0; w < 6; w++) {
+    let cells = '';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(gridStart); d.setDate(gridStart.getDate() + w * 7 + i);
+      const k = startOfDay(d).getTime(); const inM = d.getMonth() === m;
+      const evs = inM ? (byDay[k] || []) : [];
+      const types = [...new Set(evs.map((e) => (e.busy ? 'busy' : e.type)))].slice(0, 3);
+      const hot = evs.some((e) => (e.proof && e.proof.count >= 3));
+      const cls = [inM ? '' : 'out', k === today ? 'today' : '', k === sel ? 'sel' : '', hot ? 'hot' : ''].join(' ').trim();
+      cells += `<button class="cell ${cls}" onclick="selectDay('${d.toISOString()}')"><span class="n">${d.getDate()}</span><div class="dots">${types.map((t) => `<span class="dot ${t}"></span>`).join('')}</div></button>`;
+    }
+    rows += `<div class="wkrow">${cells}</div>`;
+    const after = new Date(gridStart); after.setDate(gridStart.getDate() + (w + 1) * 7);
+    if (after >= next) break;
+  }
+  const selEvs = (byDay[sel] || []).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+  const selD = new Date(state.selDay);
+  const isToday = sel === today;
+  const agenda = selEvs.length
+    ? selEvs.map((e) => e.busy
+      ? `<div class="ag"><span class="tm">${timeLabel(e.startTime)}</span><span class="bar busy"></span><span class="t faint">Busy</span></div>`
+      : `<div class="ag"><span class="tm">${timeLabel(e.startTime)}</span><span class="bar ${e.type === 'intention' ? 'free' : e.type}"></span><span class="t">${esc(e.title)}${e.recurring ? ' ↻' : ''}<small>${esc(e.location || '')}${e.proof && e.proof.count ? ' · ' + e.proof.count + ' going' : ''}</small></span></div>`).join('')
+    : `<div class="empty" style="padding:20px">Open day.</div>`;
+  return `<div class="cal-h"><div class="mo">${first.toLocaleDateString('en-US', { month: 'long' })} <span>${y}</span></div></div>
+    <div class="mo-wd">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d) => `<div>${d}</div>`).join('')}</div>
+    ${rows}
+    <div class="mo-agenda"><div class="kicker">${selD.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${isToday ? ' · Today' : ''}</div>${agenda}</div>`;
 }
+window.selectDay = (iso) => { state.selDay = iso; refresh(); };
 
-// Views
-function showAuth() {
-  document.getElementById('app').innerHTML = `
-    <div class="min-h-screen flex items-center justify-center p-4">
-      <div class="bg-gray-900 rounded-2xl p-8 w-full max-w-md border border-gray-800">
-        <h1 class="text-3xl font-bold text-center mb-2">📅 Social Cal</h1>
-        <p class="text-gray-400 text-center mb-8">Share your calendar with friends</p>
-        
-        <div id="authForm">
-          <input type="text" id="username" placeholder="Username" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 mb-4">
-          <input type="text" id="displayName" placeholder="Display Name" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 mb-4">
-          <input type="password" id="password" placeholder="Password" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 mb-6">
-          <button onclick="handleLogin()" class="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 rounded-lg mb-4">Login</button>
-          <button onclick="handleRegister()" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg">Create Account</button>
-        </div>
-        <p id="authError" class="text-red-400 text-center mt-4 hidden"></p>
-      </div>
-    </div>
-  `;
+/* ---------- plans ---------- */
+async function renderPlans() {
+  const end = new Date(); end.setDate(end.getDate() + 60);
+  const { events } = await api(`/api/calendar?start=${startOfDay(new Date()).toISOString()}&end=${end.toISOString()}`);
+  const mine = events.filter((e) => !e.busy && (e.creator.id === state.me.id || e.myRsvp));
+  let body = mine.length ? '' : `<div class="empty">No plans yet.<br>Tap ＋ to make one — or set an intention like “free for lunch”.</div>`;
+  let last = '';
+  for (const ev of mine) {
+    const dl = dayLabel(ev.startTime); if (dl !== last) { body += `<div class="daylabel">${dl}</div>`; last = dl; }
+    const [pc, pl] = PILL[ev.type] || PILL.event;
+    const role = ev.creator.id === state.me.id ? 'Hosting' : (ev.myRsvp === 'going' ? "You're in" : ev.myRsvp);
+    body += `<div class="card"><div class="row between"><span class="pill ${pc}">${I[pc] || I.event} ${pl}${ev.recurring ? ' ·↻' : ''}</span><span class="meta">${timeLabel(ev.startTime)}</span></div>
+      <div class="ev-title">${esc(ev.title)}</div>
+      <div class="meta">${esc(ev.location || '')}${ev.attendeeCount ? '<span class="dot"></span>' + ev.attendeeCount + ' in' : ''}</div>
+      <div class="row between" style="margin-top:10px"><span class="btn sm in">${role}</span>${ev.creator.id === state.me.id ? `<button class="btn sm" onclick="del('${ev.id}')">Cancel</button>` : ''}</div></div>`;
+  }
+  return `<div class="topbar"><div><div class="kicker">Plans</div><div class="h-title">What you're in</div></div><button class="btn sm" onclick="openCreate()">＋ New</button></div>${body}`;
 }
+window.del = async (id) => { if (confirm('Cancel this plan?')) { await api(`/api/events/${id}`, { method: 'DELETE' }); refresh(); } };
 
-async function handleLogin() {
-  const u = document.getElementById('username').value;
-  const p = document.getElementById('password').value;
-  const data = await login(u, p);
-  if (data.error) showError(data.error);
+/* ---------- regulars ---------- */
+async function renderRegulars() {
+  const { regulars, rising } = await api('/api/regulars');
+  const head = `<div class="topbar"><div><div class="kicker">Regulars</div><div class="h-title">Familiar faces</div></div></div>
+    <div style="margin:12px 2px 0"><span class="priv">${I.inner} Only you can see this</span></div>`;
+  if (!regulars.length && !rising.length) return head + `<div class="empty">No regulars yet.<br>The more you show up, the more the people you keep seeing surface here.</div>`;
+  const top = regulars[0];
+  const insight = top ? `<div class="insight"><p>You &amp; <b>${esc(top.user.displayName.split(' ')[0])}</b> have overlapped <b>${top.count}×</b> — make it a ritual?</p><button class="btn solid block" onclick="makeStanding('${esc(top.user.displayName.split(' ')[0])}')">${I.standing} Suggest a standing plan</button></div>` : '';
+  const row = (r, rising) => `<div class="reg">${avatar(r.user, 'lg')}<div class="info"><div class="nm">${esc(r.user.displayName)} ${rising ? '<span class="trend">↑ trending</span>' : `<span class="ct">${r.count}× this month</span>`}</div><div class="sub">${r.contexts.length ? 'usually ' + r.contexts.map(esc).join(' + ') : 'seen recently'}${r.last ? ' · last ' + relTime(r.last) : ''}</div></div><button class="btn sm" onclick="makeStanding('${esc(r.user.displayName.split(' ')[0])}')">${rising ? 'Say hi' : 'Standing plan'}</button></div>`;
+  return head + insight + regulars.map((r) => row(r, false)).join('') +
+    (rising.length ? `<div class="sub-h">Becoming regulars</div>` + rising.map((r) => row(r, true)).join('') : '') +
+    `<div class="footnote">Private to you. Counts &amp; faces — never a behavioral dossier.</div>`;
 }
-
-async function handleRegister() {
-  const u = document.getElementById('username').value;
-  const p = document.getElementById('password').value;
-  const d = document.getElementById('displayName').value;
-  const data = await register(u, p, d);
-  if (data.error) showError(data.error);
+function relTime(iso) {
+  const days = Math.round((Date.now() - new Date(iso)) / 864e5);
+  if (days <= 0) return 'today'; if (days === 1) return 'yesterday'; if (days < 14) return days + 'd ago'; return Math.round(days / 7) + 'w ago';
 }
+window.makeStanding = (name) => openCreate({ type: 'plan', recurring: 'weekly', title: name ? `Standing plan with ${name}` : 'Standing plan' });
 
-function showError(msg) {
-  const el = document.getElementById('authError');
-  el.textContent = msg;
-  el.classList.remove('hidden');
+/* ---------- profile ---------- */
+async function renderProfile() {
+  const p = await api('/api/profile/' + state.me.handle);
+  const u = p.user;
+  const chips = (u.scenes || []).map((s) => `<span class="chip">${esc(s)}</span>`).join('');
+  const upcoming = p.upcoming.length ? p.upcoming.map((e) => {
+    const d = new Date(e.startTime); const [vc, vl] = VIS[e.visibility] || VIS.inner;
+    return `<div class="up"><div class="when"><b>${d.getDate()}</b><span>${d.toLocaleDateString('en-US', { weekday: 'short' })}</span></div>
+      <div class="body"><div class="t">${esc(e.title)}${e.recurring ? ' <span style="color:var(--violet)">↻</span>' : ''}</div><div class="s">${timeLabel(e.startTime)}${e.location ? ' · ' + esc(e.location) : ''}</div></div>
+      <span class="vis">${I[vc]} ${vl}</span></div>`;
+  }).join('') : `<div class="empty" style="padding:24px">Nothing upcoming yet.</div>`;
+  const s = p.stats || {};
+  const link = location.origin + '/u/' + u.handle;
+  return `<div class="banner"></div>
+    <div class="pf-head">
+      ${avatar(u, 'xl pf-av')}
+      <div class="pf-name">${esc(u.displayName)}</div>
+      <div class="pf-handle">@${esc(u.handle)}</div>
+      ${u.bio ? `<div class="pf-bio">${esc(u.bio)}</div>` : ''}
+      ${chips ? `<div class="chips" style="margin-top:13px">${chips}</div>` : ''}
+      <div class="linkrow"><div class="linkbox">${I.link} ${esc(link.replace(/^https?:\/\//, ''))}</div><button class="btn solid" onclick="copyLink('${esc(link)}')">Share</button></div>
+      <div class="row" style="gap:10px;margin-top:10px"><button class="btn sm" onclick="openEdit()">Edit profile</button><button class="btn sm" onclick="go('circles')">Circles</button><button class="btn sm" onclick="logout()" style="margin-left:auto">Log out</button></div>
+      <div class="kicker" style="margin:22px 0 6px">What I'm going to</div>
+      ${upcoming}
+      <div class="statline"><div><b>${s.regulars || 0}</b><span>regulars</span></div><div><b>${s.plans || 0}</b><span>plans</span></div><div><b>${s.scenes || 0}</b><span>scenes</span></div></div>
+    </div>`;
 }
+window.copyLink = (l) => { navigator.clipboard?.writeText(l); toast('Link copied'); };
+window.openEdit = () => {
+  const u = state.me;
+  sheet(`<h3>Edit profile</h3>
+    <div class="field"><label>Display name</label><input id="e-dn" type="text" value="${esc(u.displayName)}"></div>
+    <div class="field"><label>Bio</label><textarea id="e-bio">${esc(u.bio || '')}</textarea></div>
+    <div class="field"><label>Scenes (comma separated)</label><input id="e-sc" type="text" value="${esc((u.scenes || []).join(', '))}"></div>
+    <label class="row" style="gap:9px;margin:4px 0 16px"><input type="checkbox" id="e-ghost" ${u.ghost ? 'checked' : ''} style="width:auto"> <span class="muted">Ghost mode — hide my profile</span></label>
+    <button class="btn solid block" onclick="saveProfile()">Save</button>`);
+};
+window.saveProfile = async () => {
+  const scenes = val('e-sc').split(',').map((x) => x.trim()).filter(Boolean);
+  state.me = await api('/api/me', { method: 'PUT', body: JSON.stringify({ displayName: val('e-dn'), bio: val('e-bio'), scenes, ghost: document.getElementById('e-ghost').checked }) });
+  closeSheet(); refresh();
+};
 
-function showDashboard() {
-  fetch(`${API}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } })
-    .then(r => r.json())
-    .then(data => {
-      user = data;
-      renderDashboard();
-    });
+/* ---------- circles ---------- */
+async function renderCircles() {
+  const [c, users] = await Promise.all([api('/api/circles'), api('/api/users')]);
+  const reqs = c.requests.length ? `<div class="sub-h">Requests</div>` + c.requests.map((r) => `<div class="reg">${avatar(r.user, 'lg')}<div class="info"><div class="nm">${esc(r.user.displayName)}</div><div class="sub">wants to connect</div></div><button class="btn sm in" onclick="accept('${r.id}')">Accept</button></div>`).join('') : '';
+  const tierRow = (x) => `<div class="reg">${avatar(x.user, 'lg')}<div class="info"><div class="nm">${esc(x.user.displayName)}</div><div class="sub">@${esc(x.user.handle)}</div></div>
+    <div class="seg" style="margin:0;width:150px">${['inner', 'orbit'].map((t) => `<button class="${x.tier === t ? 'on' : ''}" onclick="setTier('${x.user.id}','${t}')">${t === 'inner' ? 'Inner' : 'Orbit'}</button>`).join('')}</div></div>`;
+  const inner = c.inner.map(tierRow).join(''); const orbit = c.orbit.map(tierRow).join('');
+  const addable = users.filter((u) => u.status === 'none');
+  const pending = users.filter((u) => u.status === 'pending_out');
+  const add = addable.length ? `<div class="sub-h">Add people</div>` + addable.map((u) => `<div class="reg">${avatar(u, 'lg')}<div class="info"><div class="nm">${esc(u.displayName)}</div><div class="sub">@${esc(u.handle)}</div></div><button class="btn sm" onclick="addPerson('${u.id}')">Add</button></div>`).join('') : '';
+  const pend = pending.length ? `<div class="sub-h">Requested</div>` + pending.map((u) => `<div class="reg">${avatar(u, 'lg')}<div class="info"><div class="nm">${esc(u.displayName)}</div><div class="sub">request sent</div></div><span class="btn sm" style="opacity:.6">Pending</span></div>`).join('') : '';
+  return `<div class="topbar"><div><div class="kicker">People</div><div class="h-title">Your circles</div></div><button class="btn sm" onclick="go('you')">Done</button></div>
+    <p class="muted" style="font-size:13px;margin:12px 2px 0">Inner Circle sees what you're doing; Orbit sees when you're free.</p>
+    ${reqs}
+    ${inner ? `<div class="sub-h">Inner circle</div>${inner}` : ''}
+    ${orbit ? `<div class="sub-h">Orbit</div>${orbit}` : ''}
+    ${add}${pend}`;
 }
+window.accept = async (id) => { await api(`/api/connections/${id}/accept`, { method: 'POST' }); refresh(); };
+window.setTier = async (otherId, tier) => { await api('/api/placements', { method: 'PUT', body: JSON.stringify({ otherId, tier }) }); refresh(); };
+window.addPerson = async (id) => { await api('/api/connections', { method: 'POST', body: JSON.stringify({ toId: id }) }); refresh(); };
 
-function renderDashboard() {
-  const shareUrl = `${API}/calendar/${user.shareId}`;
-  const googleUrl = `${API}/api/calendar/${user.shareId}/google`;
-  
-  document.getElementById('app').innerHTML = `
-    <div class="min-h-screen">
-      <header class="bg-gray-900 border-b border-gray-800 p-4">
-        <div class="max-w-2xl mx-auto flex items-center justify-between">
-          <h1 class="text-2xl font-bold">📅 Social Cal</h1>
-          <div class="flex items-center gap-4">
-            <span class="text-gray-400">@${user.username}</span>
-            <button onclick="logout()" class="text-sm text-gray-400 hover:text-white">Logout</button>
-          </div>
-        </div>
-      </header>
-      
-      <main class="max-w-2xl mx-auto p-4 space-y-6">
-        <!-- Share Card -->
-        <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-          <h2 class="text-lg font-semibold mb-4">🔗 Share Your Calendar</h2>
-          <p class="text-gray-400 text-sm mb-4">Send this link to friends so they can view your events and add them to Google Calendar:</p>
-          
-          <div class="flex gap-2 mb-4">
-            <input type="text" id="shareLink" value="${shareUrl}" readonly class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm">
-            <button onclick="copyShareLink()" class="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold px-4 py-2 rounded-lg">Copy</button>
-          </div>
-          
-          <div class="flex gap-2">
-            <a href="${googleUrl}" target="_blank" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-center">
-              📆 Add to Google Calendar
-            </a>
-            <button onclick="showSettings()" class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg">
-              ⚙️
-            </button>
-          </div>
-        </div>
-        
-        <!-- Add Event -->
-        <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-          <h2 class="text-lg font-semibold mb-4">➕ Add Event</h2>
-          <form onsubmit="addEvent(event)" class="space-y-4">
-            <input type="text" id="eventTitle" placeholder="Event Title" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3">
-            <textarea id="eventDesc" placeholder="Description (optional)" rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3"></textarea>
-            <input type="text" id="eventLocation" placeholder="Location" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs text-gray-400">Start</label>
-                <input type="datetime-local" id="eventStart" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3">
-              </div>
-              <div>
-                <label class="text-xs text-gray-400">End</label>
-                <input type="datetime-local" id="eventEnd" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3">
-              </div>
-            </div>
-            <label class="flex items-center gap-2">
-              <input type="checkbox" id="eventAllDay" class="w-5 h-5">
-              <span>All Day</span>
-            </label>
-            <label class="flex items-center gap-2">
-              <input type="checkbox" id="eventPublic" checked class="w-5 h-5">
-              <span>Public (shareable)</span>
-            </label>
-            <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 rounded-lg">Add Event</button>
-          </form>
-        </div>
-        
-        <!-- Events List -->
-        <div class="bg-gray-900 rounded-xl p-6 border border-gray-800">
-          <h2 class="text-lg font-semibold mb-4">📋 Your Events</h2>
-          <div id="eventsList" class="space-y-3"></div>
-        </div>
-      </main>
-    </div>
-    
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-      <div class="bg-gray-900 rounded-xl p-6 w-full max-w-md border border-gray-800">
-        <h3 class="text-xl font-bold mb-4">⚙️ Settings</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="text-sm text-gray-400">Display Name</label>
-            <input type="text" id="settingsDisplayName" value="${user.displayName || ''}" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 mt-1">
-          </div>
-          <label class="flex items-center gap-2">
-            <input type="checkbox" id="settingsPublic" ${user.isPublic ? 'checked' : ''} class="w-5 h-5">
-            <span>Public Calendar</span>
-          </label>
-          <button onclick="saveSettings()" class="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 rounded-lg">Save</button>
-          <button onclick="regenerateLink()" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg text-sm">🔄 Generate New Link</button>
-          <button onclick="closeSettings()" class="w-full bg-transparent text-gray-400 py-2">Cancel</button>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  loadEvents();
-}
-
-async function loadEvents() {
-  const res = await fetch(`${API}/api/events`, { headers: { 'Authorization': `Bearer ${token}` } });
-  const events = await res.json();
-  
-  document.getElementById('eventsList').innerHTML = events.length ? events.map(e => `
-    <div class="event-card bg-gray-800 rounded-lg p-4 flex justify-between items-start">
-      <div>
-        <div class="font-semibold">${e.title}</div>
-        <div class="text-sm text-gray-400">${formatDate(e.startTime)}${e.endTime ? ' - ' + formatDate(e.endTime) : ''}</div>
-        ${e.location ? `<div class="text-sm text-gray-500">📍 ${e.location}</div>` : ''}
-      </div>
-      <button onclick="deleteEvent('${e.id}')" class="text-red-400 hover:text-red-300 text-sm">Delete</button>
-    </div>
-  `).join('') : '<p class="text-gray-500 text-center py-8">No events yet. Add one above!</p>';
-}
-
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
-
-async function addEvent(e) {
-  e.preventDefault();
-  const data = {
-    title: document.getElementById('eventTitle').value,
-    description: document.getElementById('eventDesc').value,
-    location: document.getElementById('eventLocation').value,
-    startTime: document.getElementById('eventStart').value,
-    endTime: document.getElementById('eventEnd').value || null,
-    isAllDay: document.getElementById('eventAllDay').checked,
-    isPublic: document.getElementById('eventPublic').checked
+/* ---------- create sheet ---------- */
+function defaultStart() { const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0); return d.toISOString().slice(0, 16); }
+window.openCreate = (pre = {}) => {
+  const types = [['intention', 'Free / intention'], ['plan', 'Plan'], ['event', 'Event']];
+  const vis = [['inner', 'Inner'], ['orbit', 'Orbit'], ['public', 'Public']];
+  sheet(`<h3>Make something</h3>
+    <div class="field"><label>Type</label><div class="chips" id="c-type">${types.map(([v, l]) => `<span class="chip pick ${(pre.type || 'event') === v ? 'on' : ''}" data-v="${v}" onclick="pickType('${v}')">${l}</span>`).join('')}</div></div>
+    <div class="field"><label>Title</label><input id="c-title" type="text" value="${esc(pre.title || '')}" placeholder="Natural wine night"></div>
+    <div class="field"><label>Where</label><input id="c-loc" type="text" placeholder="Ruffian, East Village"></div>
+    <div class="row" style="gap:10px"><div class="field" style="flex:1"><label>Start</label><input id="c-start" type="datetime-local" value="${defaultStart()}"></div><div class="field" style="flex:1"><label>End</label><input id="c-end" type="datetime-local"></div></div>
+    <label class="row" style="gap:9px;margin:0 0 14px"><input type="checkbox" id="c-rec" ${pre.recurring ? 'checked' : ''} style="width:auto"> <span class="muted">Repeats weekly (standing)</span></label>
+    <div class="field"><label>Who can see it</label><div class="chips" id="c-vis">${vis.map(([v, l]) => `<span class="chip pick ${v === 'inner' ? 'on' : ''}" data-v="${v}" onclick="pickVis('${v}')">${l}</span>`).join('')}</div></div>
+    <button class="btn solid block" onclick="submitCreate()">Add to my calendar</button>`);
+  window._ctype = pre.type || 'event'; window._cvis = 'inner';
+};
+window.pickType = (v) => { window._ctype = v; document.querySelectorAll('#c-type .chip').forEach((c) => c.classList.toggle('on', c.dataset.v === v)); };
+window.pickVis = (v) => { window._cvis = v; document.querySelectorAll('#c-vis .chip').forEach((c) => c.classList.toggle('on', c.dataset.v === v)); };
+window.submitCreate = async () => {
+  const title = val('c-title'); if (!title) return toast('Add a title');
+  const body = {
+    type: window._ctype, title, location: val('c-loc'),
+    startTime: val('c-start'), endTime: val('c-end') || null,
+    recurring: document.getElementById('c-rec').checked ? 'weekly' : null,
+    visibility: window._cvis,
+    expiresAt: window._ctype === 'intention' ? (() => { const d = new Date(val('c-start')); d.setHours(23, 59, 0, 0); return d.toISOString(); })() : null,
   };
-  
-  await fetch(`${API}/api/events`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify(data)
-  });
-  
-  e.target.reset();
-  loadEvents();
+  await api('/api/events', { method: 'POST', body: JSON.stringify(body) });
+  closeSheet(); state.tab = 'plans'; refresh(); toast('Added');
+};
+
+/* ---------- sheet + toast ---------- */
+function sheet(inner) {
+  const s = document.createElement('div'); s.className = 'scrim'; s.id = 'scrim';
+  s.onclick = (e) => { if (e.target === s) closeSheet(); };
+  s.innerHTML = `<div class="sheet"><div class="grab"></div>${inner}</div>`;
+  document.body.appendChild(s);
+}
+window.closeSheet = () => { const s = document.getElementById('scrim'); if (s) s.remove(); };
+function toast(msg) {
+  const t = document.createElement('div'); t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:#1c1a24;border:1px solid var(--bd);color:var(--ink);padding:10px 18px;border-radius:999px;z-index:80;font-size:13px;font-weight:600';
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1600);
 }
 
-async function deleteEvent(id) {
-  if (!confirm('Delete this event?')) return;
-  await fetch(`${API}/api/events/${id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  loadEvents();
-}
-
-function copyShareLink() {
-  const input = document.getElementById('shareLink');
-  input.select();
-  navigator.clipboard.writeText(input.value);
-  alert('Link copied!');
-}
-
-function showSettings() {
-  document.getElementById('settingsModal').classList.remove('hidden');
-}
-
-function closeSettings() {
-  document.getElementById('settingsModal').classList.add('hidden');
-}
-
-async function saveSettings() {
-  const displayName = document.getElementById('settingsDisplayName').value;
-  const isPublic = document.getElementById('settingsPublic').checked;
-  
-  await fetch(`${API}/api/settings`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({ displayName, isPublic })
-  });
-  
-  user.displayName = displayName;
-  user.isPublic = isPublic;
-  closeSettings();
-  renderDashboard();
-}
-
-async function regenerateLink() {
-  if (!confirm('Generate a new link? The old one will stop working.')) return;
-  
-  const res = await fetch(`${API}/api/settings/regenerate-shareId`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  const data = await res.json();
-  user.shareId = data.shareId;
-  renderDashboard();
-}
-
-// Init
-if (token) {
-  showDashboard();
-} else {
-  showAuth();
-}
+/* ---------- boot ---------- */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+refresh();

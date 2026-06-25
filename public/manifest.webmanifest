@@ -1,0 +1,14 @@
+{
+  "name": "Orbit",
+  "short_name": "Orbit",
+  "description": "Your social calendar is your profile. See when your people are free, and actually make plans.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0C0B10",
+  "theme_color": "#0C0B10",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

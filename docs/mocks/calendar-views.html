@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbit — Week & Month views</title>
+<style>
+  :root{
+    --bg:#0C0B10; --bg2:#100E16;
+    --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.03);
+    --bd:rgba(255,255,255,.085); --bd2:rgba(255,255,255,.06);
+    --ink:#F4F1EA; --dim:#A09CA9; --faint:#6C6878;
+    --accent:#FF7A59; --accent2:#FF5E87; --free:#5FD3A6; --violet:#9B8CFF; --amber:#FFC178;
+    --grad:linear-gradient(135deg,#FF8A5B 0%,#FF5E87 100%);
+    --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);
+    background:radial-gradient(1100px 650px at 50% -10%,#1a1726 0%,rgba(26,23,38,0) 60%),#08070B;
+    min-height:100vh;padding:54px 46px 60px}
+  .board-head{max-width:880px;margin:0 auto 38px;text-align:center}
+  .logo{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:15px;margin-bottom:16px}
+  .logo .mark{width:22px;height:22px;border-radius:50%;background:var(--grad);box-shadow:0 0 22px rgba(255,94,135,.5);position:relative}
+  .logo .mark::after{content:"";position:absolute;inset:6px;border-radius:50%;background:#08070B}
+  .board-head h1{font-family:var(--serif);font-weight:500;font-size:38px;letter-spacing:-.01em;margin-bottom:9px}
+  .board-head p{color:var(--dim);font-size:15px}.board-head p b{color:var(--ink);font-weight:600}
+  .phones{display:flex;gap:34px;justify-content:center;align-items:flex-start;flex-wrap:nowrap}
+  figure{display:flex;flex-direction:column;align-items:center;gap:15px}
+  figcaption{color:var(--dim);font-size:13.5px;text-align:center;max-width:330px;line-height:1.5}
+  figcaption b{color:var(--ink);font-weight:600;font-size:14.5px}
+
+  .phone{width:386px;height:858px;border-radius:50px;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,var(--bg2),var(--bg));border:1px solid var(--bd);
+    box-shadow:0 50px 90px -30px rgba(0,0,0,.8),0 0 0 8px #0a0910,0 0 0 9px rgba(255,255,255,.05);
+    display:flex;flex-direction:column}
+  .status{height:42px;flex:0 0 42px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font-size:13px;font-weight:600}
+  .status .dots{display:flex;gap:6px;align-items:center}
+  .status .sig{width:17px;height:11px;background:var(--ink);border-radius:2px;opacity:.85}
+  .status .bat{width:22px;height:11px;border:1.3px solid rgba(255,255,255,.55);border-radius:3px;position:relative}
+  .status .bat::after{content:"";position:absolute;inset:1.5px;width:70%;background:var(--ink);border-radius:1px}
+  .screen{flex:1;overflow:hidden;display:flex;flex-direction:column}
+  .scroll{flex:1;overflow:hidden;padding:8px 20px 8px}
+  .tabs{flex:0 0 76px;display:flex;align-items:center;justify-content:space-around;padding:8px 14px 22px;border-top:1px solid var(--bd2);background:rgba(8,7,11,.6)}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--faint);font-size:10px;font-weight:500}
+  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .tab.on{color:var(--ink)}
+  .tab .create{width:42px;height:42px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;margin-top:-12px;box-shadow:0 8px 22px -6px rgba(255,94,135,.7)}
+  .tab .create svg{width:22px;height:22px;stroke:#1a0f14;stroke-width:2.4}
+
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--accent);text-transform:uppercase}
+  .cal-h{display:flex;align-items:flex-end;justify-content:space-between;margin:6px 2px 0}
+  .cal-h .mo{font-family:var(--serif);font-weight:500;font-size:29px;letter-spacing:-.01em;line-height:1}
+  .cal-h .mo span{color:var(--faint);font-family:var(--sans);font-size:15px;font-weight:600;margin-left:6px}
+  .cal-h .open{font-size:12px;font-weight:650;color:var(--free);text-align:right;line-height:1.3}
+  /* segmented control */
+  .seg{display:flex;background:var(--card2);border:1px solid var(--bd2);border-radius:13px;padding:3px;gap:3px;margin:15px 0 4px}
+  .seg div{flex:1;text-align:center;font-size:12.5px;font-weight:650;color:var(--dim);padding:8px 0;border-radius:10px}
+  .seg div.on{background:rgba(255,255,255,.09);color:var(--ink)}
+
+  /* WEEK */
+  .wk-days{display:flex;margin:14px 0 6px;padding-left:30px}
+  .wk-days div{flex:1;text-align:center}
+  .wk-days .wd{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .wk-days .dt{font-size:14.5px;font-weight:650;margin-top:5px;color:var(--dim)}
+  .wk-days .today .dt{color:#160d11;background:var(--grad);width:26px;height:26px;line-height:26px;border-radius:50%;margin:3px auto 0;display:block}
+  .wk-grid{position:relative;height:466px;margin-top:2px}
+  .wk-times span{position:absolute;left:0;font-size:9px;color:var(--faint);transform:translateY(-50%)}
+  .wk-line{position:absolute;left:30px;right:0;border-top:1px solid var(--bd2)}
+  .wk-cols{position:absolute;left:30px;right:0;top:0;bottom:0;display:flex}
+  .wk-col{flex:1;position:relative;border-left:1px solid rgba(255,255,255,.045)}
+  .wk-col.today{background:rgba(255,122,89,.055)}
+  .ev{position:absolute;left:2px;right:2px;border-radius:6px;padding:3px 3px;font-size:8.5px;font-weight:700;line-height:1.05;overflow:hidden;color:#0c0a0e}
+  .teal{background:#5FD3A6}.violet{background:#9B8CFF}.coral{background:#FF7A59}.amber{background:#FFC178}
+  .grey{background:rgba(255,255,255,.13);color:var(--dim)}
+  .wk-foot{position:absolute;bottom:-2px;left:0;right:0;text-align:center;font-size:11px;color:var(--faint)}
+
+  /* MONTH */
+  .mo-wd{display:flex;margin:16px 0 4px}
+  .mo-wd div{flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--faint);letter-spacing:.06em}
+  .wkrow{display:flex}
+  .cell{flex:1;height:62px;padding-top:7px;text-align:center;position:relative;border-top:1px solid var(--bd2)}
+  .cell .n{font-size:13.5px;font-weight:600;color:var(--ink);display:inline-block;width:25px;height:25px;line-height:25px;border-radius:50%}
+  .cell.out .n{color:var(--faint);opacity:.4}
+  .cell.today .n{background:var(--grad);color:#160d11;font-weight:800}
+  .cell.hot{background:linear-gradient(180deg,rgba(255,193,120,.09),transparent 70%)}
+  .dots{display:flex;justify-content:center;gap:3px;margin-top:6px}
+  .dot{width:5.5px;height:5.5px;border-radius:50%}
+  .mo-agenda{margin-top:14px;border-top:1px solid var(--bd2);padding-top:12px}
+  .ag{display:flex;align-items:center;gap:11px;padding:9px 2px}
+  .ag .tm{font-size:12px;color:var(--dim);width:54px;flex:0 0 54px;font-weight:600}
+  .ag .bar{width:3px;height:30px;border-radius:3px;flex:0 0 3px}
+  .ag .t{font-size:14.5px;font-weight:600}
+  .ag .t small{display:block;font-size:11.5px;color:var(--dim);font-weight:400;margin-top:1px}
+</style>
+</head>
+<body>
+  <div class="board-head">
+    <div class="logo"><span class="mark"></span> Orbit</div>
+    <h1>Week &amp; Month views</h1>
+    <p>The calendar <b>Chronos</b> views — toggled from the home alongside <b>Discover</b>.</p>
+  </div>
+
+  <div class="phones">
+
+    <!-- ============ WEEK ============ -->
+    <figure>
+    <div class="phone" id="p-week">
+      <div class="status"><span>9:41</span><span class="dots"><span class="sig"></span><span class="bat"></span></span></div>
+      <div class="screen">
+        <div class="scroll">
+          <div class="cal-h">
+            <div class="mo">June <span>2026</span></div>
+            <div class="open">3 open<br>evenings</div>
+          </div>
+          <div class="seg"><div>Discover</div><div class="on">Week</div><div>Month</div></div>
+
+          <div class="wk-days">
+            <div><div class="wd">Mon</div><div class="dt">23</div></div>
+            <div class="today"><div class="wd">Tue</div><div class="dt">24</div></div>
+            <div><div class="wd">Wed</div><div class="dt">25</div></div>
+            <div><div class="wd">Thu</div><div class="dt">26</div></div>
+            <div><div class="wd">Fri</div><div class="dt">27</div></div>
+            <div><div class="wd">Sat</div><div class="dt">28</div></div>
+            <div><div class="wd">Sun</div><div class="dt">29</div></div>
+          </div>
+
+          <div class="wk-grid">
+            <div class="wk-times">
+              <span style="top:0">8 AM</span><span style="top:116px">12 PM</span>
+              <span style="top:232px">4 PM</span><span style="top:348px">8 PM</span><span style="top:462px">12 AM</span>
+            </div>
+            <div class="wk-line" style="top:116px"></div>
+            <div class="wk-line" style="top:232px"></div>
+            <div class="wk-line" style="top:348px"></div>
+            <div class="wk-cols">
+              <div class="wk-col"><div class="ev grey" style="top:58px;height:28px">Work</div></div>
+              <div class="wk-col today">
+                <div class="ev teal" style="top:130px;height:42px">Lunch · Maya</div>
+                <div class="ev violet" style="top:305px;height:28px">Run</div>
+              </div>
+              <div class="wk-col"><div class="ev coral" style="top:348px;height:29px">Wine</div></div>
+              <div class="wk-col"><div class="ev violet" style="top:305px;height:28px">Run</div></div>
+              <div class="wk-col"><div class="ev amber" style="top:434px;height:28px">SHØLT</div></div>
+              <div class="wk-col"><div class="ev teal" style="top:58px;height:36px">Climb</div></div>
+              <div class="wk-col"></div>
+            </div>
+            <div class="wk-foot">Thu · Sun open — your evenings to spend</div>
+          </div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg>Discover</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Plans</div>
+        <div class="tab"><span class="create"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)"/><circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none"/></svg>Regulars</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>You</div>
+      </div>
+    </div>
+    <figcaption><b>Week — the time grid.</b> Your real week, color-coded by type (free · standing · event · scene), with open evenings celebrated, not buried.</figcaption>
+    </figure>
+
+    <!-- ============ MONTH ============ -->
+    <figure>
+    <div class="phone" id="p-month">
+      <div class="status"><span>9:41</span><span class="dots"><span class="sig"></span><span class="bat"></span></span></div>
+      <div class="screen">
+        <div class="scroll">
+          <div class="cal-h">
+            <div class="mo">June <span>2026</span></div>
+            <div class="open" style="color:var(--dim)">9 plans<br>this month</div>
+          </div>
+          <div class="seg"><div>Discover</div><div>Week</div><div class="on">Month</div></div>
+
+          <div class="mo-wd"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+
+          <div class="wkrow">
+            <div class="cell"><span class="n">1</span></div><div class="cell"><span class="n">2</span></div>
+            <div class="cell"><span class="n">3</span></div><div class="cell"><span class="n">4</span></div>
+            <div class="cell"><span class="n">5</span></div>
+            <div class="cell"><span class="n">6</span><div class="dots"><span class="dot violet"></span></div></div>
+            <div class="cell"><span class="n">7</span></div>
+          </div>
+          <div class="wkrow">
+            <div class="cell"><span class="n">8</span></div><div class="cell"><span class="n">9</span></div>
+            <div class="cell"><span class="n">10</span></div><div class="cell"><span class="n">11</span></div>
+            <div class="cell"><span class="n">12</span><div class="dots"><span class="dot coral"></span></div></div>
+            <div class="cell"><span class="n">13</span></div><div class="cell"><span class="n">14</span></div>
+          </div>
+          <div class="wkrow">
+            <div class="cell"><span class="n">15</span></div><div class="cell"><span class="n">16</span></div>
+            <div class="cell"><span class="n">17</span></div>
+            <div class="cell"><span class="n">18</span><div class="dots"><span class="dot teal"></span></div></div>
+            <div class="cell"><span class="n">19</span></div><div class="cell"><span class="n">20</span></div>
+            <div class="cell"><span class="n">21</span></div>
+          </div>
+          <div class="wkrow">
+            <div class="cell"><span class="n">22</span></div>
+            <div class="cell"><span class="n">23</span></div>
+            <div class="cell today"><span class="n">24</span><div class="dots"><span class="dot teal"></span><span class="dot violet"></span></div></div>
+            <div class="cell"><span class="n">25</span><div class="dots"><span class="dot coral"></span></div></div>
+            <div class="cell"><span class="n">26</span><div class="dots"><span class="dot violet"></span></div></div>
+            <div class="cell hot"><span class="n">27</span><div class="dots"><span class="dot amber"></span></div></div>
+            <div class="cell"><span class="n">28</span><div class="dots"><span class="dot teal"></span></div></div>
+          </div>
+          <div class="wkrow">
+            <div class="cell"><span class="n">29</span></div>
+            <div class="cell"><span class="n">30</span><div class="dots"><span class="dot coral"></span></div></div>
+            <div class="cell out"><span class="n">1</span></div><div class="cell out"><span class="n">2</span></div>
+            <div class="cell out"><span class="n">3</span></div><div class="cell out"><span class="n">4</span></div>
+            <div class="cell out"><span class="n">5</span></div>
+          </div>
+
+          <div class="mo-agenda">
+            <div class="kicker">Tue 24 · Today</div>
+            <div class="ag"><span class="tm">12:30</span><span class="bar teal"></span><span class="t">Lunch — with Maya<small>Devoción · 2 more free</small></span></div>
+            <div class="ag"><span class="tm">6:30</span><span class="bar violet"></span><span class="t">Evening run ↻<small>Brooklyn Bridge · 3 going</small></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg>Discover</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Plans</div>
+        <div class="tab"><span class="create"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)"/><circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none"/></svg>Regulars</div>
+        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>You</div>
+      </div>
+    </div>
+    <figcaption><b>Month — the overview.</b> Dots are typed by event kind; the warm-lit day (27) is where your circle is converging. Tap a day → its agenda below.</figcaption>
+    </figure>
+
+  </div>
+</body>
+</html>
