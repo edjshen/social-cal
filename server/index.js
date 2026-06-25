@@ -7,7 +7,12 @@ const db = require('./db');
 const { avatarFor, initials } = require('./domain');
 
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET || 'orbit-dev-secret-change-me';
+// M2: never ship a predictable default. Use the env secret; otherwise generate a
+// random ephemeral one per boot (dev convenience — tokens reset on restart).
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  console.warn('JWT_SECRET not set — using an ephemeral random secret (tokens reset on restart). Set JWT_SECRET in production.');
+  return require('crypto').randomBytes(32).toString('hex');
+})();
 const PUBLIC = path.join(__dirname, '..', 'public');
 
 app.use(express.json());

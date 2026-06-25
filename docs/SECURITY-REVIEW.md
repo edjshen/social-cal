@@ -198,6 +198,52 @@ taken-vs-available response uniform if enumeration matters, add a minimum passwo
 4. **M2 / L2** — Shorten token lifetime, plan revocation, purge `net._http_response`.
 5. **L1 / L3** — Tighten CORS if/when auth moves to cookies; rate-limit and de-enumerate auth.
 
-_Items C1 and H1 touch the live deployment (secret rotation + redeploy, DB role/project
-changes). Per the review request, none of these were applied — they're staged here for
-your go-ahead._
+---
+
+## Remediation status (patched on `claude/practical-newton-jbaxit`)
+
+All fixes are committed to this branch. Items that change live infrastructure
+(deploying the Edge Function, applying the migration, purging response rows) are
+**staged, not executed** — see the runbook below. The live frontend tracks
+`master`, and the Supabase project is shared with a production app, so those
+steps are intentionally left to a deliberate, owner-approved deploy.
+
+| ID | Status | What changed (code) | Owner step to go live |
+|----|--------|---------------------|-----------------------|
+| **C1** | Patched in code | `SECRET` now reads `ORBIT_HMAC_SECRET` → falls back to the auto-injected `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_DB_URL`; throws if absent. No secret in source. | Redeploy the function (rotates the key; existing sessions re-login). |
+| **H1** | Mechanism + migration staged | Function connects with `connection: { role: ORBIT_DB_ROLE }` when set; `supabase/migrations/*_orbit_least_privilege_role.sql` creates a `orbit`-only role. | Apply the migration, set `ORBIT_DB_ROLE=orbit_app`, redeploy. (Or move Orbit to its own project.) |
+| **M1** | **Fully patched** | `esc()` now also escapes `'`; the three exploitable `onclick` sinks (`makeStanding`, `copyLink`) were converted to `data-*` attributes read via `this.dataset`. | Lands for users once the frontend redeploys (Pages on `master`) and/or `ORBIT_ASSET_REF` is bumped. |
+| **M2** | Patched in code | Token lifetime 30d → 7d; local server no longer uses a predictable default `JWT_SECRET` (random ephemeral + warning). | Redeploy. Revocation (a session/`jti` store) remains future work. |
+| **L1** | Patched in code | CORS is now an allow-list via `ORBIT_ALLOWED_ORIGINS` (defaults to `*`, no behavior change). | Set the env var to your origins if you want to restrict. |
+| **L2** | Live-data only | (no code) Login responses with tokens persist in `net._http_response`. | `delete from net._http_response where content::text ilike '%"handle":"ed"%';` (orbit rows only). |
+| **L3** | Patched in code | Best-effort per-isolate auth rate-limit (429) + 8-char minimum password on register. | Redeploy. For hard limits, back the throttle with a shared store. |
+
+> **Important — M1 inline-handler subtlety:** HTML-entity-escaping a `'` (`&#39;`)
+> is **not** sufficient inside an inline `onclick`, because the browser HTML-decodes
+> the attribute back to `'` before the JS runs. The real fix is to keep user data
+> out of the JS-string context entirely — hence the `data-*` + `this.dataset`
+> rewrite. The `esc()` change is defense-in-depth for text/attribute contexts.
+
+### Deploy runbook (owner)
+
+```bash
+# 1. (C1) optional but recommended: set a dedicated signing secret
+supabase secrets set ORBIT_HMAC_SECRET="$(openssl rand -hex 32)" --project-ref bpqtjfdiwifvrnkzldwg
+
+# 2. (H1) create the least-privilege role, then point the function at it
+#    (run the migration via the SQL editor or supabase db push), then:
+supabase secrets set ORBIT_DB_ROLE=orbit_app --project-ref bpqtjfdiwifvrnkzldwg
+
+# 3. redeploy the function (picks up new code + secrets; rotates tokens)
+supabase functions deploy orbit --project-ref bpqtjfdiwifvrnkzldwg
+
+# 4. (M1) frontend: merge this branch to master so Pages/CF rebuild, OR pin the
+#    function's asset ref at the fixed commit:
+supabase secrets set ORBIT_ASSET_REF=<this-branch-commit-sha> --project-ref bpqtjfdiwifvrnkzldwg
+
+# 5. (L2) purge lingering demo tokens from the response cache
+#    delete from net._http_response where content::text ilike '%"handle":"ed"%';
+```
+
+C1 stays live-exploitable until step 3 runs — it's the priority.
+
