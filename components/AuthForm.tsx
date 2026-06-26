@@ -11,7 +11,7 @@ export default function AuthForm({ mode, action }: { mode: 'login' | 'register';
   return (
     <form action={formAction}>
       <div className="logo"><span className="mark" /> Orbit</div>
-      <p className="tag">Your social calendar is your profile.</p>
+      <p className="tag">your life in orbit</p>
       <div className="field"><label>Username</label><input name="username" type="text" autoCapitalize="off" placeholder="ed" /></div>
       {reg && <div className="field"><label>Display name</label><input name="displayName" type="text" placeholder="Ed Shen" /></div>}
       <div className="field"><label>Password</label><input name="password" type="password" placeholder="••••••••" /></div>
