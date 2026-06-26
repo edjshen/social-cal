@@ -14,7 +14,7 @@
 export { RoomDO } from './room-do.js';
 
 function allowedOrigins(env) {
-  return String(env.ALLOWED_ORIGINS || 'https://plur.nyc')
+  return String(env.ALLOWED_ORIGINS || 'https://orbit.junting-mp3.workers.dev')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
