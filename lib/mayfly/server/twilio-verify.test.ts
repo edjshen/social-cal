@@ -75,7 +75,7 @@ describe('sendCode', () => {
     expect(r.ok).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://verify.twilio.com/v2/Services/VA_test/Verifications');
     expect(init.method).toBe('POST');
     expect((init.headers as Record<string, string>).Authorization).toBe(
@@ -106,7 +106,7 @@ describe('checkCode', () => {
     const r = await checkCode('+15551234567', '123456');
     expect(r.ok).toBe(true);
 
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://verify.twilio.com/v2/Services/VA_test/VerificationCheck');
     const body = new URLSearchParams(init.body as URLSearchParams);
     expect(body.get('To')).toBe('+15551234567');
@@ -154,7 +154,7 @@ describe('process.env fallback (lets a single .env work under next dev)', () => 
     const fetchMock = vi.fn(async () => new Response('{}', { status: 201 }));
     vi.stubGlobal('fetch', fetchMock);
     await sendCode('+15551234567');
-    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toContain('/Services/VA_test/'); // binding wins, not process.env
   });
 });
