@@ -4,7 +4,7 @@
  * Each helper returns either `null` (proceed) or a `Response` (stop + return it)
  * so route handlers stay flat.
  */
-import { checkCode, isVerifyConfigured, isOtpBypassAllowed } from './twilio-verify';
+import { checkCode, isVerifyConfigured } from './twilio-verify';
 import {
   consumeServerRateLimit,
   clientIpKey,
@@ -39,8 +39,8 @@ export async function consumeRateLimit(
 }
 
 /**
- * Verify an OTP for a phone. Returns null on success (incl. the dev bypass), or
- * a Response describing the failure. Fails CLOSED in prod when Twilio is unset.
+ * Verify an OTP for a phone. Returns null on success, or a Response describing
+ * the failure. Fails CLOSED when Twilio Verify is not configured.
  */
 export async function verifyOtpOrReject(phone: string, code: unknown): Promise<Response | null> {
   if (isVerifyConfigured()) {
@@ -51,10 +51,6 @@ export async function verifyOtpOrReject(phone: string, code: unknown): Promise<R
     if (!v.ok) {
       return Response.json({ error: v.error || 'Wrong code.', code: v.code }, { status: 400 });
     }
-    return null;
-  }
-  if (isOtpBypassAllowed()) {
-    console.warn('[rooms] Twilio not configured; OTP bypass explicitly allowed');
     return null;
   }
   return Response.json(

@@ -4,16 +4,11 @@
  *
  * Sends an SMS verification code (Twilio Verify) before creating a room or
  * joining an ad-hoc user room. Public per-event rooms do NOT use this — they
- * join openly. Fails closed in prod without Twilio; MAYFLY_ALLOW_UNVERIFIED=true
- * or SPIN_ALLOW_UNVERIFIED=true bypasses for local dev.
+ * join openly. Fails closed when Twilio Verify is not configured.
  */
 import { parseJsonBody } from '@/lib/http';
 import { normalizePhoneUS } from '@/lib/phone';
-import {
-  sendCode,
-  isVerifyConfigured,
-  isOtpBypassAllowed,
-} from '@/lib/mayfly/server/twilio-verify';
+import { sendCode, isVerifyConfigured } from '@/lib/mayfly/server/twilio-verify';
 import { consumeRateLimit } from '@/lib/mayfly/server/phone-gate';
 import { consumeServerRateLimit } from '@/lib/mayfly/server/rate-limit';
 
@@ -35,9 +30,6 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (!isVerifyConfigured()) {
-    if (isOtpBypassAllowed()) {
-      return Response.json({ ok: true, otpRequired: false });
-    }
     return Response.json(
       { error: 'Verification is temporarily unavailable. Please try again soon.' },
       { status: 503 }

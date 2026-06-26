@@ -1,23 +1,22 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-function env(): Record<string, string | undefined> {
-  return getCloudflareContext().env as unknown as Record<string, string | undefined>;
+// Twilio creds live on the Cloudflare env: `.dev.vars` in dev, Worker secrets in
+// prod. Under `next dev` they may instead be in Node's process.env (loaded from
+// `.env`), which OpenNext does NOT surface into the Cloudflare binding — so read
+// the binding first and fall back to process.env (same pattern as
+// lib/auth/session.ts). This lets a single `.env` work for local dev.
+function v(key: string): string | undefined {
+  const env = getCloudflareContext().env as unknown as Record<string, string | undefined>;
+  return env[key] ?? process.env[key];
 }
 export function isVerifyConfigured(): boolean {
-  const e = env();
-  return !!(e.TWILIO_ACCOUNT_SID && e.TWILIO_AUTH_TOKEN && e.TWILIO_VERIFY_SERVICE_SID);
-}
-export function isOtpBypassAllowed(): boolean {
-  const e = env();
-  return e.MAYFLY_ALLOW_UNVERIFIED === 'true' || e.SPIN_ALLOW_UNVERIFIED === 'true';
+  return !!(v('TWILIO_ACCOUNT_SID') && v('TWILIO_AUTH_TOKEN') && v('TWILIO_VERIFY_SERVICE_SID'));
 }
 function authHeader(): string {
-  const e = env();
-  return 'Basic ' + btoa(`${e.TWILIO_ACCOUNT_SID}:${e.TWILIO_AUTH_TOKEN}`);
+  return 'Basic ' + btoa(`${v('TWILIO_ACCOUNT_SID')}:${v('TWILIO_AUTH_TOKEN')}`);
 }
 export async function sendCode(phone: string): Promise<{ ok: boolean; error?: string }> {
-  const e = env();
-  const res = await fetch(`https://verify.twilio.com/v2/Services/${e.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
+  const res = await fetch(`https://verify.twilio.com/v2/Services/${v('TWILIO_VERIFY_SERVICE_SID')}/Verifications`, {
     method: 'POST',
     headers: { Authorization: authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ To: phone, Channel: 'sms' }),
@@ -26,8 +25,7 @@ export async function sendCode(phone: string): Promise<{ ok: boolean; error?: st
   return { ok: true };
 }
 export async function checkCode(phone: string, code: string): Promise<{ ok: boolean; error?: string; code?: string }> {
-  const e = env();
-  const res = await fetch(`https://verify.twilio.com/v2/Services/${e.TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`, {
+  const res = await fetch(`https://verify.twilio.com/v2/Services/${v('TWILIO_VERIFY_SERVICE_SID')}/VerificationCheck`, {
     method: 'POST',
     headers: { Authorization: authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ To: phone, Code: code }),

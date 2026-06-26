@@ -44,11 +44,6 @@ export default function PhoneGate({ purpose = 'continue', onSubmit, onCancel }) 
         setError(data.error || 'Could not send a code. Try again.');
         return;
       }
-      if (data.otpRequired === false) {
-        // Dev bypass — no SMS step.
-        await finish(null);
-        return;
-      }
       setStep('code');
     } catch {
       setError('Network error. Try again.');
