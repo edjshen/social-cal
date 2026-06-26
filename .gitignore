@@ -8,6 +8,7 @@ dist/
 build/
 prisma/dev.db
 .dev.vars
+.next/
 .open-next/
 .wrangler/
 drizzle/seed.sql
