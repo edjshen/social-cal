@@ -1,16 +1,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "orbit",
+  "name": "barycal",
   "account_id": "1fb5ac4e609c1d4f4b9171e62d5127c1",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-05-28",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
-  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "orbit" }],
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "barycal" }],
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "orbit-db",
+      "database_name": "barycal-db",
       // Real remote D1 (account junting.mp3@gmail.com), created 2026-06-25.
       // Local `wrangler d1 ... --local` uses a separate on-disk SQLite, so this
       // id is only consulted for --remote operations and deploys.

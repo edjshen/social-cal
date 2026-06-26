@@ -1,8 +1,8 @@
-import type { Attendance, OrbitEvent, User } from '../db/schema';
+import type { Attendance, BarycalEvent, User } from '../db/schema';
 import { ATTEND } from './types';
 import { publicUser } from './helpers';
 
-export function computeRegulars(me: string, events: OrbitEvent[], attendance: Attendance[], users: User[]) {
+export function computeRegulars(me: string, events: BarycalEvent[], attendance: Attendance[], users: User[]) {
   // A ghost never surfaces as someone else's Regular (they chose to disappear).
   const ghostIds = new Set(users.filter((u) => u.ghost && u.id !== me).map((u) => u.id));
   const myEventIds = attendance.filter((a) => a.userId === me && ATTEND.includes(a.rsvp)).map((a) => a.eventId);

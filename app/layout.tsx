@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Orbit',
+  title: 'Barycal',
   description: 'Your social calendar is your profile.',
 };
 export const viewport: Viewport = {

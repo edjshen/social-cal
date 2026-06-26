@@ -1,5 +1,5 @@
 /**
- * Generic D1-backed fixed-window rate limiter for Orbit server actions (auth
+ * Generic D1-backed fixed-window rate limiter for Barycal server actions (auth
  * brute force / account-spam controls). Atomic: a single insert-or-increment
  * upsert with RETURNING, so concurrent attempts can't slip past a check-then-
  * write gap. Kept independent of the Mayfly limiter to honor the import boundary.

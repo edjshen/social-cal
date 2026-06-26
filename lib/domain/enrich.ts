@@ -1,4 +1,4 @@
-import type { Connection, Placement, Attendance, User, OrbitEvent } from '../db/schema';
+import type { Connection, Placement, Attendance, User, BarycalEvent } from '../db/schema';
 import { ATTEND, type PublicUser } from './types';
 import { publicUser } from './helpers';
 import { canSeeContent, myConnectionIds } from './visibility';
@@ -7,7 +7,7 @@ export interface EnrichCtx { users: User[]; conns: Connection[]; places: Placeme
 
 const byId = (users: User[], id: string) => users.find((u) => u.id === id) || null;
 
-export function enrich(ev: OrbitEvent, viewer: string | null, ctx: EnrichCtx, opts: { detail?: boolean } = {}) {
+export function enrich(ev: BarycalEvent, viewer: string | null, ctx: EnrichCtx, opts: { detail?: boolean } = {}) {
   // Ghost mode: a ghost's events are redacted to the free/busy stub for everyone
   // but the ghost themselves — hiding their identity AND content uniformly. This
   // is the single enforcement point for the whole event read path (Discover,

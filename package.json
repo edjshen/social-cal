@@ -1,5 +1,5 @@
 {
-  "name": "orbit",
+  "name": "barycal",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -17,10 +17,10 @@
     "test:watch": "vitest",
     "test:mayfly": "node --test \"lib/mayfly/shared/*.test.js\"",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply orbit-db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply orbit-db --remote",
-    "db:seed:local": "tsx scripts/gen-seed.ts && wrangler d1 execute orbit-db --local --file=drizzle/seed.sql",
-    "db:seed:remote": "tsx scripts/gen-seed.ts && wrangler d1 execute orbit-db --remote --file=drizzle/seed.sql",
+    "db:migrate:local": "wrangler d1 migrations apply barycal-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply barycal-db --remote",
+    "db:seed:local": "tsx scripts/gen-seed.ts && wrangler d1 execute barycal-db --local --file=drizzle/seed.sql",
+    "db:seed:remote": "tsx scripts/gen-seed.ts && wrangler d1 execute barycal-db --remote --file=drizzle/seed.sql",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
   },
   "dependencies": {

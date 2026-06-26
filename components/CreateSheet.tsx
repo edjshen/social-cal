@@ -5,7 +5,7 @@ import Sheet from './primitives/Sheet';
 import { createEvent } from '@/lib/actions/events';
 
 const TYPES = [['intention', 'Free / intention'], ['plan', 'Plan'], ['event', 'Event']] as const;
-const VIS = [['inner', 'Inner'], ['orbit', 'Orbit'], ['public', 'Public']] as const;
+const VIS = [['inner', 'Inner'], ['orbit', 'Outer'], ['public', 'Public']] as const;
 const defaultStart = () => { const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
 
 export default function CreateSheet({ open, onOpenChange, prefill }: { open: boolean; onOpenChange: (o: boolean) => void; prefill?: { type?: string; title?: string; recurring?: boolean } }) {

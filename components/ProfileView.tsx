@@ -12,7 +12,7 @@ import type { ProfileData } from '@/lib/db/profile';
 
 const VIS: Record<string, [string, string]> = {
   inner: ['inner', 'Inner'],
-  orbit: ['orbit', 'Circle'],
+  orbit: ['orbit', 'Outer'],
   public: ['public', 'Public'],
 };
 

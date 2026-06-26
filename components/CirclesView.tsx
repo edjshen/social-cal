@@ -52,7 +52,7 @@ export default function CirclesView({
               className={item.tier === t ? 'on' : ''}
               onClick={() => handleSetTier(item.user!.id, t)}
             >
-              {t === 'inner' ? 'Inner' : 'Orbit'}
+              {t === 'inner' ? 'Inner' : 'Outer'}
             </button>
           ))}
         </div>
@@ -70,7 +70,7 @@ export default function CirclesView({
         <Link href="/you" className="btn sm">Done</Link>
       </div>
       <p className="muted" style={{ fontSize: 13, margin: '12px 2px 0' }}>
-        Inner Circle sees what you&apos;re doing; Orbit sees when you&apos;re free.
+        Inner Circle sees what you&apos;re doing; Outer Circle sees when you&apos;re free.
       </p>
 
       {requests.length > 0 && (
@@ -98,7 +98,7 @@ export default function CirclesView({
 
       {orbit.length > 0 && (
         <>
-          <div className="sub-h">Orbit</div>
+          <div className="sub-h">Outer circle</div>
           {orbit.map((item) => <TierRow key={item.user?.id} item={item} />)}
         </>
       )}

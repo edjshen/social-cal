@@ -18,7 +18,7 @@ function sessionSecret(): string {
 export async function getSession() {
   return getIronSession<SessionData>(await cookies(), {
     password: sessionSecret(),
-    cookieName: 'orbit_session',
+    cookieName: 'barycal_session',
     cookieOptions: { secure: process.env.NODE_ENV === 'production', httpOnly: true, sameSite: 'lax' },
   });
 }

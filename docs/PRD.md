@@ -1,12 +1,12 @@
-# Orbit — Product Requirements Document
+# Barycal — Product Requirements Document
 
-**Name:** Orbit *(confirmed; was "Kairos" in v0.1)*
+**Name:** Barycal *(formerly Orbit)*
 **One-liner:** Your social calendar is your profile. Share it with the people you care about, see what your circles are up to this week, and the same faces recurring become your community.
 **Doc owner:** Ed
 **Status:** Draft v0.4 — key decisions locked (see §0.1)
 **Platform:** PWA (MVP) → native iOS/Android (v1)
 
-> **The product in one breath.** Orbit is a **personal social calendar** centered on **community through repeated exposure**, built on the *everyday* texture of social life (lunches, the gym, coffee, the Tuesday hang). Three stacked layers: a future-tense **calendar-as-profile**; **discovery through your people**; and a **Regulars** engine that turns incidental co-presence into real community. Events are **created natively in Orbit** (Google Calendar is an optional seed). Availability is a quiet utility. Letting **organizations** (PLUR, SAM, clubs) push events onto members' calendars is a **paid feature**, not the core.
+> **The product in one breath.** Barycal is a **personal social calendar** centered on **community through repeated exposure**, built on the *everyday* texture of social life (lunches, the gym, coffee, the Tuesday hang). Three stacked layers: a future-tense **calendar-as-profile**; **discovery through your people**; and a **Regulars** engine that turns incidental co-presence into real community. Events are **created natively in Barycal** (Google Calendar is an optional seed). Availability is a quiet utility. Letting **organizations** (PLUR, SAM, clubs) push events onto members' calendars is a **paid feature**, not the core.
 
 ---
 
@@ -16,11 +16,11 @@
 
 | # | Decision | Choice |
 |---|---|---|
-| 1 | Name | **Orbit** |
+| 1 | Name | **Barycal** |
 | 2 | Primary product | **Sharing personal social calendars, peer-to-peer** |
 | 3 | Home screen | **Discover** — this week, with social proof |
-| 4 | Events model | **Created natively in Orbit** (exclusive to it); Google Calendar = optional **seed/import** |
-| 5 | Privacy model | **Tiered by circle** — Inner Circle sees event content; Orbit sees free/busy |
+| 4 | Events model | **Created natively in Barycal** (exclusive to it); Google Calendar = optional **seed/import** |
+| 5 | Privacy model | **Tiered by circle** — Inner Circle sees event content; Outer sees free/busy |
 | 6 | Discovery scope (MVP) | **Friends only** — no external/city import |
 | 7 | Regulars visibility | **Private to you**; nudges a **standing plan** |
 | 8 | Account-free depth | **View + soft-RSVP** without an account |
@@ -35,7 +35,7 @@
 
 - **v0.1 → v0.2:** north star from *plans-that-happened* → **recurring co-presence**; hero from *availability* → **profile + discovery + Regulars**; privacy from free/busy-only → **content, tiered by circle**.
 - **v0.3:** **everyday-first** — ordinary interactions are the fabric; brought back **Status/Intention**; kept **free/busy** as a utility.
-- **v0.4 (this version):** **personal calendar sharing is the core** (not host-as-engine); **events are Orbit-native**, Google Calendar is a seed; **org event-injection is a paid tier** (§11). Cold-start re-based on peer virality + your personal graph (§10).
+- **v0.4 (this version):** **personal calendar sharing is the core** (not host-as-engine); **events are Barycal-native**, Google Calendar is a seed; **org event-injection is a paid tier** (§11). Cold-start re-based on peer virality + your personal graph (§10).
 
 Inherited from v0.1 unless noted: tech architecture, OAuth scope strategy, PWA constraints. See §13 for deltas.
 
@@ -45,9 +45,9 @@ Inherited from v0.1 unless noted: tech architecture, OAuth scope strategy, PWA c
 
 Instagram is a museum of the past — proof of what you already did. A calendar points the other way: a future-tense, *actionable* record of what you're about to do. That makes it a far better social object, because "you're going to that? I'm in" turns a profile view into a plan. A photo grid can't.
 
-Orbit is your **personal social calendar, made shareable** — a future-tense profile of what you're up to that you share with the people you care about, tier by tier. You open it to **Discover** what your circles are doing this week (everyday or out), join with a tap or spin up a low-friction plan, and over time Orbit surfaces your **Regulars** — the people you keep ending up around — and nudges them into standing plans. The substance is **everyday**: lunches, workouts, coffee, the standing Tuesday hang. Everyday recurrence is exactly the soil community grows in, and turning acquaintances into regulars is the whole job.
+Barycal is your **personal social calendar, made shareable** — a future-tense profile of what you're up to that you share with the people you care about, tier by tier. You open it to **Discover** what your circles are doing this week (everyday or out), join with a tap or spin up a low-friction plan, and over time Barycal surfaces your **Regulars** — the people you keep ending up around — and nudges them into standing plans. The substance is **everyday**: lunches, workouts, coffee, the standing Tuesday hang. Everyday recurrence is exactly the soil community grows in, and turning acquaintances into regulars is the whole job.
 
-Events are **created in Orbit** and live there; connecting Google Calendar is an optional convenience that seeds your week and powers availability. Growth is **peer-to-peer** — shareable profiles and account-free RSVP pull your friends in — seeded by your own dense communities. Later, **organizations** (PLUR.NYC, SAM, clubs, run crews) can pay to push their events onto members' shared calendars — a distribution-and-revenue feature layered on top of a product that already works for individuals.
+Events are **created in Barycal** and live there; connecting Google Calendar is an optional convenience that seeds your week and powers availability. Growth is **peer-to-peer** — shareable profiles and account-free RSVP pull your friends in — seeded by your own dense communities. Later, **organizations** (PLUR.NYC, SAM, clubs, run crews) can pay to push their events onto members' shared calendars — a distribution-and-revenue feature layered on top of a product that already works for individuals.
 
 Beachhead: the NYC social graph already reachable through PLUR.NYC and SAM — dense, pre-connected, taste-driven.
 
@@ -55,14 +55,14 @@ Beachhead: the NYC social graph already reachable through PLUR.NYC and SAM — d
 
 ## 2. Thesis: community is a byproduct of repeated exposure
 
-**The mechanism.** Proximity and repetition, not compatibility, create relationships (Festinger's propinquity effect; Zajonc's mere-exposure effect). You grow close to the people you keep incidentally encountering — the regulars. Friendship precipitates out of recurrence; it is almost never engineered directly. **Everyday** life is where that recurrence happens, which is why Orbit is everyday-first.
+**The mechanism.** Proximity and repetition, not compatibility, create relationships (Festinger's propinquity effect; Zajonc's mere-exposure effect). You grow close to the people you keep incidentally encountering — the regulars. Friendship precipitates out of recurrence; it is almost never engineered directly. **Everyday** life is where that recurrence happens, which is why Barycal is everyday-first.
 
-**The failure of everyone else.** Social products engineer the *connection* — feeds, follower graphs, suggestions, matching — and optimize reach and engagement. A feed gives you a thousand weak, one-way exposures to people you'll never share a room with. Orbit inverts the target: **engineer recurrence, not connection.** Make the same real people keep showing up in each other's actual lives, and community forms on its own.
+**The failure of everyone else.** Social products engineer the *connection* — feeds, follower graphs, suggestions, matching — and optimize reach and engagement. A feed gives you a thousand weak, one-way exposures to people you'll never share a room with. Barycal inverts the target: **engineer recurrence, not connection.** Make the same real people keep showing up in each other's actual lives, and community forms on its own.
 
 **Three stacked layers:**
 - **Calendar-as-profile** — your future-tense identity. What you're into, expressed by where you're going. Browseable, account-free-viewable, screenshot-worthy — the social object that replaces the IG profile, but *forward-pointing and therefore joinable*.
 - **Discovery through your people** — find things to do (everyday or out) by seeing what your circles are up to this week, with social proof ("who you know is going").
-- **Regulars** — Orbit makes recurring overlaps *visible* ("you've seen Maya 3×") and *actionable* (a standing plan), turning incidental co-presence into a named, growing community.
+- **Regulars** — Barycal makes recurring overlaps *visible* ("you've seen Maya 3×") and *actionable* (a standing plan), turning incidental co-presence into a named, growing community.
 
 **Positioning, one line:** the everyday, future-tense personal social calendar that routes discovery through your people and is engineered to make the same faces recur until they're a community — where Instagram is past-tense and solitary, Partiful is episodic and amnesiac, and Howbout is a utility with no identity, discovery, or community model.
 
@@ -87,14 +87,14 @@ Beachhead: the NYC social graph already reachable through PLUR.NYC and SAM — d
 
 ## 4. Design philosophy: "engineer recurrence, not engagement"
 
-The soul carries from v0.1's "intentional," sharpened: Orbit *embraces* discovery and identity (they serve real-world recurrence) while refusing engagement-bait. One test governs everything:
+The soul carries from v0.1's "intentional," sharpened: Barycal *embraces* discovery and identity (they serve real-world recurrence) while refusing engagement-bait. One test governs everything:
 
 > **Does this make the same real people more likely to be in the same room again?** If yes, ship it. If it only raises time-in-app, cut it.
 
 - **Everyday-first, ultra-low friction.** The common case is "free for lunch, who's around?" — two taps, not an event-creation wizard. Friction is the enemy of recurrence.
 - **Forward-tense and joinable.** Identity is what you're *going to do*, and every expression is an open door. A face, not a stage — no vanity counts as a goal.
 - **Discovery in service of meeting, not scrolling.** There *is* a Discover home (a reversal from v0.1), but it's bounded — "this week," finite — and oriented to action. No infinite feed.
-- **Memory of co-presence — a deliberate, narrow past tense.** Orbit remembers who you've been around (to power Regulars); almost nothing else. Threads and statuses fade; the recurrence graph persists, because it *is* the product.
+- **Memory of co-presence — a deliberate, narrow past tense.** Barycal remembers who you've been around (to power Regulars); almost nothing else. Threads and statuses fade; the recurrence graph persists, because it *is* the product.
 - **Calm notifications.** Batched digest at a time you pick. Real-time only for convergence ("3 of your regulars are converging on lunch").
 - **Density over reach.** The unit is the *circle/pocket*, not the dyad and not the global network.
 - **Soft commitment.** RSVP is a gradient (Down / Maybe / Can't), so tentative everyday plans form earlier and recur more easily.
@@ -108,9 +108,9 @@ The soul carries from v0.1's "intentional," sharpened: Orbit *embraces* discover
 - **Discover** — the home. This week's events *and* everyday openings from your people, chronological, with social proof.
 - **Intention / Status** — the everyday on-ramp: a lightweight, expiring broadcast ("free for lunch," "gym at 6, join?") to a chosen tier. The lowest-friction way to create a hang.
 - **Plan** — a concrete hang you spin up (invite, soft-RSVP, optionally write to Google). **Standing plans** (recurring) are first-class — Tuesday lunch, Sunday run.
-- **Event** — a first-class, *joinable* object you create **in Orbit**, with a page and who's-going. (Organizations can create events too — that's the paid tier, §11.)
+- **Event** — a first-class, *joinable* object you create **in Barycal**, with a page and who's-going. (Organizations can create events too — that's the paid tier, §11.)
 - **Regulars** — *the hero magic.* The people you keep ending up around, surfaced privately from overlapping presence; nudges you toward a standing plan.
-- **Circles & visibility tiers** — your graph in closeness tiers: **Inner Circle** sees event *content*; **Orbit** sees *free/busy* only. One-tap ghost mode.
+- **Circles & visibility tiers** — your graph in closeness tiers: **Inner Circle** sees event *content*; **Outer circle** sees *free/busy* only. One-tap ghost mode.
 - **The Scene** — an organization's surface (PLUR, SAM, a run crew) that pushes events to members. A **paid** product (§11), the Poiesis bridge.
 
 ---
@@ -158,8 +158,8 @@ You
 **F2 — Discover (home) + Week/Month views.** This week's events *and* everyday openings from your people, chronological, each with social proof ("who you know is going / who's free"). Bounded, not an infinite feed. The home toggles between three views: **Discover** (the social default), **Week** (a Chronos time grid that celebrates open evenings), and **Month** (an overview grid that flags the days your circle is converging).
 *Acceptance:* with ≥3 connections, the user finds one real thing to do *and* sees who they'd know there, in under 15 seconds.
 
-**F3 — Create events (Orbit-native) + Google seed/import.** Anyone can create an event in Orbit in under a minute (title, when, where, cover, visibility) — events live in Orbit and are the shareable social layer. Connecting Google **imports** existing commitments to seed your week and availability; it is not the source of truth for social events.
-*Acceptance:* a user creates an Orbit event fast; if they connect Google, their existing commitments appear without manual entry; created events never silently leak to Google unless the user writes them back (F8).
+**F3 — Create events (Barycal-native) + Google seed/import.** Anyone can create an event in Barycal in under a minute (title, when, where, cover, visibility) — events live in Barycal and are the shareable social layer. Connecting Google **imports** existing commitments to seed your week and availability; it is not the source of truth for social events.
+*Acceptance:* a user creates a Barycal event fast; if they connect Google, their existing commitments appear without manual entry; created events never silently leak to Google unless the user writes them back (F8).
 
 **F4 — Intention / Status.** Two-tap everyday broadcast ("free for lunch," "gym at 6, join?") to a chosen tier; auto-expires. The lowest-friction path into a hang; shows up ambiently on friends' Discover.
 *Acceptance:* setting an intention takes two taps; friends see it this-week; it disappears on its own.
@@ -170,17 +170,17 @@ You
 **F6 — Regulars (repeated-exposure engine).** *Private to you.* Surfaces the people you keep co-occurring with (everyday + events) and nudges a standing plan. Warm, never surveillant.
 *Acceptance:* after sharing ≥3 occasions with someone, they appear as a Regular with a one-tap "make it a standing thing"; visible only to you.
 
-**F7 — Circles + tiered visibility.** Inner Circle (sees content) / Orbit (sees free/busy); conservative defaults; one-tap ghost mode.
+**F7 — Circles + tiered visibility.** Inner Circle (sees content) / Outer (sees free/busy); conservative defaults; one-tap ghost mode.
 *Acceptance:* a user trusts the model in under a minute; every item's audience is obvious and changeable in one tap.
 
 **F8 — Soft-RSVP + account-free RSVP + optional write-back.** Down / Maybe / Can't on any event/plan; non-users can view and soft-RSVP via link (install nudge after). If Google is connected, the user may write a confirmed plan to their Google Calendar.
 *Acceptance:* a non-user RSVPs from a shared link with no account; a connected user can opt to mirror a plan into Google.
 
-**F9 — Google Calendar (optional connect).** Orbit is fully usable standalone. Connecting Google **seeds** your week from existing commitments and enables the **free/busy availability utility** (F10). Scopes requested just-in-time.
+**F9 — Google Calendar (optional connect).** Barycal is fully usable standalone. Connecting Google **seeds** your week from existing commitments and enables the **free/busy availability utility** (F10). Scopes requested just-in-time.
 *Acceptance:* a user is fully functional without connecting; connecting visibly enriches Discover and plan-making within seconds.
 
-**F10 — Availability utility (free/busy).** *Quiet utility, not a screen.* Used inside make-a-plan to suggest times that work, and to power the Orbit-tier "free/busy" visibility. No availability home screen.
-*Acceptance:* the slot suggester respects everyone's free/busy without exposing Inner-Circle-only content to the Orbit tier.
+**F10 — Availability utility (free/busy).** *Quiet utility, not a screen.* Used inside make-a-plan to suggest times that work, and to power the Outer-tier "free/busy" visibility. No availability home screen.
+*Acceptance:* the slot suggester respects everyone's free/busy without exposing Inner-Circle-only content to the Outer tier.
 
 **F11 — Ephemeral plan thread** (Mayfly substrate; fades after the event) · **F12 — Slow notifications** (batched; real-time only for convergence) · **F13 — PWA install** (guided, Safari-aware).
 
@@ -193,7 +193,7 @@ You
 | Profile (calendar-as-identity) | ● | ● | ● |
 | Discover (home, social proof) | ● | ● | ● |
 | Week & Month calendar views | ● | ● | ● |
-| Create Orbit-native events | ● | ● | ● |
+| Create Barycal-native events | ● | ● | ● |
 | Intention / Status (everyday) | ● | ● | ● |
 | Plans + standing plans | ● | ● | ● |
 | **Regulars (private engine)** | ● | ● | ● |
@@ -242,7 +242,7 @@ Cold-start is the genre's killer, and with the host demoted from "engine" to a p
 - **Seed the pocket.** Launch into one dense, pre-connected cluster from your own communities (PLUR/SAM social graphs) as *individuals and friend-groups* — density inside a pocket is enough; you don't need global scale.
 - **Your personal hosting helps.** Events you personally host still give your friends reasons to show up — that's just you using the core product well, not a separate engine.
 
-**Then, monetize distribution (§11):** once the consumer loop works in a pocket, sell **organizations** the ability to push their events onto members' shared calendars — turning their audiences into connected Orbit graphs. That's both revenue and a distribution flywheel, layered on a product that already works without it.
+**Then, monetize distribution (§11):** once the consumer loop works in a pocket, sell **organizations** the ability to push their events onto members' shared calendars — turning their audiences into connected Barycal graphs. That's both revenue and a distribution flywheel, layered on a product that already works without it.
 
 ---
 
@@ -252,7 +252,7 @@ No ads — incompatible with the ethos and the trust story. Three compatible str
 
 - **Consumer core — free.** Personal calendar sharing, circles, Discover, plans, standing plans, Regulars. The whole loop is genuinely useful for free; this is the graph-builder.
 - **Org / Scene tier — paid B2B2C (the feature you sell).** Organizations (PLUR.NYC, SAM, clubs, run crews) pay to **broadcast events onto members' shared calendars**, with a branded **Scene page**, member analytics, and recurring-event tools. This is the explicit monetization the product is designed around: individuals get a free personal calendar; *groups* pay to reach everyone's calendar at once. It is also the Poiesis bridge (§12) and a distribution loop.
-- **Orbit+ — consumer subscription (later, ~$4–6/mo).** Power/delight only — more circles, generative event art, AI plan concierge, premium themes, the Reel/year-in-review. Never gates the core loop.
+- **Barycal+ — consumer subscription (later, ~$4–6/mo).** Power/delight only — more circles, generative event art, AI plan concierge, premium themes, the Reel/year-in-review. Never gates the core loop.
 
 The dividing line: **free for a person, paid for an organization.** A user sharing their own social calendar never pays; an org that wants to put events in front of a whole community does.
 
@@ -260,7 +260,7 @@ The dividing line: **free for a person, paid for an organization.** A user shari
 
 ## 12. Relationship to your other builds
 
-- **Poiesis** = the *organizer/operator* surface (run the event). **Orbit** = the *personal* surface (your social calendar, your people). The **Org/Scene tier (§11) is the seam** — a Poiesis-run event surfaces natively on members' Orbit calendars. This is now explicitly the *paid* connective tissue, not the consumer engine.
+- **Poiesis** = the *organizer/operator* surface (run the event). **Barycal** = the *personal* surface (your social calendar, your people). The **Org/Scene tier (§11) is the seam** — a Poiesis-run event surfaces natively on members' Barycal calendars. This is now explicitly the *paid* connective tissue, not the consumer engine.
 - **Mayfly** (ephemeral chat) → plan threads (F11) and statuses (F4).
 - **PLUR.NYC / SAM** → the pre-connected seed pocket (consumer cold-start) *and* the first buyers of the Org tier.
 - **Stack** (Next.js, Supabase, Cloudflare DO/Yjs, Anthropic) is largely reused; new surface area is the co-attendance graph and the Discover/Profile rendering.
@@ -271,10 +271,10 @@ The dividing line: **free for a person, paid for an organization.** A user shari
 
 Inherited: v0.1 architecture, OAuth scope strategy, PWA constraints. Changes:
 
-- **Orbit-native events are first-class and the source of truth for the social layer.** Tables ≈ `events` (creator: user or org; `visibility ∈ {inner, orbit, public}`; cover, location, time; `recurring` flag), `event_attendance` (`rsvp ∈ {down,maybe,cant,none}`, `source ∈ {created, joined, intention}`), `intentions` (text, vibe, tier, `expires_at`). Google-imported items are stored as **seed/availability data**, flagged distinctly from Orbit-native events.
+- **Barycal-native events are first-class and the source of truth for the social layer.** Tables ≈ `events` (creator: user or org; `visibility ∈ {inner, orbit, public}`; cover, location, time; `recurring` flag), `event_attendance` (`rsvp ∈ {down,maybe,cant,none}`, `source ∈ {created, joined, intention}`), `intentions` (text, vibe, tier, `expires_at`). Google-imported items are stored as **seed/availability data**, flagged distinctly from Barycal-native events.
 - **Co-presence graph** is the core structure: derive `(user_a, user_b, shared_count, last_shared_at)` from attendance + standing plans. Powers Regulars (F6) and the north star.
-- **Tiered-circle visibility** via Postgres RLS: Inner reads content; Orbit reads free/busy; cross-tier content reads refused at the DB layer.
-- **Google Calendar is optional and import-only by default.** Connecting **reads** to seed the week + free/busy (`events.list` + `syncToken`, `freebusy.query`); **writing** Orbit plans into Google (`events.insert`) is an explicit opt-in per plan (F8). Optionality **defers Google restricted-scope verification** until the feature is switched on broadly.
+- **Tiered-circle visibility** via Postgres RLS: Inner reads content; Outer reads free/busy; cross-tier content reads refused at the DB layer.
+- **Google Calendar is optional and import-only by default.** Connecting **reads** to seed the week + free/busy (`events.list` + `syncToken`, `freebusy.query`); **writing** Barycal plans into Google (`events.insert`) is an explicit opt-in per plan (F8). Optionality **defers Google restricted-scope verification** until the feature is switched on broadly.
 - **Org tier** introduces `orgs`, `org_members`, and org-authored `events` with a fan-out to members' calendars — gated behind billing. Out of MVP scope; schema designed so it slots in.
 - **Reuse from the current `social-cal` prototype:** the shareId + account-free public-page pattern, and the per-event `isPublic` flag (the seed of the visibility tiers). The existing manual event-CRUD is essentially F3 in embryo. Rebuild on the v0.1 stack.
 
@@ -284,7 +284,7 @@ Inherited: v0.1 architecture, OAuth scope strategy, PWA constraints. Changes:
 
 Carries v0.1 §12 (data minimization for free/busy, RLS as authz, JIT consent, token hygiene, conservative defaults, ghost mode) **plus**:
 
-- **Tiered content is the model:** Inner sees what; Orbit sees when. New connections default conservative until placed in a tier.
+- **Tiered content is the model:** Inner sees what; Outer sees when. New connections default conservative until placed in a tier.
 - **Future-tense location is a safety surface.** Mitigations: Google-imported items default private; location coarsened/hidden on public events unless opted in; ghost mode one tap; the *public* tier is always an explicit per-item choice.
 - **Co-presence memory is sensitive and private.** Regulars is private-to-you (decision #7); minimal data (counts + timestamps + refs), never a behavioral dossier.
 - **Discovery ≠ surveillance.** You only see what someone chose to share at the tier they chose. No "who viewed you," no location pings.
@@ -313,15 +313,15 @@ Carries v0.1 §12 (data minimization for free/busy, RLS as authz, JIT consent, t
 Still open:
 - **Discover ranking** beyond chronological-with-social-proof — weighting without becoming a popularity feed.
 - **Standing-plan mechanics** — how aggressively to auto-propose the next slot; opt-in vs default.
-- **Org tier shape** — pricing, and how much Scene tooling lives in Orbit vs Poiesis.
-- **One app or two** (Orbit ↔ Poiesis) data/brand boundary.
+- **Org tier shape** — pricing, and how much Scene tooling lives in Barycal vs Poiesis.
+- **One app or two** (Barycal ↔ Poiesis) data/brand boundary.
 - **Where "bounded discovery" ends and "a feed" begins** as usage grows.
 
 ---
 
 ## 17. Roadmap & milestones
 
-**Phase 0 — Foundation (weeks 0–2).** Auth, the **Profile** (F1) + **Discover** shell (F2), create Orbit-native events (F3), Circles + tiered visibility (F7), optional Google seed (F9). *Milestone: your profile is something you'd actually share, and Discover shows something real.*
+**Phase 0 — Foundation (weeks 0–2).** Auth, the **Profile** (F1) + **Discover** shell (F2), create Barycal-native events (F3), Circles + tiered visibility (F7), optional Google seed (F9). *Milestone: your profile is something you'd actually share, and Discover shows something real.*
 
 **Phase 1 — The everyday recurrence loop (weeks 2–8).** Intentions (F4), Plans + standing plans (F5), Regulars (F6), soft/account-free RSVP + optional write-back (F8), availability utility (F10), threads (F11), slow notifications (F12), PWA install (F13). *Milestone: a closed beta in one pocket produces real repeat co-presence — pairs reaching a 3rd shared occasion.*
 

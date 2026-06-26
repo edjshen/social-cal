@@ -1,5 +1,5 @@
-# Orbit room relay — a SEPARATE Cloudflare Worker, deployed independently of the
-# Orbit Next site (the OpenNext worker `orbit`). Distinct from plur.nyc's
+# Barycal room relay — a SEPARATE Cloudflare Worker, deployed independently of the
+# Barycal Next site (the OpenNext worker `barycal`). Distinct from plur.nyc's
 # `mayfly-room` relay so the two projects share no live infrastructure. This
 # relay only ever handles ciphertext + routing metadata.
 #
@@ -15,7 +15,7 @@
 # the Next app's NEXT_PUBLIC_ROOM_API_BASE env. Later attach room.<orbit-domain>
 # as a custom domain.
 
-name = "orbit-room"
+name = "barycal-room"
 main = "src/worker.js"
 # Initial production deploy: 2026-06-23 (account worker/cron caps cleared; retry).
 # Pin the account so CI deploys land on the same account as the main site
@@ -31,7 +31,7 @@ compatibility_date = "2025-06-01"
 # origin (the app's workers.dev host, or its custom domain once attached) — not
 # this relay's host. localhost:3000 covers `next dev`.
 [vars]
-ALLOWED_ORIGINS = "https://orbit.junting-mp3.workers.dev,http://localhost:3000"
+ALLOWED_ORIGINS = "https://barycal.junting-mp3.workers.dev,http://localhost:3000"
 
 [[durable_objects.bindings]]
 name = "ROOM"

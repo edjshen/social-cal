@@ -20,8 +20,8 @@ async function load(id: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params; const e = await load(id);
-  if (!e || e.busy) return { title: 'Orbit' };
-  return { title: `${e.title} · Orbit`, description: e.location || 'on Orbit' };
+  if (!e || e.busy) return { title: 'Barycal' };
+  return { title: `${e.title} · Barycal`, description: e.location || 'on Barycal' };
 }
 
 export default async function PublicEvent({ params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +30,7 @@ export default async function PublicEvent({ params }: { params: Promise<{ id: st
   if (!e || e.busy) notFound();
   return (
     <div className="shell"><div className="main">
-      <div className="topbar" style={{ marginBottom: 16 }}><div className="logo" style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}><span style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--grad)', display: 'inline-block' }} /> Orbit</div></div>
+      <div className="topbar" style={{ marginBottom: 16 }}><div className="logo" style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}><span style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--grad)', display: 'inline-block' }} /> Barycal</div></div>
       <div className="card" style={{ padding: 20 }}>
         <span className={`pill ${e.type === 'intention' ? 'free' : e.type}`}>{e.type}</span>
         <div className="ev-title" style={{ fontSize: 24, fontFamily: 'var(--serif)', fontWeight: 500 }}>{e.title}</div>
@@ -39,7 +39,7 @@ export default async function PublicEvent({ params }: { params: Promise<{ id: st
         {e.description && <div className="pf-bio">{e.description}</div>}
         <div className="row" style={{ marginTop: 16, gap: 8 }}>{(e.attendees || []).slice(0, 6).map((a: any) => <Avatar key={a.id} user={a} />)}<span className="muted" style={{ fontSize: 13 }}>{e.attendeeCount} going</span></div>
       </div>
-      <PublicCta label="I'm down — open in Orbit" />
+      <PublicCta label="I'm down — open in Barycal" />
     </div></div>
   );
 }

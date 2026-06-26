@@ -8,8 +8,8 @@ import { timeLabel } from '@/lib/format';
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
   const { handle } = await params; const data = await getProfileData(handle, null);
-  if (!data) return { title: 'Orbit' };
-  return { title: `${data.user.displayName} · Orbit`, description: data.user.bio || 'on Orbit', openGraph: { title: data.user.displayName } };
+  if (!data) return { title: 'Barycal' };
+  return { title: `${data.user.displayName} · Barycal`, description: data.user.bio || 'on Barycal', openGraph: { title: data.user.displayName } };
 }
 export default async function PublicProfile({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -30,7 +30,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ hand
           <div className="up" key={e.id}><div className="when"><b>{new Date(e.startTime).getDate()}</b><span>{new Date(e.startTime).toLocaleDateString('en-US', { weekday: 'short' })}</span></div>
             <div className="body"><div className="t">{e.title}</div><div className="s">{timeLabel(e.startTime)}{e.location && ' · ' + e.location}</div></div></div>
         )) : <div className="empty" style={{ padding: 20 }}>Nothing public right now.</div>}
-        <PublicCta label={`Follow ${u.displayName.split(' ')[0]} on Orbit`} />
+        <PublicCta label={`Follow ${u.displayName.split(' ')[0]} on Barycal`} />
       </div>
     </div></div>
   );

@@ -13,7 +13,7 @@ const id = () => crypto.randomUUID();
 const q = (v: string | null) => (v === null ? 'NULL' : `'${v.replace(/'/g, "''")}'`);
 
 async function main() {
-  const pw = await hashPassword('orbit');
+  const pw = await hashPassword('barycal');
   const lines: string[] = ['DELETE FROM attendance;','DELETE FROM events;','DELETE FROM placements;','DELETE FROM connections;','DELETE FROM users;'];
   const U: Record<string, string> = {};
   const user = (handle: string, name: string, bio = '', scenes: string[] = []) => {

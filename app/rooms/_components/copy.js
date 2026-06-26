@@ -17,14 +17,14 @@
  */
 
 export const PHONE_MARKETING_CONSENT =
-  'By entering your phone number and using Orbit rooms, you agree to receive recurring ' +
+  'By entering your phone number and using Barycal rooms, you agree to receive recurring ' +
   'automated marketing and account text messages (such as event drops and ticket info) from ' +
-  'Orbit at the number you provide, including messages sent using an automatic telephone ' +
+  'Barycal at the number you provide, including messages sent using an automatic telephone ' +
   'dialing system. Consent is not a condition of any purchase. Message frequency varies. ' +
   'Message & data rates may apply. Reply STOP to unsubscribe or HELP for help.';
 
 // Short label for the explicit (required, unchecked) opt-in checkbox shown at
 // the point of collection. The full disclosure above is rendered alongside it.
 export const PHONE_CONSENT_CHECKBOX =
-  'I agree to receive recurring automated marketing & account texts from Orbit at this ' +
+  'I agree to receive recurring automated marketing & account texts from Barycal at this ' +
   'number. Consent is not a condition of purchase. Msg & data rates may apply; reply STOP to opt out.';
