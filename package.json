@@ -1,22 +1,54 @@
 {
   "name": "orbit",
-  "version": "0.1.0",
-  "description": "Orbit — your social calendar is your profile. Community through repeated exposure.",
-  "main": "server/index.js",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "22.x" },
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "seed": "node server/seed.js",
-    "deploy": "wrangler deploy",
-    "preview": "wrangler dev"
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "build:cf": "opennextjs-cloudflare build",
+    "deploy:cf": "opennextjs-cloudflare deploy",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:mayfly": "node --test \"lib/mayfly/shared/*.test.js\"",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply orbit-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply orbit-db --remote",
+    "db:seed:local": "tsx scripts/gen-seed.ts && wrangler d1 execute orbit-db --local --file=drizzle/seed.sql",
+    "db:seed:remote": "tsx scripts/gen-seed.ts && wrangler d1 execute orbit-db --remote --file=drizzle/seed.sql",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "uuid": "^9.0.0"
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "drizzle-orm": "^0.44.0",
+    "iron-session": "^8.0.4",
+    "@noble/hashes": "^1.6.0",
+    "motion": "^12.41.0",
+    "@base-ui-components/react": "1.0.0-rc.0",
+    "tweetnacl": "^1.0.3",
+    "zod": "^3.25.76",
+    "idb": "^8.0.3",
+    "jsqr": "^1.4.0",
+    "nanoid": "^5.1.15",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "wrangler": "^4.105.0"
+    "@opennextjs/cloudflare": "^1.19.9",
+    "@serwist/next": "^9.5.11",
+    "serwist": "^9.5.11",
+    "drizzle-kit": "^0.30.0",
+    "@cloudflare/workers-types": "^4.20260601.0",
+    "wrangler": "^4.103.0",
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "vitest": "^2.1.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/node": "^22.0.0"
   }
 }

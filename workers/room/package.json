@@ -1,0 +1,21 @@
+{
+  "name": "mayfly-room",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mayfly ephemeral-chat relay — a dumb encrypted Cloudflare Worker + Durable Object. Stores and forwards ciphertext; never holds the room key or sees plaintext.",
+  "scripts": {
+    "dev": "wrangler dev -c ./wrangler.toml",
+    "deploy": "wrangler deploy -c ./wrangler.toml",
+    "tail": "wrangler tail -c ./wrangler.toml",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.71",
+    "vitest": "~3.2.0",
+    "wrangler": "^4.90.0"
+  }
+}

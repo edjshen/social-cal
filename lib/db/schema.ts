@@ -1,0 +1,66 @@
+import { sqliteTable, text, integer, index, unique } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),
+  handle: text('handle').notNull().unique(),
+  displayName: text('display_name').notNull(),
+  passwordHash: text('password_hash').notNull(),
+  bio: text('bio').notNull().default(''),
+  scenes: text('scenes', { mode: 'json' }).$type<string[]>().notNull().default(sql`'[]'`),
+  avatar: text('avatar').notNull(),
+  shareId: text('share_id').notNull().unique(),
+  ghost: integer('ghost', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+});
+
+export const connections = sqliteTable('connections', {
+  id: text('id').primaryKey(),
+  aId: text('a_id').notNull().references(() => users.id),
+  bId: text('b_id').notNull().references(() => users.id),
+  status: text('status', { enum: ['pending', 'accepted'] }).notNull(),
+  requestedBy: text('requested_by').notNull().references(() => users.id),
+  createdAt: text('created_at').notNull(),
+}, (t) => ({
+  // Non-unique by design: connection uniqueness (including the reverse pair
+  // (b,a)) is enforced at the application layer via connectionStatus(), matching
+  // the original app. A DB unique index on the ordered pair would be incomplete.
+  pair: index('conn_pair').on(t.aId, t.bId),
+}));
+
+export const placements = sqliteTable('placements', {
+  id: text('id').primaryKey(),
+  ownerId: text('owner_id').notNull().references(() => users.id),
+  otherId: text('other_id').notNull().references(() => users.id),
+  tier: text('tier', { enum: ['inner', 'orbit'] }).notNull(),
+}, (t) => ({ uniq: unique('place_owner_other').on(t.ownerId, t.otherId) }));
+
+export const events = sqliteTable('events', {
+  id: text('id').primaryKey(),
+  creatorId: text('creator_id').notNull().references(() => users.id),
+  type: text('type', { enum: ['intention', 'plan', 'event', 'scene'] }).notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull().default(''),
+  location: text('location').notNull().default(''),
+  startTime: text('start_time').notNull(),
+  endTime: text('end_time'),
+  recurring: text('recurring', { enum: ['weekly'] }),
+  visibility: text('visibility', { enum: ['inner', 'orbit', 'public'] }).notNull(),
+  expiresAt: text('expires_at'),
+  createdAt: text('created_at').notNull(),
+}, (t) => ({ byStart: index('events_start').on(t.startTime), byCreator: index('events_creator').on(t.creatorId) }));
+
+export const attendance = sqliteTable('attendance', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id').notNull().references(() => events.id),
+  userId: text('user_id').notNull().references(() => users.id),
+  rsvp: text('rsvp', { enum: ['going', 'down', 'maybe', 'cant'] }).notNull(),
+  createdAt: text('created_at').notNull(),
+}, (t) => ({ byEvent: index('attend_event').on(t.eventId) }));
+
+export type User = typeof users.$inferSelect;
+export type Connection = typeof connections.$inferSelect;
+export type Placement = typeof placements.$inferSelect;
+// Named OrbitEvent (not Event) to avoid shadowing the global DOM/Workers `Event`.
+export type OrbitEvent = typeof events.$inferSelect;
+export type Attendance = typeof attendance.$inferSelect;
