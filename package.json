@@ -21,7 +21,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply barycal-db --remote",
     "db:seed:local": "tsx scripts/gen-seed.ts && wrangler d1 execute barycal-db --local --file=drizzle/seed.sql",
     "db:seed:remote": "tsx scripts/gen-seed.ts && wrangler d1 execute barycal-db --remote --file=drizzle/seed.sql",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@base-ui-components/react": "1.0.0-rc.0",
@@ -47,6 +48,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "drizzle-kit": "^0.31.10",
+    "patch-package": "^8.0.1",
     "serwist": "^9.5.11",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
