@@ -175,7 +175,9 @@ textarea{resize:vertical;min-height:64px}
 
 /* sheet / modal */
 .scrim{position:fixed;inset:0;background:rgba(4,3,7,.7);backdrop-filter:blur(3px);z-index:60;display:flex;align-items:flex-end;justify-content:center}
-.sheet{width:100%;max-width:480px;background:var(--bg2);border:1px solid var(--bd);border-radius:24px 24px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+/* z-index must sit above .scrim (z:60); without it the backdrop captures clicks
+   on the lower half of the sheet (so submit buttons can't be tapped). */
+.sheet{width:100%;max-width:480px;background:var(--bg2);border:1px solid var(--bd);border-radius:24px 24px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;position:relative;z-index:61}
 .sheet h3{font-family:var(--serif);font-weight:500;font-size:22px;margin-bottom:16px}
 .sheet .grab{width:38px;height:4px;border-radius:2px;background:var(--bd);margin:0 auto 16px}
 
@@ -187,6 +189,122 @@ textarea{resize:vertical;min-height:64px}
 .auth .tag{text-align:center;color:var(--dim);font-size:14px;margin-bottom:28px}
 .toggle-link{text-align:center;font-size:13px;color:var(--dim);margin-top:16px}
 .toggle-link b{color:var(--accent)}
+
+/* ============================================================
+   Calendar tab — Google-Calendar-style views (day/3-day/week/month/schedule)
+   ============================================================ */
+:root{ --navh:74px; --tg-gutter:46px; --hr:52px; }
+/* let the calendar break out of the shell's content padding */
+.main:has(.cal-app){padding:0}
+
+.cal-app{display:flex;flex-direction:column;height:calc(100dvh - var(--navh));position:relative;overflow:hidden}
+
+/* header */
+.cal-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;gap:8px}
+.cal-title{display:flex;align-items:center;gap:4px;background:none;border:0;color:var(--ink);font-family:var(--serif);font-size:22px;font-weight:500;letter-spacing:-.01em}
+.cal-caret{width:18px;height:18px;stroke:var(--dim);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:3px}
+.cal-nav{display:flex;align-items:center;gap:4px}
+.cal-nav button{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:none;border:0;color:var(--ink)}
+.cal-nav button:active{background:var(--card)}
+.cal-nav svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cal-nav .cal-today{width:auto;padding:0 12px;font-size:12.5px;font-weight:650;color:var(--dim);border:1px solid var(--bd);border-radius:999px;height:30px}
+
+/* view switcher dropdown */
+.cal-vmenu{position:absolute;top:50px;left:16px;z-index:40;background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:6px;display:flex;flex-direction:column;min-width:150px;box-shadow:0 18px 40px -12px rgba(0,0,0,.6)}
+.cal-vmenu button{text-align:left;padding:10px 12px;border-radius:9px;background:none;border:0;color:var(--dim);font-size:14px;font-weight:600}
+.cal-vmenu button.on{background:rgba(255,255,255,.08);color:var(--ink)}
+
+/* day-of-week header strip (grid views) */
+.cal-dayhead{display:flex;padding-left:var(--tg-gutter);border-bottom:1px solid var(--bd2)}
+.cal-dh{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0 7px;background:none;border:0;border-left:1px solid var(--bd2)}
+.cal-dh:first-child{border-left:0}
+.cal-dh-wd{font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--faint);text-transform:uppercase}
+.cal-dh-n{font-size:16px;font-weight:650;color:var(--dim);width:28px;height:28px;line-height:28px;border-radius:50%;text-align:center}
+.cal-dh.today .cal-dh-n{background:var(--grad);color:#160d11;font-weight:800}
+.cal-dh.today .cal-dh-wd{color:var(--accent)}
+
+.cal-body{flex:1;min-height:0;display:flex;flex-direction:column}
+
+/* time grid */
+.tg{flex:1;min-height:0;display:flex;flex-direction:column}
+.tg-allday{display:flex;border-bottom:1px solid var(--bd2);max-height:88px;overflow-y:auto}
+.tg-allday-label{font-size:9px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;padding-top:6px;text-align:right;padding-right:6px}
+.tg-gutter{width:var(--tg-gutter);flex:none;position:relative}
+.tg-allday-cols{flex:1;display:flex}
+.tg-allday-col{flex:1;border-left:1px solid var(--bd2);padding:3px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tg-allday-ev{border:0;border-radius:6px;padding:3px 6px;font-size:10.5px;font-weight:650;color:#0c0a0e;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+.tg-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.tg-body{position:relative;display:flex}
+.tg-body .tg-gutter{height:100%}
+.tg-hr{position:absolute;right:6px;transform:translateY(-7px);width:calc(var(--tg-gutter) - 6px);text-align:right}
+.tg-hr span{font-size:9.5px;color:var(--faint)}
+.tg-cols{position:relative;flex:1;display:flex;touch-action:pan-y}
+.tg-line{position:absolute;left:0;right:0;border-top:1px solid var(--bd2)}
+.tg-col{flex:1;position:relative;border-left:1px solid var(--bd2)}
+.tg-today{background:rgba(255,122,89,.045)}
+.tg-ev{position:absolute;border-radius:6px;padding:2px 5px;overflow:hidden;cursor:pointer;touch-action:none;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.tg-ev.busy{cursor:default}
+.tg-ev-t{font-size:11px;font-weight:650;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg-ev-s{font-size:9.5px;opacity:.85;margin-top:1px}
+.tg-ev-resize{position:absolute;left:0;right:0;bottom:0;height:9px;cursor:ns-resize}
+.tg-ghost{position:absolute;left:1px;right:1px;background:rgba(255,122,89,.28);border:1px solid var(--accent);border-radius:6px;pointer-events:none}
+.tg-now{position:absolute;left:0;right:0;height:0;border-top:2px solid #FF5252;z-index:5;pointer-events:none}
+.tg-now-dot{position:absolute;left:-4px;top:-5px;width:9px;height:9px;border-radius:50%;background:#FF5252}
+
+/* month view */
+.mv{height:100%;display:flex;flex-direction:column}
+.mv-wd{display:flex;border-bottom:1px solid var(--bd2)}
+.mv-wd div{flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--faint);padding:6px 0;letter-spacing:.05em}
+.mv-grid{flex:1;display:grid;grid-template-columns:repeat(7,1fr)}
+.mv-cell{position:relative;border-left:1px solid var(--bd2);border-bottom:1px solid var(--bd2);background:none;text-align:left;padding:3px 2px 2px;overflow:hidden;display:flex;flex-direction:column;gap:2px;min-width:0}
+.mv-cell:nth-child(7n+1){border-left:0}
+.mv-cell.out{background:rgba(0,0,0,.18)}
+.mv-cell.out .mv-n{color:var(--faint);opacity:.5}
+.mv-n{font-size:12px;font-weight:600;color:var(--dim);width:21px;height:21px;line-height:21px;border-radius:50%;text-align:center;align-self:center}
+.mv-n.today{background:var(--grad);color:#160d11;font-weight:800}
+.mv-chips{display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.mv-chip{display:flex;align-items:center;gap:3px;font-size:9.5px;font-weight:600;line-height:1.25;padding:1px 4px;border-radius:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mv-dot{width:5px;height:5px;border-radius:50%;flex:none}
+.mv-more{font-size:9px;color:var(--faint);font-weight:700;padding-left:4px}
+
+/* schedule view */
+.sv{height:100%;overflow-y:auto;padding:6px 16px 24px}
+.sv-day{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--bd2)}
+.sv-date{width:46px;flex:none;text-align:center}
+.sv-dnum{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1}
+.sv-dmeta{display:flex;flex-direction:column;margin-top:3px}
+.sv-dwd{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+.sv-dmo{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+.sv-date.today .sv-dnum{color:var(--accent)}
+.sv-evs{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.sv-ev{display:flex;align-items:flex-start;gap:10px;background:none;border:0;text-align:left;padding:2px 0}
+.sv-bar{width:4px;align-self:stretch;border-radius:3px;flex:none;min-height:34px}
+.sv-time{font-size:12px;color:var(--dim);width:62px;flex:none;font-weight:600;padding-top:1px}
+.sv-body{flex:1;min-width:0}
+.sv-title{font-size:14.5px;font-weight:600;color:var(--ink);display:block;line-height:1.25}
+.sv-sub{font-size:12px;color:var(--dim);display:block;margin-top:2px}
+
+/* FAB — fixed so it isn't clipped by the calendar's overflow, and stacked
+   above the global Rooms launcher (🦋, bottom:86px) so they don't collide. */
+.cal-fab{position:fixed;right:16px;bottom:calc(146px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:18px;background:var(--grad);border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px -6px rgba(255,94,135,.7);z-index:45}
+.cal-fab svg{width:26px;height:26px;stroke:#1a0f14;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* editor / detail extras */
+.ce-switch{display:flex;align-items:center;justify-content:space-between;padding:10px 2px 14px;font-size:14px;font-weight:600}
+.ce-switch input{width:auto}
+.ce-colors{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.ce-sw{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;display:inline-flex}
+.ce-sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg2) inset}
+.ce-sw.ce-auto{background:var(--card);align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--dim)}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A09CA9' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
+.ed-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ed-swatch{width:14px;height:14px;border-radius:4px;flex:none}
+.ed-line{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.ed-line strong{font-size:15px;font-weight:650}
+.ed-meta{font-size:13px;color:var(--dim);margin-bottom:6px}
+.ed-desc{font-size:14px;color:#cbc7d0;line-height:1.5;margin:12px 0 4px}
+.ed-rsvp{display:flex;gap:8px;margin-top:16px}
 
 /* smooth cross-screen + theme transitions */
 @view-transition { navigation: auto; }

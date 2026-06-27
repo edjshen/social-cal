@@ -44,7 +44,14 @@ export const events = sqliteTable('events', {
   location: text('location').notNull().default(''),
   startTime: text('start_time').notNull(),
   endTime: text('end_time'),
-  recurring: text('recurring', { enum: ['weekly'] }),
+  // Recurrence frequency. Historically only 'weekly' existed; the calendar tab
+  // adds the rest of the Google-Calendar set. Enum is type-only at runtime
+  // (no CHECK constraint), so older rows storing 'weekly' stay valid.
+  recurring: text('recurring', { enum: ['daily', 'weekly', 'monthly', 'yearly', 'weekday'] }),
+  // All-day events render in the day-spanning band rather than the time grid.
+  allDay: integer('all_day', { mode: 'boolean' }).notNull().default(false),
+  // Optional explicit color key (see CAL_COLORS). Null falls back to type color.
+  color: text('color'),
   visibility: text('visibility', { enum: ['inner', 'orbit', 'public'] }).notNull(),
   expiresAt: text('expires_at'),
   createdAt: text('created_at').notNull(),
