@@ -9,5 +9,5 @@ export async function loadCalendar(fromISO: string, toISO: string) {
   const uid = await requireUserId();
   const from = toISOOrThrow(fromISO, 'from');
   const to = toISOOrThrow(toISO, 'to');
-  return calendarWindow(uid, from, to);
+  return calendarWindow(uid, from, to, { includePastRecurring: true });
 }
