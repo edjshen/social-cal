@@ -1,383 +1,1167 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Orbit — Hero Screens</title>
-<style>
-  :root{
-    --bg:#0C0B10; --bg2:#100E16;
-    --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.03);
-    --bd:rgba(255,255,255,.085); --bd2:rgba(255,255,255,.06);
-    --ink:#F4F1EA; --dim:#A09CA9; --faint:#6C6878;
-    --accent:#FF7A59; --accent2:#FF5E87; --free:#5FD3A6; --violet:#9B8CFF;
-    --grad:linear-gradient(135deg,#FF8A5B 0%,#FF5E87 100%);
-    --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:var(--sans); color:var(--ink);
-    background:
-      radial-gradient(1200px 700px at 50% -10%, #1a1726 0%, rgba(26,23,38,0) 60%),
-      radial-gradient(900px 600px at 85% 110%, #1c1322 0%, rgba(28,19,34,0) 55%),
-      #08070B;
-    min-height:100vh; padding:54px 46px 64px;
-  }
-  .board-head{max-width:1240px;margin:0 auto 40px;text-align:center}
-  .logo{display:inline-flex;align-items:center;gap:9px;font-weight:600;letter-spacing:.02em;color:var(--ink);margin-bottom:18px;font-size:15px}
-  .logo .mark{width:22px;height:22px;border-radius:50%;background:var(--grad);box-shadow:0 0 22px rgba(255,94,135,.5);position:relative}
-  .logo .mark::after{content:"";position:absolute;inset:6px;border-radius:50%;background:#08070B}
-  .board-head h1{font-family:var(--serif);font-weight:500;font-size:40px;letter-spacing:-.01em;margin-bottom:10px}
-  .board-head p{color:var(--dim);font-size:15px}
-  .board-head p b{color:var(--ink);font-weight:600}
-  .phones{display:flex;gap:38px;justify-content:center;align-items:flex-start;flex-wrap:wrap;max-width:1320px;margin:0 auto}
-  figure{display:flex;flex-direction:column;align-items:center;gap:16px}
-  figcaption{color:var(--dim);font-size:13.5px;text-align:center;max-width:300px;line-height:1.5}
-  figcaption b{color:var(--ink);font-weight:600;font-size:14.5px}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orbit — Hero Screens</title>
+    <style>
+      :root {
+        --bg: #0c0b10;
+        --bg2: #100e16;
+        --card: rgba(255, 255, 255, 0.045);
+        --card2: rgba(255, 255, 255, 0.03);
+        --bd: rgba(255, 255, 255, 0.085);
+        --bd2: rgba(255, 255, 255, 0.06);
+        --ink: #f4f1ea;
+        --dim: #a09ca9;
+        --faint: #6c6878;
+        --accent: #ff7a59;
+        --accent2: #ff5e87;
+        --free: #5fd3a6;
+        --violet: #9b8cff;
+        --grad: linear-gradient(135deg, #ff8a5b 0%, #ff5e87 100%);
+        --serif: ui-serif, Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+        --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--sans);
+        color: var(--ink);
+        background:
+          radial-gradient(1200px 700px at 50% -10%, #1a1726 0%, rgba(26, 23, 38, 0) 60%),
+          radial-gradient(900px 600px at 85% 110%, #1c1322 0%, rgba(28, 19, 34, 0) 55%), #08070b;
+        min-height: 100vh;
+        padding: 54px 46px 64px;
+      }
+      .board-head {
+        max-width: 1240px;
+        margin: 0 auto 40px;
+        text-align: center;
+      }
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--ink);
+        margin-bottom: 18px;
+        font-size: 15px;
+      }
+      .logo .mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--grad);
+        box-shadow: 0 0 22px rgba(255, 94, 135, 0.5);
+        position: relative;
+      }
+      .logo .mark::after {
+        content: '';
+        position: absolute;
+        inset: 6px;
+        border-radius: 50%;
+        background: #08070b;
+      }
+      .board-head h1 {
+        font-family: var(--serif);
+        font-weight: 500;
+        font-size: 40px;
+        letter-spacing: -0.01em;
+        margin-bottom: 10px;
+      }
+      .board-head p {
+        color: var(--dim);
+        font-size: 15px;
+      }
+      .board-head p b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .phones {
+        display: flex;
+        gap: 38px;
+        justify-content: center;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        max-width: 1320px;
+        margin: 0 auto;
+      }
+      figure {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      figcaption {
+        color: var(--dim);
+        font-size: 13.5px;
+        text-align: center;
+        max-width: 300px;
+        line-height: 1.5;
+      }
+      figcaption b {
+        color: var(--ink);
+        font-weight: 600;
+        font-size: 14.5px;
+      }
 
-  /* phone shell */
-  .phone{
-    width:386px;height:858px;border-radius:50px;position:relative;overflow:hidden;
-    background:linear-gradient(180deg,var(--bg2),var(--bg));
-    border:1px solid var(--bd);
-    box-shadow:0 50px 90px -30px rgba(0,0,0,.8), 0 0 0 8px #0a0910, 0 0 0 9px rgba(255,255,255,.05);
-    display:flex;flex-direction:column;
-  }
-  .status{height:42px;flex:0 0 42px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 30px;font-size:13px;font-weight:600;color:var(--ink);position:relative;z-index:5}
-  .status .dots{display:flex;gap:5px;align-items:center}
-  .status .sig{width:17px;height:11px;background:linear-gradient(90deg,var(--ink) 60%,var(--faint) 60%);-webkit-mask:linear-gradient(#000,#000);border-radius:2px;opacity:.9}
-  .status .bat{width:22px;height:11px;border:1.3px solid rgba(255,255,255,.55);border-radius:3px;position:relative}
-  .status .bat::after{content:"";position:absolute;inset:1.5px;width:70%;background:var(--ink);border-radius:1px}
-  .status .bat::before{content:"";position:absolute;right:-3px;top:3px;width:2px;height:4px;background:rgba(255,255,255,.55);border-radius:0 1px 1px 0}
-  .screen{flex:1;overflow:hidden;display:flex;flex-direction:column}
-  .scroll{flex:1;overflow:hidden;padding:6px 20px 8px}
+      /* phone shell */
+      .phone {
+        width: 386px;
+        height: 858px;
+        border-radius: 50px;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(180deg, var(--bg2), var(--bg));
+        border: 1px solid var(--bd);
+        box-shadow:
+          0 50px 90px -30px rgba(0, 0, 0, 0.8),
+          0 0 0 8px #0a0910,
+          0 0 0 9px rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+      }
+      .status {
+        height: 42px;
+        flex: 0 0 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 26px 0 30px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink);
+        position: relative;
+        z-index: 5;
+      }
+      .status .dots {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+      }
+      .status .sig {
+        width: 17px;
+        height: 11px;
+        background: linear-gradient(90deg, var(--ink) 60%, var(--faint) 60%);
+        -webkit-mask: linear-gradient(#000, #000);
+        border-radius: 2px;
+        opacity: 0.9;
+      }
+      .status .bat {
+        width: 22px;
+        height: 11px;
+        border: 1.3px solid rgba(255, 255, 255, 0.55);
+        border-radius: 3px;
+        position: relative;
+      }
+      .status .bat::after {
+        content: '';
+        position: absolute;
+        inset: 1.5px;
+        width: 70%;
+        background: var(--ink);
+        border-radius: 1px;
+      }
+      .status .bat::before {
+        content: '';
+        position: absolute;
+        right: -3px;
+        top: 3px;
+        width: 2px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.55);
+        border-radius: 0 1px 1px 0;
+      }
+      .screen {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .scroll {
+        flex: 1;
+        overflow: hidden;
+        padding: 6px 20px 8px;
+      }
 
-  /* tab bar */
-  .tabs{flex:0 0 76px;display:flex;align-items:center;justify-content:space-around;padding:8px 14px 22px;border-top:1px solid var(--bd2);background:rgba(8,7,11,.6);backdrop-filter:blur(8px)}
-  .tab{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--faint);font-size:10px;font-weight:500;letter-spacing:.02em}
-  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-  .tab.on{color:var(--ink)}
-  .tab .create{width:42px;height:42px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;margin-top:-12px;box-shadow:0 8px 22px -6px rgba(255,94,135,.7)}
-  .tab .create svg{width:22px;height:22px;stroke:#1a0f14;stroke-width:2.4}
+      /* tab bar */
+      .tabs {
+        flex: 0 0 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 8px 14px 22px;
+        border-top: 1px solid var(--bd2);
+        background: rgba(8, 7, 11, 0.6);
+        backdrop-filter: blur(8px);
+      }
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        color: var(--faint);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+      .tab svg {
+        width: 23px;
+        height: 23px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .tab.on {
+        color: var(--ink);
+      }
+      .tab .create {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--grad);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -12px;
+        box-shadow: 0 8px 22px -6px rgba(255, 94, 135, 0.7);
+      }
+      .tab .create svg {
+        width: 22px;
+        height: 22px;
+        stroke: #1a0f14;
+        stroke-width: 2.4;
+      }
 
-  /* shared bits */
-  .kicker{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--accent);text-transform:uppercase}
-  .h-title{font-family:var(--serif);font-weight:500;font-size:31px;letter-spacing:-.01em;line-height:1.05}
-  .daylabel{font-size:11px;font-weight:700;letter-spacing:.13em;color:var(--faint);text-transform:uppercase;margin:16px 2px 9px}
-  .av{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#0b0a0e;border:1.5px solid var(--bg)}
-  .stack{display:flex}.stack .av{margin-left:-8px}.stack .av:first-child{margin-left:0}
-  .card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:14px 15px;margin-bottom:11px}
-  .pill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:999px;text-transform:uppercase}
-  .pill svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.8}
-  .pill.free{color:var(--free);background:rgba(95,211,166,.12)}
-  .pill.standing{color:var(--violet);background:rgba(155,140,255,.13)}
-  .pill.event{color:var(--accent);background:rgba(255,122,89,.13)}
-  .pill.scene{color:#FFC178;background:rgba(255,193,120,.13)}
-  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .ev-title{font-size:16px;font-weight:650;letter-spacing:-.01em;margin:9px 0 3px}
-  .meta{font-size:12.5px;color:var(--dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  .meta .dot{width:3px;height:3px;border-radius:50%;background:var(--faint)}
-  .proof{display:flex;align-items:center;gap:8px;margin-top:12px;flex:0 1 auto;min-width:0}
-  .proof span{font-size:12px;color:var(--dim)}
-  .btn{font-size:12.5px;font-weight:650;padding:8px 15px;border-radius:999px;border:1px solid var(--bd);color:var(--ink);background:transparent;white-space:nowrap;flex:none;align-self:center;width:max-content}
-  .card .row .btn{margin-left:auto}
-  .btn.solid{background:var(--grad);border:0;color:#1a0f14}
-  .btn.in{color:var(--free);border-color:rgba(95,211,166,.35);background:rgba(95,211,166,.08)}
-  .endcap{text-align:center;color:var(--faint);font-size:12px;letter-spacing:.04em;margin:18px 0 4px}
+      /* shared bits */
+      .kicker {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        color: var(--accent);
+        text-transform: uppercase;
+      }
+      .h-title {
+        font-family: var(--serif);
+        font-weight: 500;
+        font-size: 31px;
+        letter-spacing: -0.01em;
+        line-height: 1.05;
+      }
+      .daylabel {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        color: var(--faint);
+        text-transform: uppercase;
+        margin: 16px 2px 9px;
+      }
+      .av {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #0b0a0e;
+        border: 1.5px solid var(--bg);
+      }
+      .stack {
+        display: flex;
+      }
+      .stack .av {
+        margin-left: -8px;
+      }
+      .stack .av:first-child {
+        margin-left: 0;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--bd);
+        border-radius: 20px;
+        padding: 14px 15px;
+        margin-bottom: 11px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 3px 9px;
+        border-radius: 999px;
+        text-transform: uppercase;
+      }
+      .pill svg {
+        width: 11px;
+        height: 11px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .pill.free {
+        color: var(--free);
+        background: rgba(95, 211, 166, 0.12);
+      }
+      .pill.standing {
+        color: var(--violet);
+        background: rgba(155, 140, 255, 0.13);
+      }
+      .pill.event {
+        color: var(--accent);
+        background: rgba(255, 122, 89, 0.13);
+      }
+      .pill.scene {
+        color: #ffc178;
+        background: rgba(255, 193, 120, 0.13);
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .ev-title {
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 9px 0 3px;
+      }
+      .meta {
+        font-size: 12.5px;
+        color: var(--dim);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .meta .dot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: var(--faint);
+      }
+      .proof {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+      .proof span {
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .btn {
+        font-size: 12.5px;
+        font-weight: 650;
+        padding: 8px 15px;
+        border-radius: 999px;
+        border: 1px solid var(--bd);
+        color: var(--ink);
+        background: transparent;
+        white-space: nowrap;
+        flex: none;
+        align-self: center;
+        width: max-content;
+      }
+      .card .row .btn {
+        margin-left: auto;
+      }
+      .btn.solid {
+        background: var(--grad);
+        border: 0;
+        color: #1a0f14;
+      }
+      .btn.in {
+        color: var(--free);
+        border-color: rgba(95, 211, 166, 0.35);
+        background: rgba(95, 211, 166, 0.08);
+      }
+      .endcap {
+        text-align: center;
+        color: var(--faint);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        margin: 18px 0 4px;
+      }
 
-  /* profile */
-  .banner{height:102px;background:
-      radial-gradient(150px 90px at 82% 45%, rgba(255,94,135,.42),transparent 72%),
-      radial-gradient(120px 70px at 60% 10%, rgba(255,138,91,.30),transparent 70%),
-      linear-gradient(120deg,#241a2e,#171320 72%);margin:-6px -20px 0;position:relative}
-  .pf-head{padding:0 4px;margin-top:-38px}
-  .pf-av{width:80px;height:80px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#160d11;border:5px solid var(--bg);box-shadow:0 10px 30px -8px rgba(255,94,135,.55);position:relative;z-index:3}
-  .pf-name{font-family:var(--serif);font-size:25px;font-weight:500;margin-top:12px}
-  .pf-handle{color:var(--dim);font-size:13.5px;margin-top:2px}
-  .pf-bio{font-size:13.5px;color:#cbc7d0;line-height:1.5;margin-top:12px}
-  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
-  .chip{font-size:11.5px;font-weight:600;color:#d8d4de;background:var(--card);border:1px solid var(--bd);padding:5px 11px;border-radius:999px}
-  .linkrow{display:flex;align-items:center;gap:9px;margin-top:15px}
-  .linkbox{flex:1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim);background:var(--card2);border:1px solid var(--bd2);border-radius:12px;padding:9px 12px}
-  .linkbox svg{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:1.7}
-  .up{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--bd2)}
-  .up .when{width:42px;flex:0 0 42px;text-align:center}
-  .up .when b{display:block;font-family:var(--serif);font-size:18px;font-weight:600;line-height:1}
-  .up .when span{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em}
-  .up .body{flex:1;min-width:0}
-  .up .t{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
-  .up .s{font-size:12px;color:var(--dim);margin-top:2px;display:flex;align-items:center;gap:6px}
-  .vis{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:var(--faint);white-space:nowrap}
-  .vis svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.7}
-  .statline{display:flex;gap:20px;padding:14px 6px 4px}
-  .statline b{font-family:var(--serif);font-size:20px;font-weight:600}
-  .statline span{font-size:11.5px;color:var(--dim);display:block;margin-top:1px}
+      /* profile */
+      .banner {
+        height: 102px;
+        background:
+          radial-gradient(150px 90px at 82% 45%, rgba(255, 94, 135, 0.42), transparent 72%),
+          radial-gradient(120px 70px at 60% 10%, rgba(255, 138, 91, 0.3), transparent 70%),
+          linear-gradient(120deg, #241a2e, #171320 72%);
+        margin: -6px -20px 0;
+        position: relative;
+      }
+      .pf-head {
+        padding: 0 4px;
+        margin-top: -38px;
+      }
+      .pf-av {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--grad);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 800;
+        color: #160d11;
+        border: 5px solid var(--bg);
+        box-shadow: 0 10px 30px -8px rgba(255, 94, 135, 0.55);
+        position: relative;
+        z-index: 3;
+      }
+      .pf-name {
+        font-family: var(--serif);
+        font-size: 25px;
+        font-weight: 500;
+        margin-top: 12px;
+      }
+      .pf-handle {
+        color: var(--dim);
+        font-size: 13.5px;
+        margin-top: 2px;
+      }
+      .pf-bio {
+        font-size: 13.5px;
+        color: #cbc7d0;
+        line-height: 1.5;
+        margin-top: 12px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 13px;
+      }
+      .chip {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #d8d4de;
+        background: var(--card);
+        border: 1px solid var(--bd);
+        padding: 5px 11px;
+        border-radius: 999px;
+      }
+      .linkrow {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 15px;
+      }
+      .linkbox {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: var(--dim);
+        background: var(--card2);
+        border: 1px solid var(--bd2);
+        border-radius: 12px;
+        padding: 9px 12px;
+      }
+      .linkbox svg {
+        width: 14px;
+        height: 14px;
+        stroke: var(--faint);
+        fill: none;
+        stroke-width: 1.7;
+      }
+      .up {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 4px;
+        border-bottom: 1px solid var(--bd2);
+      }
+      .up .when {
+        width: 42px;
+        flex: 0 0 42px;
+        text-align: center;
+      }
+      .up .when b {
+        display: block;
+        font-family: var(--serif);
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .up .when span {
+        font-size: 10px;
+        color: var(--faint);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .up .body {
+        flex: 1;
+        min-width: 0;
+      }
+      .up .t {
+        font-size: 14.5px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .up .s {
+        font-size: 12px;
+        color: var(--dim);
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .vis {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10.5px;
+        font-weight: 600;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+      .vis svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.7;
+      }
+      .statline {
+        display: flex;
+        gap: 20px;
+        padding: 14px 6px 4px;
+      }
+      .statline b {
+        font-family: var(--serif);
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .statline span {
+        font-size: 11.5px;
+        color: var(--dim);
+        display: block;
+        margin-top: 1px;
+      }
 
-  /* regulars */
-  .priv{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--dim);background:var(--card);border:1px solid var(--bd);padding:4px 10px;border-radius:999px}
-  .priv svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8}
-  .insight{background:linear-gradient(135deg,rgba(255,122,89,.16),rgba(255,94,135,.14));border:1px solid rgba(255,122,89,.28);border-radius:20px;padding:16px;margin:16px 0 8px}
-  .insight p{font-size:14.5px;line-height:1.45;font-weight:500}
-  .insight p b{font-weight:700}
-  .insight .btn{margin-top:13px;display:inline-flex;align-items:center;gap:6px}
-  .insight .btn svg{width:13px;height:13px;stroke:#1a0f14;fill:none;stroke-width:2}
-  .reg{display:flex;align-items:center;gap:13px;padding:13px 2px;border-bottom:1px solid var(--bd2)}
-  .reg .big{width:46px;height:46px;border-radius:50%;flex:0 0 46px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#0b0a0e}
-  .reg .info{flex:1;min-width:0}
-  .reg .nm{font-size:15px;font-weight:650;display:flex;align-items:center;gap:8px}
-  .reg .ct{font-size:12px;font-weight:700;color:var(--accent)}
-  .reg .sub{font-size:12px;color:var(--dim);margin-top:3px}
-  .reg .cta{font-size:11.5px;font-weight:650;color:var(--ink);border:1px solid var(--bd);border-radius:999px;padding:7px 12px;white-space:nowrap}
-  .sub-h{font-size:11px;font-weight:700;letter-spacing:.13em;color:var(--faint);text-transform:uppercase;margin:20px 2px 4px}
-  .trend{font-size:10.5px;font-weight:700;color:var(--free)}
-  .footnote{text-align:center;color:var(--faint);font-size:11.5px;line-height:1.5;margin:18px 10px 4px}
-</style>
-</head>
-<body>
-  <div class="board-head">
-    <div class="logo"><span class="mark"></span> Orbit</div>
-    <h1>Hero screens</h1>
-    <p><b>Discover</b> · <b>Profile</b> · <b>Regulars</b> &nbsp;—&nbsp; MVP, mobile PWA, dark / editorial</p>
-  </div>
-
-  <div class="phones">
-
-    <!-- ============ DISCOVER ============ -->
-    <figure>
-    <div class="phone" id="p-discover">
-      <div class="status"><span>9:41</span><span class="dots"><span class="sig"></span><span class="bat"></span></span></div>
-      <div class="screen">
-        <div class="scroll">
-          <div class="row" style="align-items:flex-end;margin:8px 2px 2px">
-            <div><div class="kicker">Discover</div><div class="h-title" style="margin-top:7px">This&nbsp;week</div></div>
-            <div style="text-align:right;color:var(--faint);font-size:12px;font-weight:600;line-height:1.3">Jun 24<br>–&nbsp;30</div>
-          </div>
-
-          <div class="daylabel">Today · Tue</div>
-
-          <div class="card">
-            <div class="row">
-              <span class="pill free"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Free</span>
-              <span class="meta" style="font-size:12px">12:30–2:00</span>
-            </div>
-            <div class="ev-title">Lunch — anyone around?</div>
-            <div class="meta"><span>Maya</span><span class="dot"></span><span>Devoción, Williamsburg</span></div>
-            <div class="row" style="margin-top:12px">
-              <div class="proof">
-                <div class="stack">
-                  <span class="av" style="background:linear-gradient(135deg,#FF8A5B,#FF5E87)">M</span>
-                  <span class="av" style="background:linear-gradient(135deg,#5FD3A6,#3FA7C2)">J</span>
-                  <span class="av" style="background:linear-gradient(135deg,#9B8CFF,#6C7BFF)">K</span>
-                </div>
-                <span>Maya + 2 free</span>
-              </div>
-              <button class="btn solid">I'm down</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="row">
-              <span class="pill standing"><svg viewBox="0 0 24 24"><path d="M17 3l3 3-3 3"/><path d="M20 6H8a4 4 0 0 0-4 4"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h12a4 4 0 0 0 4-4"/></svg> Standing</span>
-              <span class="meta" style="font-size:12px">6:30 PM</span>
-            </div>
-            <div class="ev-title">Evening run</div>
-            <div class="meta"><span>Brooklyn Bridge</span><span class="dot"></span><span>every Tue + Thu</span></div>
-            <div class="row" style="margin-top:12px">
-              <div class="proof">
-                <div class="stack">
-                  <span class="av" style="background:linear-gradient(135deg,#5FD3A6,#3FA7C2)">D</span>
-                  <span class="av" style="background:linear-gradient(135deg,#FFC178,#FF8A5B)">N</span>
-                  <span class="av" style="background:linear-gradient(135deg,#9B8CFF,#FF5E87)">T</span>
-                </div>
-                <span>3 going</span>
-              </div>
-              <button class="btn in">✓ You're in</button>
-            </div>
-          </div>
-
-          <div class="daylabel">Tomorrow · Wed</div>
-
-          <div class="card">
-            <div class="row">
-              <span class="pill event"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> Event</span>
-              <span class="meta" style="font-size:12px">8:00 PM</span>
-            </div>
-            <div class="ev-title">Natural wine night</div>
-            <div class="meta"><span>Dev</span><span class="dot"></span><span>Ruffian, East Village</span></div>
-            <div class="row" style="margin-top:12px">
-              <div class="proof">
-                <div class="stack">
-                  <span class="av" style="background:linear-gradient(135deg,#FF5E87,#9B8CFF)">D</span>
-                  <span class="av" style="background:linear-gradient(135deg,#5FD3A6,#6C7BFF)">A</span>
-                  <span class="av" style="background:linear-gradient(135deg,#FFC178,#FF5E87)">L</span>
-                  <span class="av" style="background:#2a2733;color:var(--dim);font-size:9px">+3</span>
-                </div>
-                <span>5 going · 2 maybe</span>
-              </div>
-              <button class="btn">I'm down</button>
-            </div>
-          </div>
-
-          <div class="daylabel">Friday</div>
-          <div class="card" style="margin-bottom:4px">
-            <div class="row">
-              <span class="pill scene"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/></svg> PLUR · Scene</span>
-              <span class="meta" style="font-size:12px">11:00 PM</span>
-            </div>
-            <div class="ev-title">Warehouse: SHØLT</div>
-            <div class="meta"><span>Bushwick</span><span class="dot"></span><span>8 of your circle going</span></div>
-          </div>
-          <div class="endcap">— that's your week —</div>
-        </div>
-      </div>
-      <div class="tabs">
-        <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg>Discover</div>
-        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Plans</div>
-        <div class="tab"><span class="create"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></div>
-        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)"/><circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none"/></svg>Regulars</div>
-        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>You</div>
-      </div>
+      /* regulars */
+      .priv {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--dim);
+        background: var(--card);
+        border: 1px solid var(--bd);
+        padding: 4px 10px;
+        border-radius: 999px;
+      }
+      .priv svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+      }
+      .insight {
+        background: linear-gradient(135deg, rgba(255, 122, 89, 0.16), rgba(255, 94, 135, 0.14));
+        border: 1px solid rgba(255, 122, 89, 0.28);
+        border-radius: 20px;
+        padding: 16px;
+        margin: 16px 0 8px;
+      }
+      .insight p {
+        font-size: 14.5px;
+        line-height: 1.45;
+        font-weight: 500;
+      }
+      .insight p b {
+        font-weight: 700;
+      }
+      .insight .btn {
+        margin-top: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .insight .btn svg {
+        width: 13px;
+        height: 13px;
+        stroke: #1a0f14;
+        fill: none;
+        stroke-width: 2;
+      }
+      .reg {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 13px 2px;
+        border-bottom: 1px solid var(--bd2);
+      }
+      .reg .big {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        flex: 0 0 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        color: #0b0a0e;
+      }
+      .reg .info {
+        flex: 1;
+        min-width: 0;
+      }
+      .reg .nm {
+        font-size: 15px;
+        font-weight: 650;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .reg .ct {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .reg .sub {
+        font-size: 12px;
+        color: var(--dim);
+        margin-top: 3px;
+      }
+      .reg .cta {
+        font-size: 11.5px;
+        font-weight: 650;
+        color: var(--ink);
+        border: 1px solid var(--bd);
+        border-radius: 999px;
+        padding: 7px 12px;
+        white-space: nowrap;
+      }
+      .sub-h {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        color: var(--faint);
+        text-transform: uppercase;
+        margin: 20px 2px 4px;
+      }
+      .trend {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--free);
+      }
+      .footnote {
+        text-align: center;
+        color: var(--faint);
+        font-size: 11.5px;
+        line-height: 1.5;
+        margin: 18px 10px 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board-head">
+      <div class="logo"><span class="mark"></span> Orbit</div>
+      <h1>Hero screens</h1>
+      <p>
+        <b>Discover</b> · <b>Profile</b> · <b>Regulars</b> &nbsp;—&nbsp; MVP, mobile PWA, dark /
+        editorial
+      </p>
     </div>
-    <figcaption><b>Discover — the home.</b> This week, bounded. Everyday openings and events together, each with who you know. No infinite feed.</figcaption>
-    </figure>
 
-    <!-- ============ PROFILE ============ -->
-    <figure>
-    <div class="phone" id="p-profile">
-      <div class="status"><span>9:41</span><span class="dots"><span class="sig"></span><span class="bat"></span></span></div>
-      <div class="screen">
-        <div class="scroll" style="padding-top:0">
-          <div class="banner"></div>
-          <div class="pf-head">
-            <div class="pf-av">ED</div>
-            <div class="pf-name">Ed Shen</div>
-            <div class="pf-handle">@ed · New York</div>
-            <div class="pf-bio">techno, climbing, natural wine. always down for lunch.</div>
-            <div class="chips">
-              <span class="chip">Climbing</span><span class="chip">Techno</span>
-              <span class="chip">Natural wine</span><span class="chip">PLUR</span>
-            </div>
-            <div class="linkrow">
-              <div class="linkbox"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg> orbit.so/ed</div>
-              <button class="btn solid">Share</button>
-            </div>
+    <div class="phones">
+      <!-- ============ DISCOVER ============ -->
+      <figure>
+        <div class="phone" id="p-discover">
+          <div class="status">
+            <span>9:41</span
+            ><span class="dots"><span class="sig"></span><span class="bat"></span></span>
+          </div>
+          <div class="screen">
+            <div class="scroll">
+              <div class="row" style="align-items: flex-end; margin: 8px 2px 2px">
+                <div>
+                  <div class="kicker">Discover</div>
+                  <div class="h-title" style="margin-top: 7px">This&nbsp;week</div>
+                </div>
+                <div
+                  style="
+                    text-align: right;
+                    color: var(--faint);
+                    font-size: 12px;
+                    font-weight: 600;
+                    line-height: 1.3;
+                  "
+                >
+                  Jun 24<br />–&nbsp;30
+                </div>
+              </div>
 
-            <div class="kicker" style="margin:22px 0 6px">What I'm going to</div>
+              <div class="daylabel">Today · Tue</div>
 
-            <div class="up">
-              <div class="when"><b>26</b><span>Fri</span></div>
-              <div class="body"><div class="t">Warehouse: SHØLT</div><div class="s">11 PM · Bushwick</div></div>
-              <span class="vis"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Inner</span>
-            </div>
-            <div class="up">
-              <div class="when"><b>28</b><span>Sun</span></div>
-              <div class="body"><div class="t">Climbing @ VITAL</div><div class="s">10 AM · Greenpoint</div></div>
-              <span class="vis"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 6.5a3 3 0 0 1 0 5.5M21 19a6 6 0 0 0-4-5.6"/></svg> Circle</span>
-            </div>
-            <div class="up">
-              <div class="when"><b>30</b><span>Tue</span></div>
-              <div class="body"><div class="t">Standing lunch <span style="color:var(--violet)">↻</span></div><div class="s">12:30 · rotating spot</div></div>
-              <span class="vis"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 6.5a3 3 0 0 1 0 5.5M21 19a6 6 0 0 0-4-5.6"/></svg> Circle</span>
-            </div>
-            <div class="up" style="border-bottom:0">
-              <div class="when"><b>2</b><span>Jul</span></div>
-              <div class="body"><div class="t">Pottery class</div><div class="s">7 PM · Gowanus</div></div>
-              <span class="vis"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg> Public</span>
-            </div>
+              <div class="card">
+                <div class="row">
+                  <span class="pill free"
+                    ><svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
+                    </svg>
+                    Free</span
+                  >
+                  <span class="meta" style="font-size: 12px">12:30–2:00</span>
+                </div>
+                <div class="ev-title">Lunch — anyone around?</div>
+                <div class="meta">
+                  <span>Maya</span><span class="dot"></span><span>Devoción, Williamsburg</span>
+                </div>
+                <div class="row" style="margin-top: 12px">
+                  <div class="proof">
+                    <div class="stack">
+                      <span class="av" style="background: linear-gradient(135deg, #ff8a5b, #ff5e87)"
+                        >M</span
+                      >
+                      <span class="av" style="background: linear-gradient(135deg, #5fd3a6, #3fa7c2)"
+                        >J</span
+                      >
+                      <span class="av" style="background: linear-gradient(135deg, #9b8cff, #6c7bff)"
+                        >K</span
+                      >
+                    </div>
+                    <span>Maya + 2 free</span>
+                  </div>
+                  <button class="btn solid">I'm down</button>
+                </div>
+              </div>
 
-            <div class="statline">
-              <div><b>6</b><span>regulars</span></div>
-              <div><b>12</b><span>plans / mo</span></div>
-              <div><b>3</b><span>scenes</span></div>
+              <div class="card">
+                <div class="row">
+                  <span class="pill standing"
+                    ><svg viewBox="0 0 24 24">
+                      <path d="M17 3l3 3-3 3" />
+                      <path d="M20 6H8a4 4 0 0 0-4 4" />
+                      <path d="M7 21l-3-3 3-3" />
+                      <path d="M4 18h12a4 4 0 0 0 4-4" />
+                    </svg>
+                    Standing</span
+                  >
+                  <span class="meta" style="font-size: 12px">6:30 PM</span>
+                </div>
+                <div class="ev-title">Evening run</div>
+                <div class="meta">
+                  <span>Brooklyn Bridge</span><span class="dot"></span><span>every Tue + Thu</span>
+                </div>
+                <div class="row" style="margin-top: 12px">
+                  <div class="proof">
+                    <div class="stack">
+                      <span class="av" style="background: linear-gradient(135deg, #5fd3a6, #3fa7c2)"
+                        >D</span
+                      >
+                      <span class="av" style="background: linear-gradient(135deg, #ffc178, #ff8a5b)"
+                        >N</span
+                      >
+                      <span class="av" style="background: linear-gradient(135deg, #9b8cff, #ff5e87)"
+                        >T</span
+                      >
+                    </div>
+                    <span>3 going</span>
+                  </div>
+                  <button class="btn in">✓ You're in</button>
+                </div>
+              </div>
+
+              <div class="daylabel">Tomorrow · Wed</div>
+
+              <div class="card">
+                <div class="row">
+                  <span class="pill event"
+                    ><svg viewBox="0 0 24 24">
+                      <rect x="3" y="5" width="18" height="16" rx="2" />
+                      <path d="M3 9h18M8 3v4M16 3v4" />
+                    </svg>
+                    Event</span
+                  >
+                  <span class="meta" style="font-size: 12px">8:00 PM</span>
+                </div>
+                <div class="ev-title">Natural wine night</div>
+                <div class="meta">
+                  <span>Dev</span><span class="dot"></span><span>Ruffian, East Village</span>
+                </div>
+                <div class="row" style="margin-top: 12px">
+                  <div class="proof">
+                    <div class="stack">
+                      <span class="av" style="background: linear-gradient(135deg, #ff5e87, #9b8cff)"
+                        >D</span
+                      >
+                      <span class="av" style="background: linear-gradient(135deg, #5fd3a6, #6c7bff)"
+                        >A</span
+                      >
+                      <span class="av" style="background: linear-gradient(135deg, #ffc178, #ff5e87)"
+                        >L</span
+                      >
+                      <span
+                        class="av"
+                        style="background: #2a2733; color: var(--dim); font-size: 9px"
+                        >+3</span
+                      >
+                    </div>
+                    <span>5 going · 2 maybe</span>
+                  </div>
+                  <button class="btn">I'm down</button>
+                </div>
+              </div>
+
+              <div class="daylabel">Friday</div>
+              <div class="card" style="margin-bottom: 4px">
+                <div class="row">
+                  <span class="pill scene"
+                    ><svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="3" />
+                      <ellipse cx="12" cy="12" rx="10" ry="4.5" />
+                    </svg>
+                    PLUR · Scene</span
+                  >
+                  <span class="meta" style="font-size: 12px">11:00 PM</span>
+                </div>
+                <div class="ev-title">Warehouse: SHØLT</div>
+                <div class="meta">
+                  <span>Bushwick</span><span class="dot"></span><span>8 of your circle going</span>
+                </div>
+              </div>
+              <div class="endcap">— that's your week —</div>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab on">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none" /></svg
+              >Discover
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M3 9h18M8 3v4M16 3v4" /></svg
+              >Plans
+            </div>
+            <div class="tab">
+              <span class="create"
+                ><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg
+              ></span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+                <ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)" />
+                <circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none" /></svg
+              >Regulars
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="3.6" />
+                <path d="M5 20a7 7 0 0 1 14 0" /></svg
+              >You
             </div>
           </div>
         </div>
-      </div>
-      <div class="tabs">
-        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg>Discover</div>
-        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Plans</div>
-        <div class="tab"><span class="create"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></div>
-        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)"/><circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none"/></svg>Regulars</div>
-        <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>You</div>
-      </div>
-    </div>
-    <figcaption><b>Profile — your future-tense identity.</b> What you're going to, by visibility tier. The shareable, account-free "new IG profile" — pointed forward, so it's joinable.</figcaption>
-    </figure>
+        <figcaption>
+          <b>Discover — the home.</b> This week, bounded. Everyday openings and events together,
+          each with who you know. No infinite feed.
+        </figcaption>
+      </figure>
 
-    <!-- ============ REGULARS ============ -->
-    <figure>
-    <div class="phone" id="p-regulars">
-      <div class="status"><span>9:41</span><span class="dots"><span class="sig"></span><span class="bat"></span></span></div>
-      <div class="screen">
-        <div class="scroll">
-          <div class="row" style="align-items:flex-end;margin:8px 2px 2px">
-            <div><div class="kicker">Regulars</div><div class="h-title" style="margin-top:7px">Familiar&nbsp;faces</div></div>
+      <!-- ============ PROFILE ============ -->
+      <figure>
+        <div class="phone" id="p-profile">
+          <div class="status">
+            <span>9:41</span
+            ><span class="dots"><span class="sig"></span><span class="bat"></span></span>
           </div>
-          <div style="margin:12px 2px 0"><span class="priv"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Only you can see this</span></div>
+          <div class="screen">
+            <div class="scroll" style="padding-top: 0">
+              <div class="banner"></div>
+              <div class="pf-head">
+                <div class="pf-av">ED</div>
+                <div class="pf-name">Ed Shen</div>
+                <div class="pf-handle">@ed · New York</div>
+                <div class="pf-bio">techno, climbing, natural wine. always down for lunch.</div>
+                <div class="chips">
+                  <span class="chip">Climbing</span><span class="chip">Techno</span>
+                  <span class="chip">Natural wine</span><span class="chip">PLUR</span>
+                </div>
+                <div class="linkrow">
+                  <div class="linkbox">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
+                      <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
+                    </svg>
+                    orbit.so/ed
+                  </div>
+                  <button class="btn solid">Share</button>
+                </div>
 
-          <div class="insight">
-            <p>You &amp; <b>Maya</b> have overlapped <b>4×</b> this month — make it a ritual?</p>
-            <button class="btn solid"><svg viewBox="0 0 24 24"><path d="M17 3l3 3-3 3"/><path d="M20 6H8a4 4 0 0 0-4 4"/><path d="M7 21l-3-3 3-3"/><path d="M4 18h12a4 4 0 0 0 4-4"/></svg> Suggest a standing lunch</button>
-          </div>
+                <div class="kicker" style="margin: 22px 0 6px">What I'm going to</div>
 
-          <div class="reg">
-            <div class="big" style="background:linear-gradient(135deg,#FF8A5B,#FF5E87)">M</div>
-            <div class="info">
-              <div class="nm">Maya <span class="ct">4× this month</span></div>
-              <div class="sub">usually lunch + climbing · last seen 2d ago</div>
-            </div>
-            <span class="cta">Standing plan</span>
-          </div>
-          <div class="reg">
-            <div class="big" style="background:linear-gradient(135deg,#FF5E87,#9B8CFF)">D</div>
-            <div class="info">
-              <div class="nm">Dev <span class="ct">3× this month</span></div>
-              <div class="sub">wine nights + shows · last seen 5d ago</div>
-            </div>
-            <span class="cta">Standing plan</span>
-          </div>
-          <div class="reg">
-            <div class="big" style="background:linear-gradient(135deg,#5FD3A6,#3FA7C2)">N</div>
-            <div class="info">
-              <div class="nm">Nina <span class="ct">3× this month</span></div>
-              <div class="sub">climbing crew · last seen 1d ago</div>
-            </div>
-            <span class="cta">Standing plan</span>
-          </div>
+                <div class="up">
+                  <div class="when"><b>26</b><span>Fri</span></div>
+                  <div class="body">
+                    <div class="t">Warehouse: SHØLT</div>
+                    <div class="s">11 PM · Bushwick</div>
+                  </div>
+                  <span class="vis"
+                    ><svg viewBox="0 0 24 24">
+                      <rect x="5" y="11" width="14" height="9" rx="2" />
+                      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                    </svg>
+                    Inner</span
+                  >
+                </div>
+                <div class="up">
+                  <div class="when"><b>28</b><span>Sun</span></div>
+                  <div class="body">
+                    <div class="t">Climbing @ VITAL</div>
+                    <div class="s">10 AM · Greenpoint</div>
+                  </div>
+                  <span class="vis"
+                    ><svg viewBox="0 0 24 24">
+                      <circle cx="9" cy="8" r="3" />
+                      <path d="M3 19a6 6 0 0 1 12 0" />
+                      <path d="M16 6.5a3 3 0 0 1 0 5.5M21 19a6 6 0 0 0-4-5.6" />
+                    </svg>
+                    Circle</span
+                  >
+                </div>
+                <div class="up">
+                  <div class="when"><b>30</b><span>Tue</span></div>
+                  <div class="body">
+                    <div class="t">Standing lunch <span style="color: var(--violet)">↻</span></div>
+                    <div class="s">12:30 · rotating spot</div>
+                  </div>
+                  <span class="vis"
+                    ><svg viewBox="0 0 24 24">
+                      <circle cx="9" cy="8" r="3" />
+                      <path d="M3 19a6 6 0 0 1 12 0" />
+                      <path d="M16 6.5a3 3 0 0 1 0 5.5M21 19a6 6 0 0 0-4-5.6" />
+                    </svg>
+                    Circle</span
+                  >
+                </div>
+                <div class="up" style="border-bottom: 0">
+                  <div class="when"><b>2</b><span>Jul</span></div>
+                  <div class="body">
+                    <div class="t">Pottery class</div>
+                    <div class="s">7 PM · Gowanus</div>
+                  </div>
+                  <span class="vis"
+                    ><svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" />
+                    </svg>
+                    Public</span
+                  >
+                </div>
 
-          <div class="sub-h">Becoming regulars</div>
-          <div class="reg">
-            <div class="big" style="background:linear-gradient(135deg,#9B8CFF,#6C7BFF)">T</div>
-            <div class="info">
-              <div class="nm">Theo <span class="trend">↑ trending</span></div>
-              <div class="sub">2× this month · both at run + warehouse</div>
+                <div class="statline">
+                  <div><b>6</b><span>regulars</span></div>
+                  <div><b>12</b><span>plans / mo</span></div>
+                  <div><b>3</b><span>scenes</span></div>
+                </div>
+              </div>
             </div>
-            <span class="cta">Say hi</span>
           </div>
-          <div class="reg" style="border-bottom:0">
-            <div class="big" style="background:linear-gradient(135deg,#FFC178,#FF8A5B)">S</div>
-            <div class="info">
-              <div class="nm">Sam <span class="trend">↑ trending</span></div>
-              <div class="sub">2× this month · natural wine</div>
+          <div class="tabs">
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none" /></svg
+              >Discover
             </div>
-            <span class="cta">Say hi</span>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M3 9h18M8 3v4M16 3v4" /></svg
+              >Plans
+            </div>
+            <div class="tab">
+              <span class="create"
+                ><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg
+              ></span>
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+                <ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)" />
+                <circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none" /></svg
+              >Regulars
+            </div>
+            <div class="tab on">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="3.6" />
+                <path d="M5 20a7 7 0 0 1 14 0" /></svg
+              >You
+            </div>
           </div>
-
-          <div class="footnote">Private to you. Counts &amp; faces — never a behavioral dossier.</div>
         </div>
-      </div>
-      <div class="tabs">
-        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none"/></svg>Discover</div>
-        <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Plans</div>
-        <div class="tab"><span class="create"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></div>
-        <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)"/><circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none"/></svg>Regulars</div>
-        <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>You</div>
-      </div>
-    </div>
-    <figcaption><b>Regulars — the engine, made visible.</b> Private to you. Surfaces who you keep ending up around and nudges incidental overlap into an intentional, standing plan.</figcaption>
-    </figure>
+        <figcaption>
+          <b>Profile — your future-tense identity.</b> What you're going to, by visibility tier. The
+          shareable, account-free "new IG profile" — pointed forward, so it's joinable.
+        </figcaption>
+      </figure>
 
-  </div>
-</body>
+      <!-- ============ REGULARS ============ -->
+      <figure>
+        <div class="phone" id="p-regulars">
+          <div class="status">
+            <span>9:41</span
+            ><span class="dots"><span class="sig"></span><span class="bat"></span></span>
+          </div>
+          <div class="screen">
+            <div class="scroll">
+              <div class="row" style="align-items: flex-end; margin: 8px 2px 2px">
+                <div>
+                  <div class="kicker">Regulars</div>
+                  <div class="h-title" style="margin-top: 7px">Familiar&nbsp;faces</div>
+                </div>
+              </div>
+              <div style="margin: 12px 2px 0">
+                <span class="priv"
+                  ><svg viewBox="0 0 24 24">
+                    <rect x="5" y="11" width="14" height="9" rx="2" />
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                  </svg>
+                  Only you can see this</span
+                >
+              </div>
+
+              <div class="insight">
+                <p>
+                  You &amp; <b>Maya</b> have overlapped <b>4×</b> this month — make it a ritual?
+                </p>
+                <button class="btn solid">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M17 3l3 3-3 3" />
+                    <path d="M20 6H8a4 4 0 0 0-4 4" />
+                    <path d="M7 21l-3-3 3-3" />
+                    <path d="M4 18h12a4 4 0 0 0 4-4" />
+                  </svg>
+                  Suggest a standing lunch
+                </button>
+              </div>
+
+              <div class="reg">
+                <div class="big" style="background: linear-gradient(135deg, #ff8a5b, #ff5e87)">
+                  M
+                </div>
+                <div class="info">
+                  <div class="nm">Maya <span class="ct">4× this month</span></div>
+                  <div class="sub">usually lunch + climbing · last seen 2d ago</div>
+                </div>
+                <span class="cta">Standing plan</span>
+              </div>
+              <div class="reg">
+                <div class="big" style="background: linear-gradient(135deg, #ff5e87, #9b8cff)">
+                  D
+                </div>
+                <div class="info">
+                  <div class="nm">Dev <span class="ct">3× this month</span></div>
+                  <div class="sub">wine nights + shows · last seen 5d ago</div>
+                </div>
+                <span class="cta">Standing plan</span>
+              </div>
+              <div class="reg">
+                <div class="big" style="background: linear-gradient(135deg, #5fd3a6, #3fa7c2)">
+                  N
+                </div>
+                <div class="info">
+                  <div class="nm">Nina <span class="ct">3× this month</span></div>
+                  <div class="sub">climbing crew · last seen 1d ago</div>
+                </div>
+                <span class="cta">Standing plan</span>
+              </div>
+
+              <div class="sub-h">Becoming regulars</div>
+              <div class="reg">
+                <div class="big" style="background: linear-gradient(135deg, #9b8cff, #6c7bff)">
+                  T
+                </div>
+                <div class="info">
+                  <div class="nm">Theo <span class="trend">↑ trending</span></div>
+                  <div class="sub">2× this month · both at run + warehouse</div>
+                </div>
+                <span class="cta">Say hi</span>
+              </div>
+              <div class="reg" style="border-bottom: 0">
+                <div class="big" style="background: linear-gradient(135deg, #ffc178, #ff8a5b)">
+                  S
+                </div>
+                <div class="info">
+                  <div class="nm">Sam <span class="trend">↑ trending</span></div>
+                  <div class="sub">2× this month · natural wine</div>
+                </div>
+                <span class="cta">Say hi</span>
+              </div>
+
+              <div class="footnote">
+                Private to you. Counts &amp; faces — never a behavioral dossier.
+              </div>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none" /></svg
+              >Discover
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M3 9h18M8 3v4M16 3v4" /></svg
+              >Plans
+            </div>
+            <div class="tab">
+              <span class="create"
+                ><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg
+              ></span>
+            </div>
+            <div class="tab on">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+                <ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)" />
+                <circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none" /></svg
+              >Regulars
+            </div>
+            <div class="tab">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="3.6" />
+                <path d="M5 20a7 7 0 0 1 14 0" /></svg
+              >You
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <b>Regulars — the engine, made visible.</b> Private to you. Surfaces who you keep ending
+          up around and nudges incidental overlap into an intentional, standing plan.
+        </figcaption>
+      </figure>
+    </div>
+  </body>
 </html>

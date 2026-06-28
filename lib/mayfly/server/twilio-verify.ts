@@ -16,20 +16,29 @@ function authHeader(): string {
   return 'Basic ' + btoa(`${v('TWILIO_ACCOUNT_SID')}:${v('TWILIO_AUTH_TOKEN')}`);
 }
 export async function sendCode(phone: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(`https://verify.twilio.com/v2/Services/${v('TWILIO_VERIFY_SERVICE_SID')}/Verifications`, {
-    method: 'POST',
-    headers: { Authorization: authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: phone, Channel: 'sms' }),
-  });
+  const res = await fetch(
+    `https://verify.twilio.com/v2/Services/${v('TWILIO_VERIFY_SERVICE_SID')}/Verifications`,
+    {
+      method: 'POST',
+      headers: { Authorization: authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: phone, Channel: 'sms' }),
+    }
+  );
   if (!res.ok) return { ok: false, error: 'Could not send a code right now.' };
   return { ok: true };
 }
-export async function checkCode(phone: string, code: string): Promise<{ ok: boolean; error?: string; code?: string }> {
-  const res = await fetch(`https://verify.twilio.com/v2/Services/${v('TWILIO_VERIFY_SERVICE_SID')}/VerificationCheck`, {
-    method: 'POST',
-    headers: { Authorization: authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: phone, Code: code }),
-  });
+export async function checkCode(
+  phone: string,
+  code: string
+): Promise<{ ok: boolean; error?: string; code?: string }> {
+  const res = await fetch(
+    `https://verify.twilio.com/v2/Services/${v('TWILIO_VERIFY_SERVICE_SID')}/VerificationCheck`,
+    {
+      method: 'POST',
+      headers: { Authorization: authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: phone, Code: code }),
+    }
+  );
   const data = (await res.json().catch(() => ({}))) as { status?: string };
   if (res.ok && data.status === 'approved') return { ok: true };
   return { ok: false, error: 'That code didn’t match. Try again.', code: 'invalid' };

@@ -14,7 +14,13 @@ export type CalEvent = {
   color?: string | null;
   visibility?: string;
   busy?: boolean;
-  creator?: { id: string; displayName?: string; handle?: string; initials?: string; avatar?: string } | null;
+  creator?: {
+    id: string;
+    displayName?: string;
+    handle?: string;
+    initials?: string;
+    avatar?: string;
+  } | null;
   proof?: { count: number; sample?: any[] };
   myRsvp?: string | null;
   attendeeCount?: number;
@@ -33,8 +39,34 @@ export const MIN_MS = 60000;
 
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export const WEEKDAYS_NARROW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-export const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+export const MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 export function startOfDay(d: Date | string | number): Date {
   const x = new Date(d);

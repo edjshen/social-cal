@@ -1,0 +1,197 @@
+# Pull-request validation: lint + format + typecheck + tests + build + secret
+# scan + audit.
+#
+# WHY this shape:
+#   - barycal builds with NO service secrets (the only build-time env is the
+#     public NEXT_PUBLIC_ROOM_API_BASE in .env.production), so unlike plur-nyc
+#     we run the real OpenNext build here on every PR as the authoritative
+#     "does it compile + bundle for Workers" gate.
+#   - The room relay (workers/room) is a separate package with its own vitest
+#     suite, so it gets its own install + test job.
+#   - Cheap, mostly-secret-free checks fan out as independent jobs so one
+#     failure doesn't mask the others.
+#
+# Concurrency cancels superseded runs on the same ref — only the latest commit
+# needs to pass.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Format check (Prettier)
+        run: npm run format:check
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+  tests:
+    name: Tests (app + mayfly)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests (vitest)
+        run: npm test
+
+      - name: Shared-crypto tests (node --test)
+        run: npm run test:mayfly
+
+  room-tests:
+    name: Room relay tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: workers/room/package-lock.json
+
+      - name: Install dependencies (room)
+        working-directory: workers/room
+        run: npm ci
+
+      - name: Test (vitest pool-workers)
+        working-directory: workers/room
+        run: npm test
+
+  build:
+    name: Build (OpenNext)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npx opennextjs-cloudflare build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+  audit:
+    name: npm audit (production deps)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit production dependencies (high+)
+        run: npm run audit:ci
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # gitleaks needs history to scan the PR/push commit range.
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          set -euo pipefail
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz \
+            | tar xz -C /tmp gitleaks
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan
+        # Scope the scan to the commits introduced by this event. Without
+        # --log-opts, gitleaks walks every reachable object in .git/, which
+        # includes refs from unrelated open-PR branches that Actions fetches
+        # alongside the merge ref — failing this PR for findings it didn't
+        # introduce.
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="${{ github.event.pull_request.base.sha }}..HEAD"
+          else
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          fi
+          echo "scanning range: $RANGE"
+          gitleaks detect --source . --redact --verbose --exit-code 1 \
+            --log-opts="$RANGE"

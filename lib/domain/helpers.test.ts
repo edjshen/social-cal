@@ -13,6 +13,12 @@ describe('helpers', () => {
   });
   it('publicUser: projects safe fields + initials', () => {
     const u = { id: '1', handle: 'ed', displayName: 'Ed Shen', avatar: 'a,b', passwordHash: 'x' };
-    expect(publicUser(u as any)).toEqual({ id: '1', handle: 'ed', displayName: 'Ed Shen', avatar: 'a,b', initials: 'ES' });
+    expect(publicUser(u as any)).toEqual({
+      id: '1',
+      handle: 'ed',
+      displayName: 'Ed Shen',
+      avatar: 'a,b',
+      initials: 'ES',
+    });
   });
 });

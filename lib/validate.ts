@@ -31,7 +31,11 @@ export function clampOptStr(v: unknown, max: number): string | undefined {
 }
 
 /** Normalize a scenes array: strings only, trimmed, capped in count and length. */
-export function clampScenes(v: unknown, maxItems = LIMITS.sceneItems, maxLen = LIMITS.sceneLen): string[] {
+export function clampScenes(
+  v: unknown,
+  maxItems = LIMITS.sceneItems,
+  maxLen = LIMITS.sceneLen
+): string[] {
   if (!Array.isArray(v)) return [];
   return v
     .filter((x): x is string => typeof x === 'string')

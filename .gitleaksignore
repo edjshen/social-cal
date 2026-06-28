@@ -1,0 +1,5 @@
+# Historical false positives — confirmed by inspection, none are real
+# credentials. Format: <commit-sha>:<path>:<rule>:<line>
+#
+# Empty for now. Add a line here only after manually confirming a gitleaks
+# finding is a false positive (e.g. a localStorage key name or a public id).

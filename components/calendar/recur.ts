@@ -117,7 +117,8 @@ function fastForward(freq: string, base: Date, rangeStart: Date): Date {
   if (rangeStart.getTime() <= base.getTime()) return new Date(base);
   const x = new Date(base);
   if (freq === 'daily' || freq === 'weekday') {
-    const days = Math.floor((startOfDay(rangeStart).getTime() - startOfDay(base).getTime()) / DAY_MS) - 2;
+    const days =
+      Math.floor((startOfDay(rangeStart).getTime() - startOfDay(base).getTime()) / DAY_MS) - 2;
     if (days > 0) x.setDate(x.getDate() + days);
     // settle onto a valid weekday for 'weekday'
     while (freq === 'weekday' && (x.getDay() === 0 || x.getDay() === 6)) x.setDate(x.getDate() + 1);
@@ -154,7 +155,8 @@ export type LaidOut = CalEvent & { _col: number; _cols: number };
 
 export function layoutDay(events: CalEvent[]): LaidOut[] {
   const sorted = [...events].sort(
-    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime() ||
+    (a, b) =>
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime() ||
       new Date(b.endTime || b.startTime).getTime() - new Date(a.endTime || a.startTime).getTime()
   );
   const result: LaidOut[] = [];

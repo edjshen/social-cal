@@ -5,5 +5,13 @@ import RoomsLauncher from '@/components/RoomsLauncher';
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const s = await getSession();
   if (!s.userId) redirect('/login');
-  return (<><div className="shell app-shell"><div className="main">{children}</div></div><TabBar /><RoomsLauncher /></>);
+  return (
+    <>
+      <div className="shell app-shell">
+        <div className="main">{children}</div>
+      </div>
+      <TabBar />
+      <RoomsLauncher />
+    </>
+  );
 }

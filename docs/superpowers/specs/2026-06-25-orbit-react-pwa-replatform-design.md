@@ -20,9 +20,11 @@ This is therefore a **two-phase** effort:
 ## 2. Goals & non-goals
 
 ### Optimization principle (drives every implementation fork)
+
 **Minimize ongoing overhead — both technical maintenance and cost — while delivering genuine quality and visual beauty, and keeping the Phase-2 Mayfly port clean.** Concretely: fewest vendors/dashboards/bills, generous free tiers, fewest moving parts and finicky build layers, only actively-maintained dependencies — but never at the expense of a polished product. Orbit's owner is a solo developer maintaining many projects; low cognitive/maintenance load is weighted heavily.
 
 ### Goals
+
 - Full **feature parity** with the current app's MVP surfaces (see §6).
 - **Visual fidelity** to `docs/mocks/` (dark-editorial identity) + motion polish that a React PWA unlocks.
 - A stack that makes the **Phase-2 Mayfly port** a near drop-in.
@@ -30,6 +32,7 @@ This is therefore a **two-phase** effort:
 - Deployed on the owner's existing **Cloudflare** infrastructure pattern (mirrors `plur-nyc`).
 
 ### Non-goals (Phase 1)
+
 - Mayfly itself (Phase 2).
 - Google Calendar integration (PRD future; auth leaves a door open later).
 - Row-Level Security (PRD frames it as designed-but-deferred; visibility is enforced server-side — see §5).
@@ -39,26 +42,27 @@ This is therefore a **two-phase** effort:
 
 Every choice below was validated against the optimization principle via a research review (2026 landscape, primary sources).
 
-| Concern | Decision | One-line rationale |
-|---|---|---|
-| Framework | **Next.js 16 (App Router) + React 19** | React so Mayfly drops in; App Router is the current idiom. |
-| Language | **TypeScript** | Drizzle's end-to-end type-safety (a key reason we picked it) and the typed component libs are the whole point; Next compiles TS natively (no extra config). Diverges from `plur-nyc`'s plain JS, but Mayfly's `.js` shared core imports fine. |
-| Hosting | **Cloudflare Workers via OpenNext** (`@opennextjs/cloudflare`) | Single vendor; co-located with D1 + the Mayfly relay; mirrors `plur-nyc`. |
-| Database | **Cloudflare D1** (serverless SQLite) | Native Workers binding, no separate service, never auto-pauses, free tier ≫ our scale. |
-| Data access | **Drizzle ORM** (stable 0.4x line) | First-class D1 driver, end-to-end TypeScript types, tiny/workerd-native. |
-| Auth | **iron-session 8** + **`@noble/hashes`** (scrypt) | Stable, Web-Crypto-native on Workers (what `plur-nyc` runs); credentials-only needs ~30 lines. |
-| Styling | **CSS Modules + CSS-variable tokens** | Zero added build config, preserves the bespoke identity, matches Mayfly's `rooms.module.css`. |
-| Motion | **Native View Transitions API + CSS**; **`motion`** lazy-loaded only for the avatar-cluster spring | Most of the motion brief is 0 KB JS; spend bundle only where spring physics add real beauty. |
-| Data/UX | **RSC + Server Actions + `useOptimistic`** (no SWR by default) | No client cache to keep in sync; smooth optimistic RSVP. SWR opt-in only for a future live-polling widget. |
-| PWA | **Serwist** (`@serwist/next` v9) | Maintained successor to the abandoned `next-pwa`; build-time precache, offline shell. |
-| Components | **Hand-rolled visual surface**; headless lib (**Base UI**, or **Radix** as lower-risk-today fallback) only for dialog-sheet / popover / tabs | Headless a11y where hand-rolling is error-prone; full control of the bespoke look everywhere else. |
-| Realtime (Phase 2) | **Reuse the live Durable Object relay** | Already deployed, origin-allowlisted, stack-agnostic; DOs free + hibernating. |
+| Concern            | Decision                                                                                                                                     | One-line rationale                                                                                                                                                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework          | **Next.js 16 (App Router) + React 19**                                                                                                       | React so Mayfly drops in; App Router is the current idiom.                                                                                                                                                                                    |
+| Language           | **TypeScript**                                                                                                                               | Drizzle's end-to-end type-safety (a key reason we picked it) and the typed component libs are the whole point; Next compiles TS natively (no extra config). Diverges from `plur-nyc`'s plain JS, but Mayfly's `.js` shared core imports fine. |
+| Hosting            | **Cloudflare Workers via OpenNext** (`@opennextjs/cloudflare`)                                                                               | Single vendor; co-located with D1 + the Mayfly relay; mirrors `plur-nyc`.                                                                                                                                                                     |
+| Database           | **Cloudflare D1** (serverless SQLite)                                                                                                        | Native Workers binding, no separate service, never auto-pauses, free tier ≫ our scale.                                                                                                                                                        |
+| Data access        | **Drizzle ORM** (stable 0.4x line)                                                                                                           | First-class D1 driver, end-to-end TypeScript types, tiny/workerd-native.                                                                                                                                                                      |
+| Auth               | **iron-session 8** + **`@noble/hashes`** (scrypt)                                                                                            | Stable, Web-Crypto-native on Workers (what `plur-nyc` runs); credentials-only needs ~30 lines.                                                                                                                                                |
+| Styling            | **CSS Modules + CSS-variable tokens**                                                                                                        | Zero added build config, preserves the bespoke identity, matches Mayfly's `rooms.module.css`.                                                                                                                                                 |
+| Motion             | **Native View Transitions API + CSS**; **`motion`** lazy-loaded only for the avatar-cluster spring                                           | Most of the motion brief is 0 KB JS; spend bundle only where spring physics add real beauty.                                                                                                                                                  |
+| Data/UX            | **RSC + Server Actions + `useOptimistic`** (no SWR by default)                                                                               | No client cache to keep in sync; smooth optimistic RSVP. SWR opt-in only for a future live-polling widget.                                                                                                                                    |
+| PWA                | **Serwist** (`@serwist/next` v9)                                                                                                             | Maintained successor to the abandoned `next-pwa`; build-time precache, offline shell.                                                                                                                                                         |
+| Components         | **Hand-rolled visual surface**; headless lib (**Base UI**, or **Radix** as lower-risk-today fallback) only for dialog-sheet / popover / tabs | Headless a11y where hand-rolling is error-prone; full control of the bespoke look everywhere else.                                                                                                                                            |
+| Realtime (Phase 2) | **Reuse the live Durable Object relay**                                                                                                      | Already deployed, origin-allowlisted, stack-agnostic; DOs free + hibernating.                                                                                                                                                                 |
 
 **Cost:** ~**$0/mo** at this scale (Cloudflare free tier + all-OSS deps); ~$5/mo only if we outgrow Workers Free (e.g. bundle > 3 MiB gz or higher request limits). **Vendors to maintain: one (Cloudflare).**
 
 ## 4. Architecture
 
 ### 4.1 App structure
+
 - **App Router** with route groups:
   - `(auth)` — login / register (unauthenticated).
   - `(app)` — the authenticated shell: bottom tab bar + the Discover/Week/Month/Plans/Regulars/You/Circles surfaces.
@@ -70,18 +74,21 @@ Every choice below was validated against the optimization principle via a resear
 - **Auth route(s):** login/register/logout as route handlers (or actions) that set/clear the iron-session cookie.
 
 ### 4.2 Hosting / deploy (mirror `plur-nyc`)
+
 - Build via `opennextjs-cloudflare build`, deploy via `opennextjs-cloudflare deploy`.
 - Own `wrangler.jsonc` + `open-next.config.ts`; Worker name `orbit`; same Cloudflare account as `plur-nyc`; `nodejs_compat` + `global_fetch_strictly_public` compat flags as needed.
 - **D1 binding** in `wrangler.jsonc` (e.g. `DB`).
 - **Caveat:** gate Next.js minor upgrades on OpenNext adapter support (a known failure mode — e.g. Next 16.2.0 needed an adapter patch). A first-class Cloudflare adapter on Next 16.2's stable Adapters API is expected ~end of 2026 and should reduce this.
 
 ### 4.3 Auth (iron-session)
+
 - Encrypted-cookie sessions via **iron-session 8** (Web-Crypto, runs natively on Workers). Session secret in an env var/secret.
 - Session shape: `{ userId, handle }`. A server helper `getSession()` reads it in Server Components / actions; middleware guards `(app)` routes and redirects unauthenticated users to `(auth)`.
 - **Password hashing:** **`@noble/hashes` scrypt** (WASM/Web-Crypto) — **not** native `bcrypt`, which won't run on Workers. Seed users are hashed fresh; existing JSON `bcryptjs` hashes are **not** carried over (re-seed).
 - Credentials-only for now. If Google sign-in is needed later (PRD's Calendar feature), revisit Auth.js v5 / Better Auth then — iron-session doesn't preclude it.
 
 ### 4.4 Data layer (D1 + Drizzle)
+
 - Drizzle schema in `lib/db/schema.ts`; client in `lib/db/index.ts` bound to the D1 `DB` binding.
 - Migrations via `drizzle-kit` (SQL files in `drizzle/`), applied with `wrangler d1 migrations apply` (local + remote).
 - **Visibility is enforced server-side** in the data layer (porting today's `canSeeContent` / `canSeeBusy` / tier logic verbatim). RLS deferred.

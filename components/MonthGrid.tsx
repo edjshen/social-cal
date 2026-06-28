@@ -37,8 +37,11 @@ export default function MonthGrid({ events, monthISO }: { events: any[]; monthIS
       d.setDate(gridStart.getDate() + w * 7 + i);
       const k = startOfDay(d).getTime();
       const inM = d.getMonth() === m;
-      const evs = inM ? (byDay[k] || []) : [];
-      const types = [...new Set(evs.map((e: any) => (e.busy ? 'busy' : e.type)))].slice(0, 3) as string[];
+      const evs = inM ? byDay[k] || [] : [];
+      const types = [...new Set(evs.map((e: any) => (e.busy ? 'busy' : e.type)))].slice(
+        0,
+        3
+      ) as string[];
       const hot = evs.some((e: any) => e.proof && e.proof.count >= 3);
       const cls = [
         inM ? '' : 'out',
@@ -49,11 +52,7 @@ export default function MonthGrid({ events, monthISO }: { events: any[]; monthIS
         .filter(Boolean)
         .join(' ');
       cells.push(
-        <button
-          key={i}
-          className={`cell ${cls}`}
-          onClick={() => setSelDay(d.toISOString())}
-        >
+        <button key={i} className={`cell ${cls}`} onClick={() => setSelDay(d.toISOString())}>
           <span className="n">{d.getDate()}</span>
           <div className="dots">
             {types.map((t) => (
@@ -63,16 +62,20 @@ export default function MonthGrid({ events, monthISO }: { events: any[]; monthIS
         </button>
       );
     }
-    rows.push(<div key={w} className="wkrow">{cells}</div>);
+    rows.push(
+      <div key={w} className="wkrow">
+        {cells}
+      </div>
+    );
     const after = new Date(gridStart);
     after.setDate(gridStart.getDate() + (w + 1) * 7);
     if (after >= next) break;
   }
 
   // Agenda for selected day
-  const selEvs = (byDay[sel] || []).slice().sort(
-    (a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-  );
+  const selEvs = (byDay[sel] || [])
+    .slice()
+    .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   const selD = new Date(selDay);
   const isToday = sel === today;
 

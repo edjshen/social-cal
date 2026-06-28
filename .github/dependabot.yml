@@ -1,0 +1,79 @@
+version: 2
+updates:
+  # Root app (Next.js + OpenNext + Cloudflare).
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'America/New_York'
+    open-pull-requests-limit: 5
+    labels:
+      - 'dependencies'
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
+    groups:
+      next-stack:
+        patterns:
+          - 'next'
+          - 'eslint-config-next'
+          - 'react'
+          - 'react-dom'
+      lint-and-format:
+        patterns:
+          - 'eslint'
+          - 'eslint-*'
+          - '@eslint/*'
+          - 'globals'
+          - 'prettier'
+          - 'prettier-*'
+      cloudflare:
+        patterns:
+          - '@opennextjs/*'
+          - 'wrangler'
+    ignore:
+      # Major version bumps are breaking — handle manually.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  # Room relay Worker (separate package).
+  - package-ecosystem: 'npm'
+    directory: '/workers/room'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'America/New_York'
+    open-pull-requests-limit: 3
+    labels:
+      - 'dependencies'
+      - 'room-relay'
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
+    groups:
+      cloudflare:
+        patterns:
+          - '@cloudflare/*'
+          - 'wrangler'
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'America/New_York'
+    open-pull-requests-limit: 3
+    labels:
+      - 'dependencies'
+      - 'github-actions'
+    commit-message:
+      prefix: 'chore(actions)'

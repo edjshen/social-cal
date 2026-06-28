@@ -18,17 +18,17 @@ Demo login → **username `ed` · password `barycal`**
 
 The five hero screens and the core loop, wired end to end:
 
-| Screen / feature | Status |
-|---|---|
-| **Discover** — this week, social proof, everyday + events | ✅ |
-| **Week / Month** — Chronos views, type-coded, open-time celebrated | ✅ |
-| **Profile** — future-tense identity, visibility tiers, share link | ✅ |
-| **Regulars** — private co-presence engine, "make it a standing plan" | ✅ |
-| **Circles + tiers** — Inner (content) / Outer (free-busy), ghost mode | ✅ |
-| **Create** — intentions, plans, standing (recurring), events | ✅ |
-| **Soft-RSVP** (Down / Maybe / Can't) + account-free `/u/:handle`, `/e/:id` | ✅ |
-| **PWA** — installable, offline shell, service worker | ✅ |
-| Google Calendar connect / web push | stubbed — need cloud creds (see below) |
+| Screen / feature                                                           | Status                                 |
+| -------------------------------------------------------------------------- | -------------------------------------- |
+| **Discover** — this week, social proof, everyday + events                  | ✅                                     |
+| **Week / Month** — Chronos views, type-coded, open-time celebrated         | ✅                                     |
+| **Profile** — future-tense identity, visibility tiers, share link          | ✅                                     |
+| **Regulars** — private co-presence engine, "make it a standing plan"       | ✅                                     |
+| **Circles + tiers** — Inner (content) / Outer (free-busy), ghost mode      | ✅                                     |
+| **Create** — intentions, plans, standing (recurring), events               | ✅                                     |
+| **Soft-RSVP** (Down / Maybe / Can't) + account-free `/u/:handle`, `/e/:id` | ✅                                     |
+| **PWA** — installable, offline shell, service worker                       | ✅                                     |
+| Google Calendar connect / web push                                         | stubbed — need cloud creds (see below) |
 
 Maps to features **F1–F13** in the PRD.
 
@@ -40,7 +40,7 @@ Maps to features **F1–F13** in the PRD.
 
 ### Production deltas (per PRD §13)
 
-This repo is the runnable MVP. For production the PRD calls for **Postgres + Row-Level Security** (swap `server/db.js`), **Google OAuth + Calendar sync** as an *optional* seed (events are Barycal-native here, so the core loop needs no Google), and **web push**. These need credentials/cloud not available in a sandbox, so they're stubbed.
+This repo is the runnable MVP. For production the PRD calls for **Postgres + Row-Level Security** (swap `server/db.js`), **Google OAuth + Calendar sync** as an _optional_ seed (events are Barycal-native here, so the core loop needs no Google), and **web push**. These need credentials/cloud not available in a sandbox, so they're stubbed.
 
 ## API sketch
 

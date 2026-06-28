@@ -13,7 +13,13 @@ const TIMES: [string, number][] = [
 
 const HOUR_LINES = [116, 232, 348];
 
-export default function WeekGrid({ events, weekStartISO }: { events: any[]; weekStartISO?: string }) {
+export default function WeekGrid({
+  events,
+  weekStartISO,
+}: {
+  events: any[];
+  weekStartISO?: string;
+}) {
   const ws = weekStartISO
     ? new Date(weekStartISO)
     : (() => {
@@ -55,11 +61,7 @@ export default function WeekGrid({ events, weekStartISO }: { events: any[]; week
       const cls = e.busy ? 'busy' : e.type;
       const label = e.busy ? '' : (e.title || '').split(' ').slice(0, 2).join(' ');
       return (
-        <div
-          key={e.id}
-          className={`ev ${cls}`}
-          style={{ top, height: h }}
-        >
+        <div key={e.id} className={`ev ${cls}`} style={{ top, height: h }}>
           {label}
         </div>
       );
@@ -86,7 +88,9 @@ export default function WeekGrid({ events, weekStartISO }: { events: any[]; week
           {ws.toLocaleDateString('en-US', { month: 'long' })} <span>{ws.getFullYear()}</span>
         </div>
         <div className="note">
-          {open} open<br />evening{open === 1 ? '' : 's'}
+          {open} open
+          <br />
+          evening{open === 1 ? '' : 's'}
         </div>
       </div>
       <div className="wk-days">{headDays}</div>

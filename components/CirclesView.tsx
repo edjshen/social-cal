@@ -4,7 +4,13 @@ import Link from 'next/link';
 import Avatar from './primitives/Avatar';
 import { acceptRequest, setTier, addPerson } from '@/lib/actions/connections';
 
-type PublicUser = { id: string; handle: string; displayName: string; avatar: string; initials: string };
+type PublicUser = {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatar: string;
+  initials: string;
+};
 type ListItem = { user: PublicUser | null; tier: 'inner' | 'orbit' };
 type RequestItem = { id: string; user: PublicUser | null };
 type OtherUser = PublicUser & { status: string; tier: string | null };
@@ -25,15 +31,21 @@ export default function CirclesView({
   const [, startTransition] = useTransition();
 
   function handleAccept(id: string) {
-    startTransition(() => { acceptRequest(id); });
+    startTransition(() => {
+      acceptRequest(id);
+    });
   }
 
   function handleSetTier(userId: string, tier: 'inner' | 'orbit') {
-    startTransition(() => { setTier(userId, tier); });
+    startTransition(() => {
+      setTier(userId, tier);
+    });
   }
 
   function handleAddPerson(id: string) {
-    startTransition(() => { addPerson(id); });
+    startTransition(() => {
+      addPerson(id);
+    });
   }
 
   function TierRow({ item }: { item: ListItem }) {
@@ -67,7 +79,9 @@ export default function CirclesView({
           <div className="kicker">People</div>
           <div className="h-title">Your circles</div>
         </div>
-        <Link href="/you" className="btn sm">Done</Link>
+        <Link href="/you" className="btn sm">
+          Done
+        </Link>
       </div>
       <p className="muted" style={{ fontSize: 13, margin: '12px 2px 0' }}>
         Inner Circle sees what you&apos;re doing; Outer Circle sees when you&apos;re free.
@@ -76,30 +90,39 @@ export default function CirclesView({
       {requests.length > 0 && (
         <>
           <div className="sub-h">Requests</div>
-          {requests.map((r) => r.user && (
-            <div key={r.id} className="reg">
-              <Avatar user={r.user} size="lg" />
-              <div className="info">
-                <div className="nm">{r.user.displayName}</div>
-                <div className="sub">wants to connect</div>
-              </div>
-              <button className="btn sm in" onClick={() => handleAccept(r.id)}>Accept</button>
-            </div>
-          ))}
+          {requests.map(
+            (r) =>
+              r.user && (
+                <div key={r.id} className="reg">
+                  <Avatar user={r.user} size="lg" />
+                  <div className="info">
+                    <div className="nm">{r.user.displayName}</div>
+                    <div className="sub">wants to connect</div>
+                  </div>
+                  <button className="btn sm in" onClick={() => handleAccept(r.id)}>
+                    Accept
+                  </button>
+                </div>
+              )
+          )}
         </>
       )}
 
       {inner.length > 0 && (
         <>
           <div className="sub-h">Inner circle</div>
-          {inner.map((item) => <TierRow key={item.user?.id} item={item} />)}
+          {inner.map((item) => (
+            <TierRow key={item.user?.id} item={item} />
+          ))}
         </>
       )}
 
       {orbit.length > 0 && (
         <>
           <div className="sub-h">Outer circle</div>
-          {orbit.map((item) => <TierRow key={item.user?.id} item={item} />)}
+          {orbit.map((item) => (
+            <TierRow key={item.user?.id} item={item} />
+          ))}
         </>
       )}
 
@@ -113,7 +136,9 @@ export default function CirclesView({
                 <div className="nm">{u.displayName}</div>
                 <div className="sub">@{u.handle}</div>
               </div>
-              <button className="btn sm" onClick={() => handleAddPerson(u.id)}>Add</button>
+              <button className="btn sm" onClick={() => handleAddPerson(u.id)}>
+                Add
+              </button>
             </div>
           ))}
         </>
@@ -129,7 +154,9 @@ export default function CirclesView({
                 <div className="nm">{u.displayName}</div>
                 <div className="sub">request sent</div>
               </div>
-              <span className="btn sm" style={{ opacity: 0.6 }}>Pending</span>
+              <span className="btn sm" style={{ opacity: 0.6 }}>
+                Pending
+              </span>
             </div>
           ))}
         </>

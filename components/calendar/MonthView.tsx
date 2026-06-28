@@ -1,5 +1,13 @@
 'use client';
-import { CalEvent, addDays, eventColorHex, isToday, startOfDay, startOfWeek, WEEKDAYS_NARROW } from './util';
+import {
+  CalEvent,
+  addDays,
+  eventColorHex,
+  isToday,
+  startOfDay,
+  startOfWeek,
+  WEEKDAYS_NARROW,
+} from './util';
 
 export default function MonthView({
   anchor,
@@ -16,7 +24,12 @@ export default function MonthView({
   const gridStart = startOfWeek(monthFirst);
   const cells: Date[] = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
   // trim to 5 rows when the 6th is entirely next month
-  const rows = cells[35] && cells[35].getMonth() !== anchor.getMonth() && cells[28].getMonth() !== anchor.getMonth() ? 5 : 6;
+  const rows =
+    cells[35] &&
+    cells[35].getMonth() !== anchor.getMonth() &&
+    cells[28].getMonth() !== anchor.getMonth()
+      ? 5
+      : 6;
 
   const byDay = new Map<number, CalEvent[]>();
   for (const ev of events) {
@@ -37,10 +50,18 @@ export default function MonthView({
           const inMonth = d.getMonth() === anchor.getMonth();
           const evs = (byDay.get(startOfDay(d).getTime()) || [])
             .slice()
-            .sort((a, b) => Number(!!b.allDay) - Number(!!a.allDay) || new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+            .sort(
+              (a, b) =>
+                Number(!!b.allDay) - Number(!!a.allDay) ||
+                new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+            );
           const today = isToday(d);
           return (
-            <button key={i} className={`mv-cell${inMonth ? '' : ' out'}`} onClick={() => onPickDay(d)}>
+            <button
+              key={i}
+              className={`mv-cell${inMonth ? '' : ' out'}`}
+              onClick={() => onPickDay(d)}
+            >
               <span className={`mv-n${today ? ' today' : ''}`}>{d.getDate()}</span>
               <div className="mv-chips">
                 {evs.slice(0, 3).map((ev) => (
@@ -55,11 +76,13 @@ export default function MonthView({
                       ev.busy
                         ? { background: 'rgba(255,255,255,.08)', color: 'var(--dim)' }
                         : ev.allDay
-                        ? { background: eventColorHex(ev), color: '#0c0a0e' }
-                        : { color: '#fff' }
+                          ? { background: eventColorHex(ev), color: '#0c0a0e' }
+                          : { color: '#fff' }
                     }
                   >
-                    {!ev.allDay && !ev.busy && <span className="mv-dot" style={{ background: eventColorHex(ev) }} />}
+                    {!ev.allDay && !ev.busy && (
+                      <span className="mv-dot" style={{ background: eventColorHex(ev) }} />
+                    )}
                     {ev.busy ? 'Busy' : ev.title || '(no title)'}
                   </span>
                 ))}

@@ -1,0 +1,179 @@
+# Per-PR preview deploy of the main app Worker to a uniquely-named Worker.
+#
+# Each PR gets its own *.workers.dev URL, posted as a PR comment, then smoked.
+# barycal's wrangler.jsonc declares NO cron triggers, so (unlike plur-nyc/poisys)
+# there's no triggers block to strip before deploying.
+#
+# CAVEAT: the preview Worker is deployed from the committed wrangler.jsonc, so it
+# binds the PROD `barycal-db` D1 database and the prod room relay. That's
+# acceptable for a solo project — the preview exercises real data — but be aware
+# a preview can write to prod D1. The room relay is NOT previewed; the preview
+# app talks to the prod relay.
+#
+# Required repo secret: CLOUDFLARE_API_TOKEN (account_id is in wrangler.jsonc).
+name: Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: preview-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Pre-flight diagnostic (token presence)
+        id: preflight
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Dependabot PRs and fork PRs run in a restricted context that does NOT
+          # expose repo Actions secrets, so a preview deploy is structurally
+          # impossible. Detect those and skip gracefully (green check) instead of
+          # hard-failing every dependency-bump PR.
+          IS_RESTRICTED: ${{ github.actor == 'dependabot[bot]' || github.event.pull_request.head.repo.fork }}
+        run: |
+          TOKEN_LEN=${#CF_TOKEN}
+          echo "token_len=$TOKEN_LEN" >> "$GITHUB_OUTPUT"
+          echo "Token length: $TOKEN_LEN"
+          if [ "$TOKEN_LEN" -eq 0 ]; then
+            if [ "$IS_RESTRICTED" = "true" ]; then
+              echo "::notice::Dependabot/fork PR — Cloudflare secrets are not exposed; skipping preview deploy (the prod Deploy workflow validates the build after merge)."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::CLOUDFLARE_API_TOKEN secret is empty/missing"
+            exit 1
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        id: install
+        if: steps.preflight.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Build (OpenNext)
+        id: build
+        if: steps.preflight.outputs.skip != 'true'
+        timeout-minutes: 15
+        run: npx opennextjs-cloudflare build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      - name: Deploy preview
+        id: deploy
+        if: steps.preflight.outputs.skip != 'true'
+        timeout-minutes: 6
+        env:
+          # CLI env > config in wrangler's resolution order; account_id in
+          # wrangler.jsonc is correct, so we pass only the token.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set +e
+          npx wrangler deploy \
+            --name barycal-pr-${{ github.event.pull_request.number }} \
+            2>&1 | tee /tmp/wrangler.log
+          STATUS=${PIPESTATUS[0]}
+          tail -n 100 /tmp/wrangler.log > /tmp/wrangler-tail.log
+          {
+            echo 'wrangler_log<<__EOL__'
+            cat /tmp/wrangler-tail.log
+            echo '__EOL__'
+          } >> "$GITHUB_OUTPUT"
+          exit $STATUS
+
+      - name: Comment preview URL on success
+        if: success() && steps.preflight.outputs.skip != 'true'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            // The default *.workers.dev URL includes the account subdomain
+            // (`junting-mp3`); that segment is required to resolve.
+            const url = `https://barycal-pr-${context.issue.number}.junting-mp3.workers.dev`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Cloudflare preview: ${url}`,
+            });
+
+      - name: Smoke preview
+        if: success() && steps.preflight.outputs.skip != 'true'
+        env:
+          BASE_URL: https://barycal-pr-${{ github.event.pull_request.number }}.junting-mp3.workers.dev
+        run: |
+          set -uo pipefail
+          echo "Smoking: $BASE_URL"
+          # A brand-new preview Worker's hostname isn't globally routable the
+          # instant `wrangler deploy` returns — poll the root until it's live
+          # before asserting, so the smoke doesn't race propagation.
+          ready=0
+          for i in $(seq 1 20); do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "${BASE_URL%/}/" || echo "000")
+            if [ "$code" = "200" ]; then ready=1; echo "Preview routable after attempt $i."; break; fi
+            echo "  waiting for preview route to propagate (attempt $i/20, got $code)…"
+            sleep 6
+          done
+          if [ "$ready" != "1" ]; then
+            echo "::error::Preview never became routable after ~2 min (last code: $code)"
+            exit 1
+          fi
+
+      - name: Comment diagnostic on failure or cancellation
+        if: failure() || cancelled()
+        env:
+          WRANGLER_LOG: ${{ steps.deploy.outputs.wrangler_log }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const tokenLen = '${{ steps.preflight.outputs.token_len }}';
+            const installOk = '${{ steps.install.conclusion }}';
+            const buildOk = '${{ steps.build.conclusion }}';
+            const deployOk = '${{ steps.deploy.conclusion }}';
+            const failedStep =
+              installOk === 'failure' ? 'install' :
+              buildOk === 'failure' ? 'build (OpenNext)' :
+              deployOk === 'failure' ? 'deploy (wrangler)' :
+              'unknown';
+            const wranglerLog = process.env.WRANGLER_LOG || '(no wrangler output captured)';
+            const body = [
+              '### Preview workflow diagnostic',
+              '',
+              `- CLOUDFLARE_API_TOKEN length: \`${tokenLen}\` ${tokenLen === '0' ? '(MISSING)' : '(present)'}`,
+              `- npm ci: \`${installOk}\``,
+              `- opennextjs-cloudflare build: \`${buildOk}\``,
+              `- wrangler deploy: \`${deployOk}\``,
+              `- **First failing step: ${failedStep}**`,
+              '',
+              '<details><summary>wrangler output (tail)</summary>',
+              '',
+              '```',
+              wranglerLog,
+              '```',
+              '',
+              '</details>',
+              '',
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            ].join('\n');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

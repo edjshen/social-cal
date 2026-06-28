@@ -88,7 +88,10 @@ describe('sendCode', () => {
 
   it('reports an error when Twilio returns non-2xx', async () => {
     setEnv(FULL);
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 400 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('nope', { status: 400 }))
+    );
     const r = await sendCode('+15551234567');
     expect(r.ok).toBe(false);
     expect(r.error).toBeTruthy();
@@ -126,7 +129,10 @@ describe('checkCode', () => {
 
   it('rejects when Twilio returns a non-2xx response', async () => {
     setEnv(FULL);
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('err', { status: 404 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('err', { status: 404 }))
+    );
     const r = await checkCode('+15551234567', '123456');
     expect(r.ok).toBe(false);
   });

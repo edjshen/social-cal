@@ -1,5 +1,13 @@
 'use client';
-import { CalEvent, eventColorHex, fmtTime, isToday, MONTHS_SHORT, startOfDay, WEEKDAYS } from './util';
+import {
+  CalEvent,
+  eventColorHex,
+  fmtTime,
+  isToday,
+  MONTHS_SHORT,
+  startOfDay,
+  WEEKDAYS,
+} from './util';
 
 // Agenda / "Schedule" list, grouped by day, like Google Calendar's Schedule view.
 export default function ScheduleView({
@@ -12,7 +20,9 @@ export default function ScheduleView({
   onOpenEvent: (ev: CalEvent) => void;
 }) {
   const start = startOfDay(anchor);
-  const sorted = [...events].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  const sorted = [...events].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  );
 
   // Group into days that actually have events, within the loaded window.
   const groups = new Map<number, CalEvent[]>();
@@ -25,7 +35,13 @@ export default function ScheduleView({
   const days = [...groups.keys()].sort((a, b) => a - b);
 
   if (!days.length) {
-    return <div className="empty" style={{ padding: '60px 16px' }}>Nothing scheduled.<br />Tap ＋ to add something.</div>;
+    return (
+      <div className="empty" style={{ padding: '60px 16px' }}>
+        Nothing scheduled.
+        <br />
+        Tap ＋ to add something.
+      </div>
+    );
   }
 
   return (

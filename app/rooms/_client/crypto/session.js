@@ -37,7 +37,10 @@ export function createRoomSession({ roomId, key, profile, nodeId }) {
     const ciphertext = encryptString(JSON.stringify(body), key);
     // id is generated BEFORE signing so the signature binds it (see envelopeBytes).
     const id = nanoid(21);
-    const sigBytes = sign(envelopeBytes({ roomId, id, profilePub, hlc, kind, ciphertext }), secretKey);
+    const sigBytes = sign(
+      envelopeBytes({ roomId, id, profilePub, hlc, kind, ciphertext }),
+      secretKey
+    );
     const frame = {
       type: 'publish',
       id,

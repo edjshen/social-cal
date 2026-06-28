@@ -7,6 +7,7 @@ Verified against npm dist-tags + official docs while choosing the Orbit re-platf
 **Goal:** lowest maintenance + cost, single vendor, while keeping quality/beauty.
 
 **Picks (all OSS, ~$0/mo on Cloudflare free tier):**
+
 - **Hosting:** Next.js 16 → Cloudflare Workers via `@opennextjs/cloudflare` (mirrors plur-nyc).
 - **DB:** **Cloudflare D1** (serverless SQLite) — GA, native Workers binding, **never auto-pauses**, free tier 5M row-reads/day · 100k writes/day · 5 GB (dwarfs personal-scale). Single-region writes; read replication still beta (irrelevant at this scale).
 - **ORM:** **Drizzle** — first-class official D1 driver, workerd-native, tiny, end-to-end TS types. Install the **stable 0.4x line, not v1 (still RC)**.

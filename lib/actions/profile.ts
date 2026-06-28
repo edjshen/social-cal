@@ -6,7 +6,12 @@ import { users } from '../db/schema';
 import { requireUserId } from '../auth/session';
 import { clampStr, clampScenes, LIMITS } from '../validate';
 
-export async function updateProfile(input: { displayName?: string; bio?: string; scenes?: string[]; ghost?: boolean }) {
+export async function updateProfile(input: {
+  displayName?: string;
+  bio?: string;
+  scenes?: string[];
+  ghost?: boolean;
+}) {
   const uid = await requireUserId();
   const patch: Record<string, unknown> = {};
   if (input.displayName !== undefined) {

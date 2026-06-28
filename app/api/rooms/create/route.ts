@@ -9,11 +9,7 @@
  */
 import { parseJsonBody } from '@/lib/http';
 import { normalizePhoneUS } from '@/lib/phone';
-import {
-  consumeRateLimit,
-  verifyOtpOrReject,
-  isValidRoomId,
-} from '@/lib/mayfly/server/phone-gate';
+import { consumeRateLimit, verifyOtpOrReject, isValidRoomId } from '@/lib/mayfly/server/phone-gate';
 import { logRoomCreated } from '@/lib/mayfly/server/rooms-log';
 import { hasConsent, logConsent } from '@/lib/mayfly/server/consent';
 

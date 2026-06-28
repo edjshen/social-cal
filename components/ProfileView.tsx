@@ -37,7 +37,10 @@ export default function ProfileView({ data }: { data: ProfileData }) {
   }
 
   function saveProfile() {
-    const parsedScenes = scenes.split(',').map((x) => x.trim()).filter(Boolean);
+    const parsedScenes = scenes
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
     startTransition(async () => {
       await updateProfile({ displayName: dn, bio, scenes: parsedScenes, ghost });
       setSheetOpen(false);
@@ -45,7 +48,8 @@ export default function ProfileView({ data }: { data: ProfileData }) {
     });
   }
 
-  const fullLink = typeof window !== 'undefined' ? location.origin + '/u/' + user.handle : '/u/' + user.handle;
+  const fullLink =
+    typeof window !== 'undefined' ? location.origin + '/u/' + user.handle : '/u/' + user.handle;
   const displayLink = fullLink.replace(/^https?:\/\//, '');
 
   function copyLink() {
@@ -59,69 +63,95 @@ export default function ProfileView({ data }: { data: ProfileData }) {
       <div className="banner" />
       <div className="pf-head pf-grid">
         <div className="pf-aside">
-        <Avatar user={user} size="xl" className="pf-av" />
-        <div className="pf-name">{user.displayName}</div>
-        <div className="pf-handle">@{user.handle}</div>
-        {user.bio && <div className="pf-bio">{user.bio}</div>}
-        {(user.scenes || []).length > 0 && (
-          <div className="chips" style={{ marginTop: 13 }}>
-            {(user.scenes || []).map((s) => (
-              <span key={s} className="chip">{s}</span>
-            ))}
-          </div>
-        )}
-        <div className="linkrow">
-          <div className="linkbox"><Icon name="link" /> {displayLink}</div>
-          <button className="btn solid" onClick={copyLink}>Share</button>
-        </div>
-        <div className="row" style={{ gap: 10, marginTop: 10 }}>
-          {isSelf && (
-            <button className="btn sm" onClick={openEdit}>Edit profile</button>
+          <Avatar user={user} size="xl" className="pf-av" />
+          <div className="pf-name">{user.displayName}</div>
+          <div className="pf-handle">@{user.handle}</div>
+          {user.bio && <div className="pf-bio">{user.bio}</div>}
+          {(user.scenes || []).length > 0 && (
+            <div className="chips" style={{ marginTop: 13 }}>
+              {(user.scenes || []).map((s) => (
+                <span key={s} className="chip">
+                  {s}
+                </span>
+              ))}
+            </div>
           )}
-          <Link href="/circles" className="btn sm">Circles</Link>
-          <form action={logout} style={{ marginLeft: 'auto' }}>
-            <button type="submit" className="btn sm">Log out</button>
-          </form>
-        </div>
+          <div className="linkrow">
+            <div className="linkbox">
+              <Icon name="link" /> {displayLink}
+            </div>
+            <button className="btn solid" onClick={copyLink}>
+              Share
+            </button>
+          </div>
+          <div className="row" style={{ gap: 10, marginTop: 10 }}>
+            {isSelf && (
+              <button className="btn sm" onClick={openEdit}>
+                Edit profile
+              </button>
+            )}
+            <Link href="/circles" className="btn sm">
+              Circles
+            </Link>
+            <form action={logout} style={{ marginLeft: 'auto' }}>
+              <button type="submit" className="btn sm">
+                Log out
+              </button>
+            </form>
+          </div>
         </div>
         <div className="pf-main">
-        <div className="kicker" style={{ margin: '22px 0 6px' }}>What I&apos;m going to</div>
-        {upcoming.length === 0 ? (
-          <div className="empty" style={{ padding: 24 }}>Nothing upcoming yet.</div>
-        ) : (
-          upcoming.map((ev: any) => {
-            if (ev.busy) return null;
-            const d = new Date(ev.startTime);
-            const [vc, vl] = VIS[ev.visibility] || VIS.inner;
-            return (
-              <div key={ev.id} className="up">
-                <div className="when">
-                  <b>{d.getDate()}</b>
-                  <span>{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                </div>
-                <div className="body">
-                  <div className="t">
-                    {ev.title}
-                    {ev.recurring && <span style={{ color: 'var(--violet)' }}> ↻</span>}
-                  </div>
-                  <div className="s">
-                    {timeLabel(ev.startTime)}{ev.location ? ' · ' + ev.location : ''}
-                  </div>
-                </div>
-                <span className="vis">
-                  <Icon name={vc as any} /> {vl}
-                </span>
-              </div>
-            );
-          })
-        )}
-        {isSelf && (
-          <div className="statline">
-            <div><b>{s.regulars || 0}</b><span>regulars</span></div>
-            <div><b>{s.plans || 0}</b><span>plans</span></div>
-            <div><b>{s.scenes || 0}</b><span>scenes</span></div>
+          <div className="kicker" style={{ margin: '22px 0 6px' }}>
+            What I&apos;m going to
           </div>
-        )}
+          {upcoming.length === 0 ? (
+            <div className="empty" style={{ padding: 24 }}>
+              Nothing upcoming yet.
+            </div>
+          ) : (
+            upcoming.map((ev: any) => {
+              if (ev.busy) return null;
+              const d = new Date(ev.startTime);
+              const [vc, vl] = VIS[ev.visibility] || VIS.inner;
+              return (
+                <div key={ev.id} className="up">
+                  <div className="when">
+                    <b>{d.getDate()}</b>
+                    <span>{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                  </div>
+                  <div className="body">
+                    <div className="t">
+                      {ev.title}
+                      {ev.recurring && <span style={{ color: 'var(--violet)' }}> ↻</span>}
+                    </div>
+                    <div className="s">
+                      {timeLabel(ev.startTime)}
+                      {ev.location ? ' · ' + ev.location : ''}
+                    </div>
+                  </div>
+                  <span className="vis">
+                    <Icon name={vc as any} /> {vl}
+                  </span>
+                </div>
+              );
+            })
+          )}
+          {isSelf && (
+            <div className="statline">
+              <div>
+                <b>{s.regulars || 0}</b>
+                <span>regulars</span>
+              </div>
+              <div>
+                <b>{s.plans || 0}</b>
+                <span>plans</span>
+              </div>
+              <div>
+                <b>{s.scenes || 0}</b>
+                <span>scenes</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -140,10 +170,17 @@ export default function ProfileView({ data }: { data: ProfileData }) {
           <input type="text" value={scenes} onChange={(e) => setScenes(e.target.value)} />
         </div>
         <label className="row" style={{ gap: 9, margin: '4px 0 16px' }}>
-          <input type="checkbox" checked={ghost} onChange={(e) => setGhost(e.target.checked)} style={{ width: 'auto' }} />
+          <input
+            type="checkbox"
+            checked={ghost}
+            onChange={(e) => setGhost(e.target.checked)}
+            style={{ width: 'auto' }}
+          />
           <span className="muted">Ghost mode — hide my profile</span>
         </label>
-        <button className="btn solid block" onClick={saveProfile}>Save</button>
+        <button className="btn solid block" onClick={saveProfile}>
+          Save
+        </button>
       </Sheet>
     </>
   );

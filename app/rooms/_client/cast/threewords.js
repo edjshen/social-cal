@@ -9,11 +9,7 @@
  *  - For an open room the words deterministically reproduce the id AND key
  *    (via resolveOpenWords in store/rooms.js).
  */
-import {
-  roomIdToWords,
-  isValidThreeWords,
-  normalizeWords,
-} from '@/lib/mayfly/shared/wordlist.js';
+import { roomIdToWords, isValidThreeWords, normalizeWords } from '@/lib/mayfly/shared/wordlist.js';
 import { fromB64 } from '@/lib/mayfly/shared/crypto.js';
 
 /** Display words for a room (id is base64url). */

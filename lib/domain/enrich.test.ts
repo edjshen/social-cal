@@ -5,12 +5,31 @@ const users = [
   { id: 'ed', handle: 'ed', displayName: 'Ed Shen', avatar: 'a,b' },
   { id: 'maya', handle: 'maya', displayName: 'Maya Chen', avatar: 'c,d' },
 ];
-const conns = [{ id: 'c', aId: 'ed', bId: 'maya', status: 'accepted', requestedBy: 'ed', createdAt: '' }];
-const ctx: EnrichCtx = { users: users as any, conns: conns as any, places: [], attendance: [
-  { id: 'a1', eventId: 'e1', userId: 'maya', rsvp: 'going', createdAt: '' },
-  { id: 'a2', eventId: 'e1', userId: 'ed', rsvp: 'down', createdAt: '' },
-] as any };
-const event = { id: 'e1', creatorId: 'maya', type: 'event', title: 'Wine', description: '', location: 'Ruffian', startTime: '2026-07-01T20:00:00Z', endTime: null, recurring: null, visibility: 'orbit', expiresAt: null };
+const conns = [
+  { id: 'c', aId: 'ed', bId: 'maya', status: 'accepted', requestedBy: 'ed', createdAt: '' },
+];
+const ctx: EnrichCtx = {
+  users: users as any,
+  conns: conns as any,
+  places: [],
+  attendance: [
+    { id: 'a1', eventId: 'e1', userId: 'maya', rsvp: 'going', createdAt: '' },
+    { id: 'a2', eventId: 'e1', userId: 'ed', rsvp: 'down', createdAt: '' },
+  ] as any,
+};
+const event = {
+  id: 'e1',
+  creatorId: 'maya',
+  type: 'event',
+  title: 'Wine',
+  description: '',
+  location: 'Ruffian',
+  startTime: '2026-07-01T20:00:00Z',
+  endTime: null,
+  recurring: null,
+  visibility: 'orbit',
+  expiresAt: null,
+};
 
 describe('enrich', () => {
   it('returns busy stub when content not visible — leaks no content fields', () => {
@@ -25,9 +44,10 @@ describe('enrich', () => {
     expect(out.attendeeCount).toBeUndefined();
   });
   it('excludes "cant" rsvps from proof and attendeeCount', () => {
-    const ctxCant: EnrichCtx = { ...ctx, attendance: [
-      { id: 'a1', eventId: 'e1', userId: 'maya', rsvp: 'cant', createdAt: '' },
-    ] as any };
+    const ctxCant: EnrichCtx = {
+      ...ctx,
+      attendance: [{ id: 'a1', eventId: 'e1', userId: 'maya', rsvp: 'cant', createdAt: '' }] as any,
+    };
     const out: any = enrich(event as any, 'ed', ctxCant);
     expect(out.proof.count).toBe(0);
     expect(out.attendeeCount).toBe(0);

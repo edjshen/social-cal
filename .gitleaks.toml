@@ -1,0 +1,24 @@
+# gitleaks config — extends the default ruleset, adds barycal-specific allowlists.
+#
+# .gitleaksignore is excluded from scanning entirely: its job is to enumerate
+# known false positives, so any commit touching it necessarily contains
+# "secret-shaped" strings. Scanning it would flag the file describing the flags.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public, non-secret values and files that document credential shapes."
+paths = [
+  '''\.gitleaksignore$''',
+  # .env.production holds only NEXT_PUBLIC_* values, which are inlined into the
+  # client bundle by design — public by definition, not secrets.
+  '''^\.env\.production$''',
+]
+regexes = [
+  # Browser-storage / Worker-name namespace `barycal-*` is a project convention
+  # (the worker is named `barycal`, the relay `barycal-room`, previews
+  # `barycal-pr-<N>`). These are NAMES, not credential values; the
+  # generic-api-key entropy rule occasionally flags them.
+  '''^barycal(-[a-z0-9-]+)?$''',
+]

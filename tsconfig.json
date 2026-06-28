@@ -1,12 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "ES2022",
-      "webworker"
-    ],
+    "lib": ["dom", "dom.iterable", "ES2022", "webworker"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
@@ -17,13 +12,9 @@
     "incremental": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": [
-      "vitest/globals"
-    ],
+    "types": ["vitest/globals"],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     "plugins": [
       {
@@ -32,14 +23,6 @@
     ],
     "allowJs": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "lib/mayfly/shared/**/*.test.js"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
+  "exclude": ["node_modules", "lib/mayfly/shared/**/*.test.js"]
 }

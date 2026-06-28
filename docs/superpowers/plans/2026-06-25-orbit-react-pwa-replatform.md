@@ -59,6 +59,7 @@ public/ icon.svg (kept) + icon-192/512.png
 ### Task 0.1: Remove the old app, scaffold Next.js + TypeScript
 
 **Files:**
+
 - Delete: `server/`, `public/app.js`, `public/view.js`, `public/index.html`, `public/view.html`, `public/sw.js`, `public/manifest.webmanifest`, `prisma/`, `data/`
 - Keep: `public/icon.svg`, `docs/`, `.git`, `.gitignore`, `README.md`
 - Create: `package.json`, `tsconfig.json`, `next.config.ts`, `app/layout.tsx`, `app/page.tsx`, `app/globals.css`
@@ -218,6 +219,7 @@ git commit -m "feat: scaffold Next.js 16 + TS app, remove vanilla app"
 ### Task 0.2: Cloudflare deploy config (OpenNext + Wrangler + D1)
 
 **Files:**
+
 - Create: `open-next.config.ts`, `wrangler.jsonc`, `.dev.vars`
 - Modify: `.gitignore`
 
@@ -249,9 +251,9 @@ Expected: prints a `database_id`. Copy it for the next step.
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "orbit" }],
   "d1_databases": [
-    { "binding": "DB", "database_name": "orbit-db", "database_id": "<DATABASE_ID>" }
+    { "binding": "DB", "database_name": "orbit-db", "database_id": "<DATABASE_ID>" },
   ],
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
 }
 ```
 
@@ -268,6 +270,7 @@ SESSION_SECRET=dev-only-secret-at-least-32-characters-long-change-me
 ```
 
 Append to `.gitignore`:
+
 ```
 .dev.vars
 .open-next/
@@ -289,6 +292,7 @@ git commit -m "chore: add OpenNext + Wrangler + D1 config"
 ### Task 1.1: Drizzle schema
 
 **Files:**
+
 - Create: `lib/db/schema.ts`, `drizzle.config.ts`
 
 - [ ] **Step 1: Write `lib/db/schema.ts`** (mirrors the 5 JSON collections in `server/db.js`)
@@ -303,51 +307,89 @@ export const users = sqliteTable('users', {
   displayName: text('display_name').notNull(),
   passwordHash: text('password_hash').notNull(),
   bio: text('bio').notNull().default(''),
-  scenes: text('scenes', { mode: 'json' }).$type<string[]>().notNull().default(sql`'[]'`),
+  scenes: text('scenes', { mode: 'json' })
+    .$type<string[]>()
+    .notNull()
+    .default(sql`'[]'`),
   avatar: text('avatar').notNull(),
   shareId: text('share_id').notNull().unique(),
   ghost: integer('ghost', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
 });
 
-export const connections = sqliteTable('connections', {
-  id: text('id').primaryKey(),
-  aId: text('a_id').notNull().references(() => users.id),
-  bId: text('b_id').notNull().references(() => users.id),
-  status: text('status', { enum: ['pending', 'accepted'] }).notNull(),
-  requestedBy: text('requested_by').notNull().references(() => users.id),
-  createdAt: text('created_at').notNull(),
-}, (t) => ({ pair: index('conn_pair').on(t.aId, t.bId) }));
+export const connections = sqliteTable(
+  'connections',
+  {
+    id: text('id').primaryKey(),
+    aId: text('a_id')
+      .notNull()
+      .references(() => users.id),
+    bId: text('b_id')
+      .notNull()
+      .references(() => users.id),
+    status: text('status', { enum: ['pending', 'accepted'] }).notNull(),
+    requestedBy: text('requested_by')
+      .notNull()
+      .references(() => users.id),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ pair: index('conn_pair').on(t.aId, t.bId) })
+);
 
-export const placements = sqliteTable('placements', {
-  id: text('id').primaryKey(),
-  ownerId: text('owner_id').notNull().references(() => users.id),
-  otherId: text('other_id').notNull().references(() => users.id),
-  tier: text('tier', { enum: ['inner', 'orbit'] }).notNull(),
-}, (t) => ({ uniq: unique('place_owner_other').on(t.ownerId, t.otherId) }));
+export const placements = sqliteTable(
+  'placements',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id),
+    otherId: text('other_id')
+      .notNull()
+      .references(() => users.id),
+    tier: text('tier', { enum: ['inner', 'orbit'] }).notNull(),
+  },
+  (t) => ({ uniq: unique('place_owner_other').on(t.ownerId, t.otherId) })
+);
 
-export const events = sqliteTable('events', {
-  id: text('id').primaryKey(),
-  creatorId: text('creator_id').notNull().references(() => users.id),
-  type: text('type', { enum: ['intention', 'plan', 'event', 'scene'] }).notNull(),
-  title: text('title').notNull(),
-  description: text('description').notNull().default(''),
-  location: text('location').notNull().default(''),
-  startTime: text('start_time').notNull(),
-  endTime: text('end_time'),
-  recurring: text('recurring', { enum: ['weekly'] }),
-  visibility: text('visibility', { enum: ['inner', 'orbit', 'public'] }).notNull(),
-  expiresAt: text('expires_at'),
-  createdAt: text('created_at').notNull(),
-}, (t) => ({ byStart: index('events_start').on(t.startTime), byCreator: index('events_creator').on(t.creatorId) }));
+export const events = sqliteTable(
+  'events',
+  {
+    id: text('id').primaryKey(),
+    creatorId: text('creator_id')
+      .notNull()
+      .references(() => users.id),
+    type: text('type', { enum: ['intention', 'plan', 'event', 'scene'] }).notNull(),
+    title: text('title').notNull(),
+    description: text('description').notNull().default(''),
+    location: text('location').notNull().default(''),
+    startTime: text('start_time').notNull(),
+    endTime: text('end_time'),
+    recurring: text('recurring', { enum: ['weekly'] }),
+    visibility: text('visibility', { enum: ['inner', 'orbit', 'public'] }).notNull(),
+    expiresAt: text('expires_at'),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({
+    byStart: index('events_start').on(t.startTime),
+    byCreator: index('events_creator').on(t.creatorId),
+  })
+);
 
-export const attendance = sqliteTable('attendance', {
-  id: text('id').primaryKey(),
-  eventId: text('event_id').notNull().references(() => events.id),
-  userId: text('user_id').notNull().references(() => users.id),
-  rsvp: text('rsvp', { enum: ['going', 'down', 'maybe', 'cant'] }).notNull(),
-  createdAt: text('created_at').notNull(),
-}, (t) => ({ byEvent: index('attend_event').on(t.eventId) }));
+export const attendance = sqliteTable(
+  'attendance',
+  {
+    id: text('id').primaryKey(),
+    eventId: text('event_id')
+      .notNull()
+      .references(() => events.id),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    rsvp: text('rsvp', { enum: ['going', 'down', 'maybe', 'cant'] }).notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ byEvent: index('attend_event').on(t.eventId) })
+);
 
 export type User = typeof users.$inferSelect;
 export type Connection = typeof connections.$inferSelect;
@@ -389,6 +431,7 @@ git commit -m "feat: Drizzle schema + initial D1 migration"
 ### Task 1.2: DB client + seed
 
 **Files:**
+
 - Create: `lib/db/index.ts`, `scripts/gen-seed.ts`
 
 - [ ] **Step 1: Write `lib/db/index.ts`** (Drizzle bound to the D1 binding via OpenNext context)
@@ -413,71 +456,216 @@ import { hashPassword } from '../lib/auth/password';
 
 const now = new Date();
 const at = (days: number, h: number, m = 0) => {
-  const x = new Date(now); x.setDate(x.getDate() + days); x.setHours(h, m, 0, 0);
+  const x = new Date(now);
+  x.setDate(x.getDate() + days);
+  x.setHours(h, m, 0, 0);
   return x.toISOString();
 };
-const PALETTE = [['#FF8A5B','#FF5E87'],['#5FD3A6','#3FA7C2'],['#9B8CFF','#6C7BFF'],['#FFC178','#FF8A5B'],['#FF5E87','#9B8CFF'],['#5FD3A6','#6C7BFF'],['#FFC178','#FF5E87'],['#9B8CFF','#FF5E87']];
-const hashStr = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h*31 + s.charCodeAt(i)) | 0; return Math.abs(h); };
+const PALETTE = [
+  ['#FF8A5B', '#FF5E87'],
+  ['#5FD3A6', '#3FA7C2'],
+  ['#9B8CFF', '#6C7BFF'],
+  ['#FFC178', '#FF8A5B'],
+  ['#FF5E87', '#9B8CFF'],
+  ['#5FD3A6', '#6C7BFF'],
+  ['#FFC178', '#FF5E87'],
+  ['#9B8CFF', '#FF5E87'],
+];
+const hashStr = (s: string) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};
 const avatarFor = (seed: string) => PALETTE[hashStr(seed) % PALETTE.length].join(',');
 const id = () => crypto.randomUUID();
 const q = (v: string | null) => (v === null ? 'NULL' : `'${v.replace(/'/g, "''")}'`);
 
 async function main() {
   const pw = await hashPassword('orbit');
-  const lines: string[] = ['DELETE FROM attendance;','DELETE FROM events;','DELETE FROM placements;','DELETE FROM connections;','DELETE FROM users;'];
+  const lines: string[] = [
+    'DELETE FROM attendance;',
+    'DELETE FROM events;',
+    'DELETE FROM placements;',
+    'DELETE FROM connections;',
+    'DELETE FROM users;',
+  ];
   const U: Record<string, string> = {};
   const user = (handle: string, name: string, bio = '', scenes: string[] = []) => {
-    const uid = id(); U[handle] = uid;
-    lines.push(`INSERT INTO users (id,handle,display_name,password_hash,bio,scenes,avatar,share_id,ghost,created_at) VALUES (${q(uid)},${q(handle)},${q(name)},${q(pw)},${q(bio)},${q(JSON.stringify(scenes))},${q(avatarFor(handle))},${q(handle)},0,${q(now.toISOString())});`);
+    const uid = id();
+    U[handle] = uid;
+    lines.push(
+      `INSERT INTO users (id,handle,display_name,password_hash,bio,scenes,avatar,share_id,ghost,created_at) VALUES (${q(uid)},${q(handle)},${q(name)},${q(pw)},${q(bio)},${q(JSON.stringify(scenes))},${q(avatarFor(handle))},${q(handle)},0,${q(now.toISOString())});`
+    );
   };
-  user('ed','Ed Shen','techno, climbing, natural wine. always down for lunch.',['Climbing','Techno','Natural wine','PLUR']);
-  user('maya','Maya Chen','sunsets, lunch dates, bouldering.',['Climbing','Film']);
-  user('dev','Dev Rao','wine, records, late dinners.',['Natural wine','Vinyl']);
-  user('nina','Nina Park','run club + climbing gym regular.',['Running','Climbing']);
-  user('theo','Theo Lin','always at the warehouse.',['Techno','Nightlife']);
-  user('sam','Sam Ortiz','natural wine + pottery.',['Natural wine','Ceramics']);
-  user('plur','PLUR.NYC','NYC underground — shows & community.',['Techno','Community']);
-  user('jordan','Jordan Reyes','new in town.',[]);
+  user('ed', 'Ed Shen', 'techno, climbing, natural wine. always down for lunch.', [
+    'Climbing',
+    'Techno',
+    'Natural wine',
+    'PLUR',
+  ]);
+  user('maya', 'Maya Chen', 'sunsets, lunch dates, bouldering.', ['Climbing', 'Film']);
+  user('dev', 'Dev Rao', 'wine, records, late dinners.', ['Natural wine', 'Vinyl']);
+  user('nina', 'Nina Park', 'run club + climbing gym regular.', ['Running', 'Climbing']);
+  user('theo', 'Theo Lin', 'always at the warehouse.', ['Techno', 'Nightlife']);
+  user('sam', 'Sam Ortiz', 'natural wine + pottery.', ['Natural wine', 'Ceramics']);
+  user('plur', 'PLUR.NYC', 'NYC underground — shows & community.', ['Techno', 'Community']);
+  user('jordan', 'Jordan Reyes', 'new in town.', []);
 
   const conn = (a: string, b: string, status: string, by: string) =>
-    lines.push(`INSERT INTO connections (id,a_id,b_id,status,requested_by,created_at) VALUES (${q(id())},${q(U[a])},${q(U[b])},${q(status)},${q(U[by])},${q(now.toISOString())});`);
-  for (const h of ['maya','dev','nina','theo','sam','plur']) conn('ed', h, 'accepted', 'ed');
-  conn('maya','nina','accepted','maya'); conn('dev','sam','accepted','dev');
-  conn('jordan','ed','pending','jordan');
+    lines.push(
+      `INSERT INTO connections (id,a_id,b_id,status,requested_by,created_at) VALUES (${q(id())},${q(U[a])},${q(U[b])},${q(status)},${q(U[by])},${q(now.toISOString())});`
+    );
+  for (const h of ['maya', 'dev', 'nina', 'theo', 'sam', 'plur']) conn('ed', h, 'accepted', 'ed');
+  conn('maya', 'nina', 'accepted', 'maya');
+  conn('dev', 'sam', 'accepted', 'dev');
+  conn('jordan', 'ed', 'pending', 'jordan');
 
   const place = (o: string, x: string, tier: string) =>
-    lines.push(`INSERT INTO placements (id,owner_id,other_id,tier) VALUES (${q(id())},${q(U[o])},${q(U[x])},${q(tier)});`);
-  for (const h of ['maya','dev','nina']) place('ed', h, 'inner');
-  for (const h of ['theo','sam','plur']) place('ed', h, 'orbit');
-  for (const h of ['maya','dev','nina']) place(h, 'ed', 'inner');
-  for (const h of ['theo','sam']) place(h, 'ed', 'orbit');
-  place('plur','ed','orbit');
+    lines.push(
+      `INSERT INTO placements (id,owner_id,other_id,tier) VALUES (${q(id())},${q(U[o])},${q(U[x])},${q(tier)});`
+    );
+  for (const h of ['maya', 'dev', 'nina']) place('ed', h, 'inner');
+  for (const h of ['theo', 'sam', 'plur']) place('ed', h, 'orbit');
+  for (const h of ['maya', 'dev', 'nina']) place(h, 'ed', 'inner');
+  for (const h of ['theo', 'sam']) place(h, 'ed', 'orbit');
+  place('plur', 'ed', 'orbit');
 
-  const ev = (creator: string, type: string, title: string, location: string, start: string, end: string | null, visibility: string, recurring: string | null = null, expiresAt: string | null = null) => {
+  const ev = (
+    creator: string,
+    type: string,
+    title: string,
+    location: string,
+    start: string,
+    end: string | null,
+    visibility: string,
+    recurring: string | null = null,
+    expiresAt: string | null = null
+  ) => {
     const eid = id();
-    lines.push(`INSERT INTO events (id,creator_id,type,title,description,location,start_time,end_time,recurring,visibility,expires_at,created_at) VALUES (${q(eid)},${q(U[creator])},${q(type)},${q(title)},'',${q(location)},${q(start)},${end===null?'NULL':q(end)},${recurring===null?'NULL':q(recurring)},${q(visibility)},${expiresAt===null?'NULL':q(expiresAt)},${q(now.toISOString())});`);
-    lines.push(`INSERT INTO attendance (id,event_id,user_id,rsvp,created_at) VALUES (${q(id())},${q(eid)},${q(U[creator])},'going',${q(now.toISOString())});`);
+    lines.push(
+      `INSERT INTO events (id,creator_id,type,title,description,location,start_time,end_time,recurring,visibility,expires_at,created_at) VALUES (${q(eid)},${q(U[creator])},${q(type)},${q(title)},'',${q(location)},${q(start)},${end === null ? 'NULL' : q(end)},${recurring === null ? 'NULL' : q(recurring)},${q(visibility)},${expiresAt === null ? 'NULL' : q(expiresAt)},${q(now.toISOString())});`
+    );
+    lines.push(
+      `INSERT INTO attendance (id,event_id,user_id,rsvp,created_at) VALUES (${q(id())},${q(eid)},${q(U[creator])},'going',${q(now.toISOString())});`
+    );
     return eid;
   };
   const attend = (eid: string, h: string, rsvp: string) =>
-    lines.push(`INSERT INTO attendance (id,event_id,user_id,rsvp,created_at) VALUES (${q(id())},${q(eid)},${q(U[h])},${q(rsvp)},${q(now.toISOString())});`);
+    lines.push(
+      `INSERT INTO attendance (id,event_id,user_id,rsvp,created_at) VALUES (${q(id())},${q(eid)},${q(U[h])},${q(rsvp)},${q(now.toISOString())});`
+    );
 
-  const lunch = ev('maya','intention','Lunch — anyone around?','Devoción, Williamsburg', at(0,12,30), at(0,14), 'inner', null, at(0,23,59));
-  attend(lunch,'nina','down'); attend(lunch,'theo','down');
-  const run = ev('ed','plan','Evening run','Brooklyn Bridge', at(0,18,30), at(0,19,30), 'orbit', 'weekly');
-  attend(run,'dev','down'); attend(run,'nina','down'); attend(run,'theo','down');
-  const wine = ev('dev','event','Natural wine night','Ruffian, East Village', at(1,20), at(1,23), 'orbit');
-  attend(wine,'maya','down'); attend(wine,'nina','down'); attend(wine,'sam','down'); attend(wine,'theo','maybe');
-  const runThu = ev('ed','plan','Evening run','Brooklyn Bridge', at(2,18,30), at(2,19,30), 'orbit', 'weekly'); attend(runThu,'dev','down');
-  const warehouse = ev('plur','scene','Warehouse: SHØLT','Bushwick', at(3,23), at(4,4), 'public');
-  for (const h of ['maya','dev','nina','theo','sam']) attend(warehouse, h, 'down');
-  const climb = ev('ed','event','Climbing @ VITAL','Greenpoint', at(4,10), at(4,12), 'inner'); attend(climb,'nina','down'); attend(climb,'maya','down');
-  const standing = ev('ed','plan','Standing lunch','rotating spot', at(6,12,30), at(6,14), 'inner', 'weekly'); attend(standing,'maya','down');
-  ev('ed','event','Pottery class','Gowanus', at(8,19), at(8,21), 'public');
-  const coffee = ev('maya','intention','Coffee + work','Devoción', at(-3,11), at(-3,13), 'inner'); attend(coffee,'ed','going'); attend(coffee,'sam','down');
-  const climbPast = ev('nina','event','Climbing session','VITAL', at(-7,10), at(-7,12), 'inner'); attend(climbPast,'ed','going'); attend(climbPast,'maya','down');
-  const winePast = ev('dev','event','Wine + records','home', at(-10,20), at(-10,23), 'orbit'); attend(winePast,'ed','going'); attend(winePast,'sam','down');
-  const showPast = ev('plur','scene','Show: Nowadays','Ridgewood', at(-14,22), at(-13,3), 'public'); attend(showPast,'ed','going'); attend(showPast,'theo','down');
+  const lunch = ev(
+    'maya',
+    'intention',
+    'Lunch — anyone around?',
+    'Devoción, Williamsburg',
+    at(0, 12, 30),
+    at(0, 14),
+    'inner',
+    null,
+    at(0, 23, 59)
+  );
+  attend(lunch, 'nina', 'down');
+  attend(lunch, 'theo', 'down');
+  const run = ev(
+    'ed',
+    'plan',
+    'Evening run',
+    'Brooklyn Bridge',
+    at(0, 18, 30),
+    at(0, 19, 30),
+    'orbit',
+    'weekly'
+  );
+  attend(run, 'dev', 'down');
+  attend(run, 'nina', 'down');
+  attend(run, 'theo', 'down');
+  const wine = ev(
+    'dev',
+    'event',
+    'Natural wine night',
+    'Ruffian, East Village',
+    at(1, 20),
+    at(1, 23),
+    'orbit'
+  );
+  attend(wine, 'maya', 'down');
+  attend(wine, 'nina', 'down');
+  attend(wine, 'sam', 'down');
+  attend(wine, 'theo', 'maybe');
+  const runThu = ev(
+    'ed',
+    'plan',
+    'Evening run',
+    'Brooklyn Bridge',
+    at(2, 18, 30),
+    at(2, 19, 30),
+    'orbit',
+    'weekly'
+  );
+  attend(runThu, 'dev', 'down');
+  const warehouse = ev(
+    'plur',
+    'scene',
+    'Warehouse: SHØLT',
+    'Bushwick',
+    at(3, 23),
+    at(4, 4),
+    'public'
+  );
+  for (const h of ['maya', 'dev', 'nina', 'theo', 'sam']) attend(warehouse, h, 'down');
+  const climb = ev('ed', 'event', 'Climbing @ VITAL', 'Greenpoint', at(4, 10), at(4, 12), 'inner');
+  attend(climb, 'nina', 'down');
+  attend(climb, 'maya', 'down');
+  const standing = ev(
+    'ed',
+    'plan',
+    'Standing lunch',
+    'rotating spot',
+    at(6, 12, 30),
+    at(6, 14),
+    'inner',
+    'weekly'
+  );
+  attend(standing, 'maya', 'down');
+  ev('ed', 'event', 'Pottery class', 'Gowanus', at(8, 19), at(8, 21), 'public');
+  const coffee = ev(
+    'maya',
+    'intention',
+    'Coffee + work',
+    'Devoción',
+    at(-3, 11),
+    at(-3, 13),
+    'inner'
+  );
+  attend(coffee, 'ed', 'going');
+  attend(coffee, 'sam', 'down');
+  const climbPast = ev(
+    'nina',
+    'event',
+    'Climbing session',
+    'VITAL',
+    at(-7, 10),
+    at(-7, 12),
+    'inner'
+  );
+  attend(climbPast, 'ed', 'going');
+  attend(climbPast, 'maya', 'down');
+  const winePast = ev('dev', 'event', 'Wine + records', 'home', at(-10, 20), at(-10, 23), 'orbit');
+  attend(winePast, 'ed', 'going');
+  attend(winePast, 'sam', 'down');
+  const showPast = ev(
+    'plur',
+    'scene',
+    'Show: Nowadays',
+    'Ridgewood',
+    at(-14, 22),
+    at(-13, 3),
+    'public'
+  );
+  attend(showPast, 'ed', 'going');
+  attend(showPast, 'theo', 'down');
 
   writeFileSync('drizzle/seed.sql', lines.join('\n') + '\n');
   console.log(`Wrote drizzle/seed.sql (${lines.length} statements). Demo login → ed / orbit`);
@@ -501,6 +689,7 @@ All functions here are **pure** (no DB) so they unit-test with fixtures. The dat
 ### Task 2.1: Vitest config + types + helpers
 
 **Files:**
+
 - Create: `vitest.config.ts`, `lib/domain/types.ts`, `lib/domain/helpers.ts`, `lib/domain/dates.ts`
 - Test: `lib/domain/helpers.test.ts`
 
@@ -521,7 +710,13 @@ export type Tier = 'inner' | 'orbit';
 export const ATTEND: Rsvp[] = ['going', 'down', 'maybe'];
 export const EVENT_TYPES: EventType[] = ['intention', 'plan', 'event', 'scene'];
 
-export interface PublicUser { id: string; handle: string; displayName: string; avatar: string; initials: string; }
+export interface PublicUser {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatar: string;
+  initials: string;
+}
 ```
 
 - [ ] **Step 3: Write the failing test `lib/domain/helpers.test.ts`**
@@ -542,7 +737,13 @@ describe('helpers', () => {
   });
   it('publicUser: projects safe fields + initials', () => {
     const u = { id: '1', handle: 'ed', displayName: 'Ed Shen', avatar: 'a,b', passwordHash: 'x' };
-    expect(publicUser(u as any)).toEqual({ id: '1', handle: 'ed', displayName: 'Ed Shen', avatar: 'a,b', initials: 'ES' });
+    expect(publicUser(u as any)).toEqual({
+      id: '1',
+      handle: 'ed',
+      displayName: 'Ed Shen',
+      avatar: 'a,b',
+      initials: 'ES',
+    });
   });
 });
 ```
@@ -557,30 +758,73 @@ Expected: FAIL ("Cannot find module './helpers'").
 ```ts
 import type { PublicUser } from './types';
 
-const PALETTE = [['#FF8A5B','#FF5E87'],['#5FD3A6','#3FA7C2'],['#9B8CFF','#6C7BFF'],['#FFC178','#FF8A5B'],['#FF5E87','#9B8CFF'],['#5FD3A6','#6C7BFF'],['#FFC178','#FF5E87'],['#9B8CFF','#FF5E87']];
-function hash(s: string) { let h = 0; const str = String(s); for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h); }
-export function avatarFor(seed: string) { return PALETTE[hash(seed) % PALETTE.length].join(','); }
-export function initials(name: string) {
-  return (name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
+const PALETTE = [
+  ['#FF8A5B', '#FF5E87'],
+  ['#5FD3A6', '#3FA7C2'],
+  ['#9B8CFF', '#6C7BFF'],
+  ['#FFC178', '#FF8A5B'],
+  ['#FF5E87', '#9B8CFF'],
+  ['#5FD3A6', '#6C7BFF'],
+  ['#FFC178', '#FF5E87'],
+  ['#9B8CFF', '#FF5E87'],
+];
+function hash(s: string) {
+  let h = 0;
+  const str = String(s);
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
 }
-export function publicUser<T extends { id: string; handle: string; displayName: string; avatar: string }>(u: T | null): PublicUser | null {
+export function avatarFor(seed: string) {
+  return PALETTE[hash(seed) % PALETTE.length].join(',');
+}
+export function initials(name: string) {
+  return (
+    (name || '?')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
+export function publicUser<
+  T extends { id: string; handle: string; displayName: string; avatar: string },
+>(u: T | null): PublicUser | null {
   if (!u) return null;
-  return { id: u.id, handle: u.handle, displayName: u.displayName, avatar: u.avatar, initials: initials(u.displayName) };
+  return {
+    id: u.id,
+    handle: u.handle,
+    displayName: u.displayName,
+    avatar: u.avatar,
+    initials: initials(u.displayName),
+  };
 }
 ```
 
 - [ ] **Step 6: Write `lib/domain/dates.ts`** (ports the date-window helpers in `server/index.js:148-155`)
 
 ```ts
-export function startOfToday(now = new Date()) { const d = new Date(now); d.setHours(0, 0, 0, 0); return d; }
-export function startOfDay(iso: string | Date) { const d = new Date(iso); d.setHours(0, 0, 0, 0); return d; }
-export function notExpired(ev: { expiresAt: string | null }, now = new Date()) { return !ev.expiresAt || new Date(ev.expiresAt) > now; }
+export function startOfToday(now = new Date()) {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+export function startOfDay(iso: string | Date) {
+  const d = new Date(iso);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+export function notExpired(ev: { expiresAt: string | null }, now = new Date()) {
+  return !ev.expiresAt || new Date(ev.expiresAt) > now;
+}
 ```
 
 - [ ] **Step 7: Run — expect PASS, then commit**
 
 Run: `npm test`
 Expected: PASS.
+
 ```bash
 git add -A && git commit -m "feat: domain types + helpers (TDD)"
 ```
@@ -588,6 +832,7 @@ git add -A && git commit -m "feat: domain types + helpers (TDD)"
 ### Task 2.2: Visibility logic (the security core)
 
 **Files:**
+
 - Create: `lib/domain/visibility.ts`
 - Test: `lib/domain/visibility.test.ts`
 
@@ -595,7 +840,14 @@ git add -A && git commit -m "feat: domain types + helpers (TDD)"
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { areConnected, myConnectionIds, connectionStatus, tierOf, canSeeContent, canSeeBusy } from './visibility';
+import {
+  areConnected,
+  myConnectionIds,
+  connectionStatus,
+  tierOf,
+  canSeeContent,
+  canSeeBusy,
+} from './visibility';
 import type { Connection, Placement } from '../db/schema';
 
 const conns: Connection[] = [
@@ -634,7 +886,9 @@ describe('visibility', () => {
   });
   it('canSeeContent: inner event hidden from a connection placed only in orbit', () => {
     const orbitOnly: Placement[] = [{ id: 'p', ownerId: 'maya', otherId: 'theo', tier: 'orbit' }];
-    const c: Connection[] = [{ id: 'c', aId: 'maya', bId: 'theo', status: 'accepted', requestedBy: 'maya', createdAt: '' }];
+    const c: Connection[] = [
+      { id: 'c', aId: 'maya', bId: 'theo', status: 'accepted', requestedBy: 'maya', createdAt: '' },
+    ];
     expect(canSeeContent('theo', ev({ visibility: 'inner' }), c, orbitOnly)).toBe(false);
     expect(canSeeContent('theo', ev({ visibility: 'orbit' }), c, orbitOnly)).toBe(true);
   });
@@ -659,15 +913,21 @@ import type { Tier, Visibility } from './types';
 type Ev = { creatorId: string; visibility: Visibility };
 
 export function areConnected(conns: Connection[], a: string, b: string) {
-  return conns.some((c) => c.status === 'accepted' && ((c.aId === a && c.bId === b) || (c.aId === b && c.bId === a)));
+  return conns.some(
+    (c) => c.status === 'accepted' && ((c.aId === a && c.bId === b) || (c.aId === b && c.bId === a))
+  );
 }
 export function myConnectionIds(conns: Connection[], me: string) {
   const ids = new Set<string>();
-  for (const c of conns) if (c.status === 'accepted' && (c.aId === me || c.bId === me)) ids.add(c.aId === me ? c.bId : c.aId);
+  for (const c of conns)
+    if (c.status === 'accepted' && (c.aId === me || c.bId === me))
+      ids.add(c.aId === me ? c.bId : c.aId);
   return ids;
 }
 export function connectionStatus(conns: Connection[], me: string, other: string) {
-  const c = conns.find((c) => (c.aId === me && c.bId === other) || (c.aId === other && c.bId === me));
+  const c = conns.find(
+    (c) => (c.aId === me && c.bId === other) || (c.aId === other && c.bId === me)
+  );
   if (!c) return 'none' as const;
   if (c.status === 'accepted') return 'connected' as const;
   return c.requestedBy === me ? ('pending_out' as const) : ('pending_in' as const);
@@ -676,7 +936,12 @@ export function tierOf(places: Placement[], owner: string, other: string): Tier 
   const p = places.find((p) => p.ownerId === owner && p.otherId === other);
   return p ? p.tier : null;
 }
-export function canSeeContent(viewer: string | null, ev: Ev, conns: Connection[], places: Placement[]) {
+export function canSeeContent(
+  viewer: string | null,
+  ev: Ev,
+  conns: Connection[],
+  places: Placement[]
+) {
   if (ev.visibility === 'public') return true;
   if (!viewer) return false;
   if (ev.creatorId === viewer) return true;
@@ -686,7 +951,12 @@ export function canSeeContent(viewer: string | null, ev: Ev, conns: Connection[]
   if (ev.visibility === 'inner') return tier === 'inner';
   return false;
 }
-export function canSeeBusy(viewer: string | null, ev: Ev, conns: Connection[], places: Placement[]) {
+export function canSeeBusy(
+  viewer: string | null,
+  ev: Ev,
+  conns: Connection[],
+  places: Placement[]
+) {
   if (canSeeContent(viewer, ev, conns, places)) return true;
   if (!viewer) return false;
   return areConnected(conns, ev.creatorId, viewer);
@@ -697,6 +967,7 @@ export function canSeeBusy(viewer: string | null, ev: Ev, conns: Connection[], p
 
 Run: `npm test`
 Expected: PASS (all visibility cases).
+
 ```bash
 git add -A && git commit -m "feat: visibility logic with full test coverage (TDD)"
 ```
@@ -704,6 +975,7 @@ git add -A && git commit -m "feat: visibility logic with full test coverage (TDD
 ### Task 2.3: Enrich + social proof + regulars
 
 **Files:**
+
 - Create: `lib/domain/enrich.ts`, `lib/domain/regulars.ts`
 - Test: `lib/domain/enrich.test.ts`, `lib/domain/regulars.test.ts`
 
@@ -717,12 +989,31 @@ const users = [
   { id: 'ed', handle: 'ed', displayName: 'Ed Shen', avatar: 'a,b' },
   { id: 'maya', handle: 'maya', displayName: 'Maya Chen', avatar: 'c,d' },
 ];
-const conns = [{ id: 'c', aId: 'ed', bId: 'maya', status: 'accepted', requestedBy: 'ed', createdAt: '' }];
-const ctx: EnrichCtx = { users: users as any, conns: conns as any, places: [], attendance: [
-  { id: 'a1', eventId: 'e1', userId: 'maya', rsvp: 'going', createdAt: '' },
-  { id: 'a2', eventId: 'e1', userId: 'ed', rsvp: 'down', createdAt: '' },
-] as any };
-const event = { id: 'e1', creatorId: 'maya', type: 'event', title: 'Wine', description: '', location: 'Ruffian', startTime: '2026-07-01T20:00:00Z', endTime: null, recurring: null, visibility: 'orbit', expiresAt: null };
+const conns = [
+  { id: 'c', aId: 'ed', bId: 'maya', status: 'accepted', requestedBy: 'ed', createdAt: '' },
+];
+const ctx: EnrichCtx = {
+  users: users as any,
+  conns: conns as any,
+  places: [],
+  attendance: [
+    { id: 'a1', eventId: 'e1', userId: 'maya', rsvp: 'going', createdAt: '' },
+    { id: 'a2', eventId: 'e1', userId: 'ed', rsvp: 'down', createdAt: '' },
+  ] as any,
+};
+const event = {
+  id: 'e1',
+  creatorId: 'maya',
+  type: 'event',
+  title: 'Wine',
+  description: '',
+  location: 'Ruffian',
+  startTime: '2026-07-01T20:00:00Z',
+  endTime: null,
+  recurring: null,
+  visibility: 'orbit',
+  expiresAt: null,
+};
 
 describe('enrich', () => {
   it('returns busy stub when content not visible', () => {
@@ -751,26 +1042,59 @@ import { ATTEND, type PublicUser } from './types';
 import { publicUser } from './helpers';
 import { canSeeContent, myConnectionIds } from './visibility';
 
-export interface EnrichCtx { users: User[]; conns: Connection[]; places: Placement[]; attendance: Attendance[]; }
+export interface EnrichCtx {
+  users: User[];
+  conns: Connection[];
+  places: Placement[];
+  attendance: Attendance[];
+}
 
 const byId = (users: User[], id: string) => users.find((u) => u.id === id) || null;
 
-export function enrich(ev: Event, viewer: string | null, ctx: EnrichCtx, opts: { detail?: boolean } = {}) {
+export function enrich(
+  ev: Event,
+  viewer: string | null,
+  ctx: EnrichCtx,
+  opts: { detail?: boolean } = {}
+) {
   if (!canSeeContent(viewer, ev, ctx.conns, ctx.places)) {
-    return { id: ev.id, type: 'busy' as const, busy: true, startTime: ev.startTime, endTime: ev.endTime, visibility: ev.visibility };
+    return {
+      id: ev.id,
+      type: 'busy' as const,
+      busy: true,
+      startTime: ev.startTime,
+      endTime: ev.endTime,
+      visibility: ev.visibility,
+    };
   }
   const att = ctx.attendance.filter((a) => a.eventId === ev.id);
   const mineIds = viewer ? myConnectionIds(ctx.conns, viewer) : new Set<string>();
   const going = att.filter((a) => ATTEND.includes(a.rsvp) && mineIds.has(a.userId));
   const out: any = {
-    id: ev.id, type: ev.type, title: ev.title, description: ev.description || '', location: ev.location || '',
-    startTime: ev.startTime, endTime: ev.endTime || null, recurring: ev.recurring || null, visibility: ev.visibility,
+    id: ev.id,
+    type: ev.type,
+    title: ev.title,
+    description: ev.description || '',
+    location: ev.location || '',
+    startTime: ev.startTime,
+    endTime: ev.endTime || null,
+    recurring: ev.recurring || null,
+    visibility: ev.visibility,
     creator: publicUser(byId(ctx.users, ev.creatorId)),
-    proof: { count: going.length, sample: going.slice(0, 3).map((a) => publicUser(byId(ctx.users, a.userId))).filter(Boolean) as PublicUser[] },
+    proof: {
+      count: going.length,
+      sample: going
+        .slice(0, 3)
+        .map((a) => publicUser(byId(ctx.users, a.userId)))
+        .filter(Boolean) as PublicUser[],
+    },
     myRsvp: viewer ? (att.find((a) => a.userId === viewer)?.rsvp ?? null) : null,
     attendeeCount: att.filter((a) => ATTEND.includes(a.rsvp)).length,
   };
-  if (opts.detail) out.attendees = att.filter((a) => ATTEND.includes(a.rsvp)).map((a) => ({ ...publicUser(byId(ctx.users, a.userId)), rsvp: a.rsvp }));
+  if (opts.detail)
+    out.attendees = att
+      .filter((a) => ATTEND.includes(a.rsvp))
+      .map((a) => ({ ...publicUser(byId(ctx.users, a.userId)), rsvp: a.rsvp }));
   return out;
 }
 export type EnrichedEvent = ReturnType<typeof enrich>;
@@ -790,15 +1114,47 @@ const users = [
   { id: 'sam', handle: 'sam', displayName: 'Sam Ortiz', avatar: 'e,f' },
 ];
 // ed co-attended 3 events with maya, 2 with sam
-const events = [1,2,3].map((n) => ({ id: 'e'+n, creatorId: 'maya', type: 'event', title: 'Climb '+n, location: 'VITAL', startTime: `2026-0${n}-01T10:00:00Z` }))
-  .concat([4,5].map((n) => ({ id: 'e'+n, creatorId: 'sam', type: 'event', title: 'Wine '+n, location: 'home', startTime: `2026-0${n}-02T20:00:00Z` })));
+const events = [1, 2, 3]
+  .map((n) => ({
+    id: 'e' + n,
+    creatorId: 'maya',
+    type: 'event',
+    title: 'Climb ' + n,
+    location: 'VITAL',
+    startTime: `2026-0${n}-01T10:00:00Z`,
+  }))
+  .concat(
+    [4, 5].map((n) => ({
+      id: 'e' + n,
+      creatorId: 'sam',
+      type: 'event',
+      title: 'Wine ' + n,
+      location: 'home',
+      startTime: `2026-0${n}-02T20:00:00Z`,
+    }))
+  );
 const attendance: any[] = [];
-for (const n of [1,2,3]) { attendance.push({ eventId: 'e'+n, userId: 'ed', rsvp: 'going' }, { eventId: 'e'+n, userId: 'maya', rsvp: 'going' }); }
-for (const n of [4,5]) { attendance.push({ eventId: 'e'+n, userId: 'ed', rsvp: 'going' }, { eventId: 'e'+n, userId: 'sam', rsvp: 'down' }); }
+for (const n of [1, 2, 3]) {
+  attendance.push(
+    { eventId: 'e' + n, userId: 'ed', rsvp: 'going' },
+    { eventId: 'e' + n, userId: 'maya', rsvp: 'going' }
+  );
+}
+for (const n of [4, 5]) {
+  attendance.push(
+    { eventId: 'e' + n, userId: 'ed', rsvp: 'going' },
+    { eventId: 'e' + n, userId: 'sam', rsvp: 'down' }
+  );
+}
 
 describe('computeRegulars', () => {
   it('splits regulars (>=3x) and rising (==2x), sorted by count', () => {
-    const { regulars, rising } = computeRegulars('ed', events as any, attendance as any, users as any);
+    const { regulars, rising } = computeRegulars(
+      'ed',
+      events as any,
+      attendance as any,
+      users as any
+    );
     expect(regulars.map((r) => r.user!.handle)).toEqual(['maya']);
     expect(regulars[0].count).toBe(3);
     expect(rising.map((r) => r.user!.handle)).toEqual(['sam']);
@@ -816,24 +1172,42 @@ import type { Attendance, Event, User } from '../db/schema';
 import { ATTEND } from './types';
 import { publicUser } from './helpers';
 
-export function computeRegulars(me: string, events: Event[], attendance: Attendance[], users: User[]) {
-  const myEventIds = attendance.filter((a) => a.userId === me && ATTEND.includes(a.rsvp)).map((a) => a.eventId);
+export function computeRegulars(
+  me: string,
+  events: Event[],
+  attendance: Attendance[],
+  users: User[]
+) {
+  const myEventIds = attendance
+    .filter((a) => a.userId === me && ATTEND.includes(a.rsvp))
+    .map((a) => a.eventId);
   const tally = new Map<string, { count: number; last: string | null; contexts: Set<string> }>();
   for (const eid of myEventIds) {
     const ev = events.find((e) => e.id === eid);
     if (!ev) continue;
     for (const a of attendance.filter((x) => x.eventId === eid)) {
       if (a.userId === me || !ATTEND.includes(a.rsvp)) continue;
-      const t = tally.get(a.userId) || { count: 0, last: null as string | null, contexts: new Set<string>() };
+      const t = tally.get(a.userId) || {
+        count: 0,
+        last: null as string | null,
+        contexts: new Set<string>(),
+      };
       t.count += 1;
       if (!t.last || new Date(ev.startTime) > new Date(t.last)) t.last = ev.startTime;
-      if (ev.location || ev.title) t.contexts.add((ev.type === 'intention' ? 'lunch' : ev.title.split(' ')[0]).toLowerCase());
+      if (ev.location || ev.title)
+        t.contexts.add((ev.type === 'intention' ? 'lunch' : ev.title.split(' ')[0]).toLowerCase());
       tally.set(a.userId, t);
     }
   }
-  const rows = [...tally.entries()].map(([id, t]) => ({
-    user: publicUser(users.find((u) => u.id === id) || null), count: t.count, last: t.last, contexts: [...t.contexts].slice(0, 3),
-  })).filter((r) => r.user).sort((a, b) => b.count - a.count || (new Date(b.last!).getTime() - new Date(a.last!).getTime()));
+  const rows = [...tally.entries()]
+    .map(([id, t]) => ({
+      user: publicUser(users.find((u) => u.id === id) || null),
+      count: t.count,
+      last: t.last,
+      contexts: [...t.contexts].slice(0, 3),
+    }))
+    .filter((r) => r.user)
+    .sort((a, b) => b.count - a.count || new Date(b.last!).getTime() - new Date(a.last!).getTime());
   return { regulars: rows.filter((r) => r.count >= 3), rising: rows.filter((r) => r.count === 2) };
 }
 ```
@@ -842,6 +1216,7 @@ export function computeRegulars(me: string, events: Event[], attendance: Attenda
 
 Run: `npm test`
 Expected: PASS (all domain suites green).
+
 ```bash
 git add -A && git commit -m "feat: enrich + regulars domain logic (TDD)"
 ```
@@ -849,6 +1224,7 @@ git add -A && git commit -m "feat: enrich + regulars domain logic (TDD)"
 ### Task 2.4: Query layer (Drizzle reads/writes)
 
 **Files:**
+
 - Create: `lib/db/queries.ts`
 
 - [ ] **Step 1: Write `lib/db/queries.ts`** — thin Drizzle helpers the RSC/actions use, returning rows the pure domain functions consume. No tests (integration-tested manually against local D1).
@@ -858,23 +1234,53 @@ import { and, eq, gte, lt, or } from 'drizzle-orm';
 import { getDb } from './index';
 import { users, connections, placements, events, attendance } from './schema';
 
-export async function getUserById(id: string) { return (await getDb().select().from(users).where(eq(users.id, id)).limit(1))[0] ?? null; }
+export async function getUserById(id: string) {
+  return (await getDb().select().from(users).where(eq(users.id, id)).limit(1))[0] ?? null;
+}
 export async function getUserByHandle(handle: string) {
-  return (await getDb().select().from(users).where(or(eq(users.handle, handle), eq(users.shareId, handle))).limit(1))[0] ?? null;
+  return (
+    (
+      await getDb()
+        .select()
+        .from(users)
+        .where(or(eq(users.handle, handle), eq(users.shareId, handle)))
+        .limit(1)
+    )[0] ?? null
+  );
 }
-export async function getAllUsers() { return getDb().select().from(users); }
-export async function getAllConnections() { return getDb().select().from(connections); }
-export async function getAllPlacements() { return getDb().select().from(placements); }
-export async function getAllAttendance() { return getDb().select().from(attendance); }
+export async function getAllUsers() {
+  return getDb().select().from(users);
+}
+export async function getAllConnections() {
+  return getDb().select().from(connections);
+}
+export async function getAllPlacements() {
+  return getDb().select().from(placements);
+}
+export async function getAllAttendance() {
+  return getDb().select().from(attendance);
+}
 export async function getEventsBetween(startISO: string, endISO: string) {
-  return getDb().select().from(events).where(and(gte(events.startTime, startISO), lt(events.startTime, endISO)));
+  return getDb()
+    .select()
+    .from(events)
+    .where(and(gte(events.startTime, startISO), lt(events.startTime, endISO)));
 }
-export async function getEventById(id: string) { return (await getDb().select().from(events).where(eq(events.id, id)).limit(1))[0] ?? null; }
-export async function getEventsByCreator(creatorId: string) { return getDb().select().from(events).where(eq(events.creatorId, creatorId)); }
+export async function getEventById(id: string) {
+  return (await getDb().select().from(events).where(eq(events.id, id)).limit(1))[0] ?? null;
+}
+export async function getEventsByCreator(creatorId: string) {
+  return getDb().select().from(events).where(eq(events.creatorId, creatorId));
+}
 
 // A bundle the domain layer needs for visibility/enrich across a set of events.
 export async function getGraphContext() {
-  const [u, c, p, a] = await Promise.all([getAllUsers(), getAllConnections(), getAllPlacements(), getAllAttendance()]);
+  const [u, c, p, a] = await Promise.all([
+    getAllUsers(),
+    getAllConnections(),
+    getAllPlacements(),
+    getAllAttendance(),
+  ]);
   return { users: u, conns: c, places: p, attendance: a };
 }
 ```
@@ -892,6 +1298,7 @@ git add -A && git commit -m "feat: Drizzle query layer"
 ### Task 3.1: Password hashing (TDD) + run the seed
 
 **Files:**
+
 - Create: `lib/auth/password.ts`
 - Test: `lib/auth/password.test.ts`
 
@@ -919,7 +1326,10 @@ describe('password', () => {
 import { scrypt } from '@noble/hashes/scrypt';
 import { randomBytes } from '@noble/hashes/utils';
 
-const N = 2 ** 15, r = 8, p = 1, dkLen = 32;
+const N = 2 ** 15,
+  r = 8,
+  p = 1,
+  dkLen = 32;
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 const enc = (s: string) => new TextEncoder().encode(s);
@@ -933,9 +1343,11 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const [saltB64, hashB64] = stored.split('$');
   if (!saltB64 || !hashB64) return false;
   const hash = scrypt(enc(password), unb64(saltB64), { N, r, p, dkLen });
-  const a = b64(hash), b = hashB64;
+  const a = b64(hash),
+    b = hashB64;
   if (a.length !== b.length) return false;
-  let diff = 0; for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
 ```
@@ -956,6 +1368,7 @@ Expected: "Wrote drizzle/seed.sql …" then wrangler reports rows inserted (8 us
 ### Task 3.2: Session + middleware + auth actions
 
 **Files:**
+
 - Create: `lib/auth/session.ts`, `middleware.ts`, `lib/actions/auth.ts`
 
 - [ ] **Step 1: Write `lib/auth/session.ts`**
@@ -964,13 +1377,20 @@ Expected: "Wrote drizzle/seed.sql …" then wrangler reports rows inserted (8 us
 import { getIronSession } from 'iron-session';
 import { cookies } from 'next/headers';
 
-export interface SessionData { userId?: string; handle?: string; }
+export interface SessionData {
+  userId?: string;
+  handle?: string;
+}
 
 export async function getSession() {
   return getIronSession<SessionData>(await cookies(), {
     password: process.env.SESSION_SECRET!,
     cookieName: 'orbit_session',
-    cookieOptions: { secure: process.env.NODE_ENV === 'production', httpOnly: true, sameSite: 'lax' },
+    cookieOptions: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+    },
   });
 }
 export async function requireUserId(): Promise<string> {
@@ -998,7 +1418,17 @@ export function middleware(req: NextRequest) {
   }
   return NextResponse.next();
 }
-export const config = { matcher: ['/discover/:path*', '/plans/:path*', '/regulars/:path*', '/you/:path*', '/circles/:path*', '/login', '/register'] };
+export const config = {
+  matcher: [
+    '/discover/:path*',
+    '/plans/:path*',
+    '/regulars/:path*',
+    '/you/:path*',
+    '/circles/:path*',
+    '/login',
+    '/register',
+  ],
+};
 ```
 
 - [ ] **Step 3: Write `lib/actions/auth.ts`** (server actions; ports `server/index.js:160-198`)
@@ -1013,14 +1443,22 @@ import { hashPassword, verifyPassword } from '../auth/password';
 import { getSession } from '../auth/session';
 import { avatarFor } from '../domain/helpers';
 
-function toHandle(s: string) { return String(s || '').toLowerCase().replace(/[^a-z0-9_]/g, ''); }
+function toHandle(s: string) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '');
+}
 
 export async function login(_prev: unknown, form: FormData) {
   const handle = toHandle(String(form.get('username')));
   const password = String(form.get('password') || '');
   const u = (await getDb().select().from(users).where(eq(users.handle, handle)).limit(1))[0];
-  if (!u || !(await verifyPassword(password, u.passwordHash))) return { error: 'Invalid credentials' };
-  const s = await getSession(); s.userId = u.id; s.handle = u.handle; await s.save();
+  if (!u || !(await verifyPassword(password, u.passwordHash)))
+    return { error: 'Invalid credentials' };
+  const s = await getSession();
+  s.userId = u.id;
+  s.handle = u.handle;
+  await s.save();
   redirect('/discover');
 }
 
@@ -1032,16 +1470,30 @@ export async function register(_prev: unknown, form: FormData) {
   const exists = (await getDb().select().from(users).where(eq(users.handle, handle)).limit(1))[0];
   if (exists) return { error: 'Username taken' };
   const id = crypto.randomUUID();
-  await getDb().insert(users).values({
-    id, handle, displayName, passwordHash: await hashPassword(password), bio: '', scenes: [],
-    avatar: avatarFor(handle), shareId: crypto.randomUUID().slice(0, 8), ghost: false, createdAt: new Date().toISOString(),
-  });
-  const s = await getSession(); s.userId = id; s.handle = handle; await s.save();
+  await getDb()
+    .insert(users)
+    .values({
+      id,
+      handle,
+      displayName,
+      passwordHash: await hashPassword(password),
+      bio: '',
+      scenes: [],
+      avatar: avatarFor(handle),
+      shareId: crypto.randomUUID().slice(0, 8),
+      ghost: false,
+      createdAt: new Date().toISOString(),
+    });
+  const s = await getSession();
+  s.userId = id;
+  s.handle = handle;
+  await s.save();
   redirect('/discover');
 }
 
 export async function logout() {
-  const s = await getSession(); s.destroy();
+  const s = await getSession();
+  s.destroy();
   redirect('/login');
 }
 ```
@@ -1055,6 +1507,7 @@ git add -A && git commit -m "feat: iron-session sessions, middleware guard, auth
 ### Task 3.3: Auth screens
 
 **Files:**
+
 - Create: `app/(auth)/layout.tsx`, `app/(auth)/login/page.tsx`, `app/(auth)/register/page.tsx`, `components/AuthForm.tsx`
 - Modify: `app/page.tsx` (redirect based on session)
 
@@ -1091,17 +1544,50 @@ export default function AuthForm({ mode, action }: { mode: 'login' | 'register';
   const reg = mode === 'register';
   return (
     <form action={formAction}>
-      <div className="logo"><span className="mark" /> Orbit</div>
+      <div className="logo">
+        <span className="mark" /> Orbit
+      </div>
       <p className="tag">Your social calendar is your profile.</p>
-      <div className="field"><label>Username</label><input name="username" type="text" autoCapitalize="off" placeholder="ed" /></div>
-      {reg && <div className="field"><label>Display name</label><input name="displayName" type="text" placeholder="Ed Shen" /></div>}
-      <div className="field"><label>Password</label><input name="password" type="password" placeholder="••••••••" /></div>
-      <button className="btn solid block" disabled={pending}>{reg ? 'Create account' : 'Log in'}</button>
+      <div className="field">
+        <label>Username</label>
+        <input name="username" type="text" autoCapitalize="off" placeholder="ed" />
+      </div>
+      {reg && (
+        <div className="field">
+          <label>Display name</label>
+          <input name="displayName" type="text" placeholder="Ed Shen" />
+        </div>
+      )}
+      <div className="field">
+        <label>Password</label>
+        <input name="password" type="password" placeholder="••••••••" />
+      </div>
+      <button className="btn solid block" disabled={pending}>
+        {reg ? 'Create account' : 'Log in'}
+      </button>
       {state?.error && <div className="error">{state.error}</div>}
       <div className="toggle-link">
-        {reg ? <>Have an account? <Link href="/login"><b>Log in</b></Link></> : <>New here? <Link href="/register"><b>Create account</b></Link></>}
+        {reg ? (
+          <>
+            Have an account?{' '}
+            <Link href="/login">
+              <b>Log in</b>
+            </Link>
+          </>
+        ) : (
+          <>
+            New here?{' '}
+            <Link href="/register">
+              <b>Create account</b>
+            </Link>
+          </>
+        )}
       </div>
-      {!reg && <div className="toggle-link faint" style={{ marginTop: 22 }}>demo · <b>ed</b> / <b>orbit</b></div>}
+      {!reg && (
+        <div className="toggle-link faint" style={{ marginTop: 22 }}>
+          demo · <b>ed</b> / <b>orbit</b>
+        </div>
+      )}
     </form>
   );
 }
@@ -1113,13 +1599,18 @@ export default function AuthForm({ mode, action }: { mode: 'login' | 'register';
 // app/(auth)/login/page.tsx
 import AuthForm from '@/components/AuthForm';
 import { login } from '@/lib/actions/auth';
-export default function LoginPage() { return <AuthForm mode="login" action={login} />; }
+export default function LoginPage() {
+  return <AuthForm mode="login" action={login} />;
+}
 ```
+
 ```tsx
 // app/(auth)/register/page.tsx
 import AuthForm from '@/components/AuthForm';
 import { register } from '@/lib/actions/auth';
-export default function RegisterPage() { return <AuthForm mode="register" action={register} />; }
+export default function RegisterPage() {
+  return <AuthForm mode="register" action={register} />;
+}
 ```
 
 - [ ] **Step 5: Verify login end-to-end** (requires globals.css from M4 for full styling, but flow works now)
@@ -1140,6 +1631,7 @@ git add -A && git commit -m "feat: login/register screens wired to auth actions"
 ### Task 4.1: Port the design system to globals.css
 
 **Files:**
+
 - Modify: `app/globals.css`
 
 - [ ] **Step 1: Copy `public/orbit.css` content into `app/globals.css` verbatim**, then apply these adaptations:
@@ -1149,9 +1641,19 @@ git add -A && git commit -m "feat: login/register screens wired to auth actions"
 
 ```css
 /* smooth cross-screen + theme transitions */
-@view-transition { navigation: auto; }
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; }
-@media (prefers-reduced-motion: reduce) { ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.22s;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
 ```
 
 - [ ] **Step 2: Verify the auth screen now renders styled**
@@ -1168,25 +1670,90 @@ git add -A && git commit -m "feat: port Orbit design system to globals.css"
 ### Task 4.2: Primitive components
 
 **Files:**
+
 - Create: `components/primitives/Icon.tsx`, `Avatar.tsx`, `AvatarStack.tsx`, `Pill.tsx`, `Segmented.tsx`, `Sheet.tsx`
 
 - [ ] **Step 1: Write `components/primitives/Icon.tsx`** — port the `I` SVG map from `public/app.js:26-40` into a typed component.
 
 ```tsx
 const PATHS: Record<string, React.ReactNode> = {
-  discover: <><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none" /></>,
-  plans: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18M8 3v4M16 3v4" /></>,
+  discover: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  plans: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 9h18M8 3v4M16 3v4" />
+    </>
+  ),
   create: <path d="M12 5v14M5 12h14" />,
-  regulars: <><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" /><ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)" /><circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none" /></>,
-  you: <><circle cx="12" cy="8" r="3.6" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
-  free: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-  standing: <><path d="M17 3l3 3-3 3" /><path d="M20 6H8a4 4 0 0 0-4 4" /><path d="M7 21l-3-3 3-3" /><path d="M4 18h12a4 4 0 0 0 4-4" /></>,
-  event: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 9h18M8 3v4M16 3v4" /></>,
-  scene: <><circle cx="12" cy="12" r="3" /><ellipse cx="12" cy="12" rx="10" ry="4.5" /></>,
-  inner: <><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>,
-  orbit: <><circle cx="9" cy="8" r="3" /><path d="M3 19a6 6 0 0 1 12 0" /><path d="M16 6.5a3 3 0 0 1 0 5.5M21 19a6 6 0 0 0-4-5.6" /></>,
-  public: <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" /></>,
-  link: <><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" /></>,
+  regulars: (
+    <>
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+      <ellipse cx="12" cy="12" rx="9.5" ry="4.5" transform="rotate(-22 12 12)" />
+      <circle cx="20" cy="8.5" r="1.6" fill="currentColor" stroke="none" />
+    </>
+  ),
+  you: (
+    <>
+      <circle cx="12" cy="8" r="3.6" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </>
+  ),
+  free: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  standing: (
+    <>
+      <path d="M17 3l3 3-3 3" />
+      <path d="M20 6H8a4 4 0 0 0-4 4" />
+      <path d="M7 21l-3-3 3-3" />
+      <path d="M4 18h12a4 4 0 0 0 4-4" />
+    </>
+  ),
+  event: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 9h18M8 3v4M16 3v4" />
+    </>
+  ),
+  scene: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <ellipse cx="12" cy="12" rx="10" ry="4.5" />
+    </>
+  ),
+  inner: (
+    <>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </>
+  ),
+  orbit: (
+    <>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 19a6 6 0 0 1 12 0" />
+      <path d="M16 6.5a3 3 0 0 1 0 5.5M21 19a6 6 0 0 0-4-5.6" />
+    </>
+  ),
+  public: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" />
+    </>
+  ),
+  link: (
+    <>
+      <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
+      <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
+    </>
+  ),
 };
 export type IconName = keyof typeof PATHS;
 export default function Icon({ name }: { name: IconName }) {
@@ -1199,16 +1766,38 @@ export default function Icon({ name }: { name: IconName }) {
 ```tsx
 // components/primitives/Avatar.tsx
 import type { PublicUser } from '@/lib/domain/types';
-export default function Avatar({ user, size = 'sm', className = '' }: { user: PublicUser; size?: 'sm' | 'lg' | 'xl'; className?: string }) {
-  return <span className={`av ${size} ${className}`} style={{ background: `linear-gradient(135deg,${user.avatar})` }}>{user.initials}</span>;
+export default function Avatar({
+  user,
+  size = 'sm',
+  className = '',
+}: {
+  user: PublicUser;
+  size?: 'sm' | 'lg' | 'xl';
+  className?: string;
+}) {
+  return (
+    <span
+      className={`av ${size} ${className}`}
+      style={{ background: `linear-gradient(135deg,${user.avatar})` }}
+    >
+      {user.initials}
+    </span>
+  );
 }
 ```
+
 ```tsx
 // components/primitives/AvatarStack.tsx
 import type { PublicUser } from '@/lib/domain/types';
 import Avatar from './Avatar';
 export default function AvatarStack({ users }: { users: PublicUser[] }) {
-  return <div className="stack">{users.map((u) => <Avatar key={u.id} user={u} />)}</div>;
+  return (
+    <div className="stack">
+      {users.map((u) => (
+        <Avatar key={u.id} user={u} />
+      ))}
+    </div>
+  );
 }
 ```
 
@@ -1216,11 +1805,34 @@ export default function AvatarStack({ users }: { users: PublicUser[] }) {
 
 ```tsx
 import Icon, { type IconName } from './Icon';
-const PILL: Record<string, [IconName, string]> = { intention: ['free', 'Free'], plan: ['standing', 'Plan'], event: ['event', 'Event'], scene: ['scene', 'Scene'], busy: ['event', 'Busy'] };
-export function typeClass(t: string) { return ({ intention: 'free', plan: 'standing', event: 'event', scene: 'scene', busy: 'busy' } as Record<string, string>)[t] || 'event'; }
+const PILL: Record<string, [IconName, string]> = {
+  intention: ['free', 'Free'],
+  plan: ['standing', 'Plan'],
+  event: ['event', 'Event'],
+  scene: ['scene', 'Scene'],
+  busy: ['event', 'Busy'],
+};
+export function typeClass(t: string) {
+  return (
+    (
+      {
+        intention: 'free',
+        plan: 'standing',
+        event: 'event',
+        scene: 'scene',
+        busy: 'busy',
+      } as Record<string, string>
+    )[t] || 'event'
+  );
+}
 export default function Pill({ type, recurring }: { type: string; recurring?: boolean }) {
   const [icon, label] = PILL[type] || PILL.event;
-  return <span className={`pill ${typeClass(type)}`}><Icon name={icon} /> {label}{recurring ? ' ·↻' : ''}</span>;
+  return (
+    <span className={`pill ${typeClass(type)}`}>
+      <Icon name={icon} /> {label}
+      {recurring ? ' ·↻' : ''}
+    </span>
+  );
 }
 ```
 
@@ -1228,10 +1840,28 @@ export default function Pill({ type, recurring }: { type: string; recurring?: bo
 
 ```tsx
 'use client';
-export default function Segmented({ options, value, onChange, width }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void; width?: number }) {
+export default function Segmented({
+  options,
+  value,
+  onChange,
+  width,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+  width?: number;
+}) {
   return (
     <div className="seg" style={width ? { margin: 0, width } : undefined}>
-      {options.map((o) => <button key={o.value} className={value === o.value ? 'on' : ''} onClick={() => onChange(o.value)}>{o.label}</button>)}
+      {options.map((o) => (
+        <button
+          key={o.value}
+          className={value === o.value ? 'on' : ''}
+          onClick={() => onChange(o.value)}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -1242,12 +1872,23 @@ export default function Segmented({ options, value, onChange, width }: { options
 ```tsx
 'use client';
 import { Dialog } from '@base-ui-components/react/dialog';
-export default function Sheet({ open, onOpenChange, children }: { open: boolean; onOpenChange: (o: boolean) => void; children: React.ReactNode }) {
+export default function Sheet({
+  open,
+  onOpenChange,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  children: React.ReactNode;
+}) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop className="scrim" />
-        <Dialog.Popup className="sheet"><div className="grab" />{children}</Dialog.Popup>
+        <Dialog.Popup className="sheet">
+          <div className="grab" />
+          {children}
+        </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
   );
@@ -1263,6 +1904,7 @@ git add -A && git commit -m "feat: primitive components (Icon, Avatar, Pill, Seg
 ### Task 4.3: App shell + tab bar
 
 **Files:**
+
 - Create: `app/(app)/layout.tsx`, `components/TabBar.tsx`, `components/CreateButton.tsx`
 
 - [ ] **Step 1: Write `components/TabBar.tsx`** (client; ports `navHTML()` `public/app.js:45-48`; highlights active route)
@@ -1284,13 +1926,24 @@ export default function TabBar() {
   const path = usePathname();
   return (
     <nav className="nav">
-      {TABS.slice(0, 2).map((t) => <Link key={t.href} href={t.href} className={path.startsWith(t.href) ? 'on' : ''}><Icon name={t.icon} />{t.label}</Link>)}
+      {TABS.slice(0, 2).map((t) => (
+        <Link key={t.href} href={t.href} className={path.startsWith(t.href) ? 'on' : ''}>
+          <Icon name={t.icon} />
+          {t.label}
+        </Link>
+      ))}
       <CreateButton />
-      {TABS.slice(2).map((t) => <Link key={t.href} href={t.href} className={path.startsWith(t.href) ? 'on' : ''}><Icon name={t.icon} />{t.label}</Link>)}
+      {TABS.slice(2).map((t) => (
+        <Link key={t.href} href={t.href} className={path.startsWith(t.href) ? 'on' : ''}>
+          <Icon name={t.icon} />
+          {t.label}
+        </Link>
+      ))}
     </nav>
   );
 }
 ```
+
 (Note: `<Link>` renders an anchor; `.nav button` styles also apply to `.nav a` — add `a` to those selectors in globals.css: change `.nav button` → `.nav button,.nav a`.)
 
 - [ ] **Step 2: Write `components/CreateButton.tsx`** (opens the CreateSheet built in Task 5.7; stub `onClick` until then)
@@ -1302,7 +1955,16 @@ import Icon from './primitives/Icon';
 import CreateSheet from './CreateSheet';
 export default function CreateButton() {
   const [open, setOpen] = useState(false);
-  return (<><button onClick={() => setOpen(true)}><span className="create"><Icon name="create" /></span></button><CreateSheet open={open} onOpenChange={setOpen} /></>);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>
+        <span className="create">
+          <Icon name="create" />
+        </span>
+      </button>
+      <CreateSheet open={open} onOpenChange={setOpen} />
+    </>
+  );
 }
 ```
 
@@ -1315,7 +1977,14 @@ import TabBar from '@/components/TabBar';
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const s = await getSession();
   if (!s.userId) redirect('/login');
-  return (<><div className="shell"><div className="main">{children}</div></div><TabBar /></>);
+  return (
+    <>
+      <div className="shell">
+        <div className="main">{children}</div>
+      </div>
+      <TabBar />
+    </>
+  );
 }
 ```
 
@@ -1334,6 +2003,7 @@ Each screen is a Server Component that loads data via `lib/db/queries` + domain 
 ### Task 5.1: Events server actions + RsvpButtons
 
 **Files:**
+
 - Create: `lib/actions/events.ts`, `components/RsvpButtons.tsx`
 
 - [ ] **Step 1: Write `lib/actions/events.ts`** (ports create/rsvp/delete `server/index.js:262-308`; **throws on failure** so `useOptimistic` rolls back)
@@ -1349,22 +2019,48 @@ import { getEventById, getAllConnections, getAllPlacements } from '../db/queries
 import { canSeeContent } from '../domain/visibility';
 import { EVENT_TYPES } from '../domain/types';
 
-export async function createEvent(input: { type: string; title: string; location?: string; startTime: string; endTime?: string | null; recurring?: 'weekly' | null; visibility: string; expiresAt?: string | null; }) {
+export async function createEvent(input: {
+  type: string;
+  title: string;
+  location?: string;
+  startTime: string;
+  endTime?: string | null;
+  recurring?: 'weekly' | null;
+  visibility: string;
+  expiresAt?: string | null;
+}) {
   const uid = await requireUserId();
   if (!input.title || !input.startTime) throw new Error('Title and start time required');
-  const id = crypto.randomUUID(); const nowISO = new Date().toISOString();
-  await getDb().insert(events).values({
-    id, creatorId: uid,
-    type: (EVENT_TYPES as string[]).includes(input.type) ? (input.type as any) : 'event',
-    title: input.title, description: '', location: input.location || '',
-    startTime: new Date(input.startTime).toISOString(),
-    endTime: input.endTime ? new Date(input.endTime).toISOString() : null,
-    recurring: input.recurring || null,
-    visibility: (['inner','orbit','public'].includes(input.visibility) ? input.visibility : 'inner') as any,
-    expiresAt: input.expiresAt ? new Date(input.expiresAt).toISOString() : null, createdAt: nowISO,
+  const id = crypto.randomUUID();
+  const nowISO = new Date().toISOString();
+  await getDb()
+    .insert(events)
+    .values({
+      id,
+      creatorId: uid,
+      type: (EVENT_TYPES as string[]).includes(input.type) ? (input.type as any) : 'event',
+      title: input.title,
+      description: '',
+      location: input.location || '',
+      startTime: new Date(input.startTime).toISOString(),
+      endTime: input.endTime ? new Date(input.endTime).toISOString() : null,
+      recurring: input.recurring || null,
+      visibility: (['inner', 'orbit', 'public'].includes(input.visibility)
+        ? input.visibility
+        : 'inner') as any,
+      expiresAt: input.expiresAt ? new Date(input.expiresAt).toISOString() : null,
+      createdAt: nowISO,
+    });
+  await getDb().insert(attendance).values({
+    id: crypto.randomUUID(),
+    eventId: id,
+    userId: uid,
+    rsvp: 'going',
+    createdAt: nowISO,
   });
-  await getDb().insert(attendance).values({ id: crypto.randomUUID(), eventId: id, userId: uid, rsvp: 'going', createdAt: nowISO });
-  revalidatePath('/plans'); revalidatePath('/discover'); return { id };
+  revalidatePath('/plans');
+  revalidatePath('/discover');
+  return { id };
 }
 
 export async function setRsvp(eventId: string, rsvp: 'going' | 'down' | 'maybe' | 'cant') {
@@ -1373,10 +2069,25 @@ export async function setRsvp(eventId: string, rsvp: 'going' | 'down' | 'maybe' 
   if (!ev) throw new Error('Not found');
   const [conns, places] = [await getAllConnections(), await getAllPlacements()];
   if (!canSeeContent(uid, ev, conns, places)) throw new Error('Private');
-  const existing = (await getDb().select().from(attendance).where(and(eq(attendance.eventId, eventId), eq(attendance.userId, uid))).limit(1))[0];
-  if (existing) await getDb().update(attendance).set({ rsvp }).where(eq(attendance.id, existing.id));
-  else await getDb().insert(attendance).values({ id: crypto.randomUUID(), eventId, userId: uid, rsvp, createdAt: new Date().toISOString() });
-  revalidatePath('/discover'); revalidatePath('/plans');
+  const existing = (
+    await getDb()
+      .select()
+      .from(attendance)
+      .where(and(eq(attendance.eventId, eventId), eq(attendance.userId, uid)))
+      .limit(1)
+  )[0];
+  if (existing)
+    await getDb().update(attendance).set({ rsvp }).where(eq(attendance.id, existing.id));
+  else
+    await getDb().insert(attendance).values({
+      id: crypto.randomUUID(),
+      eventId,
+      userId: uid,
+      rsvp,
+      createdAt: new Date().toISOString(),
+    });
+  revalidatePath('/discover');
+  revalidatePath('/plans');
 }
 
 export async function deleteEvent(eventId: string) {
@@ -1395,15 +2106,35 @@ export async function deleteEvent(eventId: string) {
 'use client';
 import { useOptimistic, useTransition } from 'react';
 import { setRsvp } from '@/lib/actions/events';
-const OPTS: { v: 'down' | 'maybe' | 'cant'; label: string }[] = [{ v: 'down', label: "I'm down" }, { v: 'maybe', label: 'Maybe' }, { v: 'cant', label: "Can't" }];
-export default function RsvpButtons({ eventId, myRsvp }: { eventId: string; myRsvp: string | null }) {
+const OPTS: { v: 'down' | 'maybe' | 'cant'; label: string }[] = [
+  { v: 'down', label: "I'm down" },
+  { v: 'maybe', label: 'Maybe' },
+  { v: 'cant', label: "Can't" },
+];
+export default function RsvpButtons({
+  eventId,
+  myRsvp,
+}: {
+  eventId: string;
+  myRsvp: string | null;
+}) {
   const [optimistic, setOptimistic] = useOptimistic(myRsvp);
   const [, startTransition] = useTransition();
   return (
     <div className="row" style={{ gap: 6, marginLeft: 'auto' }}>
       {OPTS.map(({ v, label }) => (
-        <button key={v} className={`btn sm ${optimistic === v ? (v === 'cant' ? '' : 'in') : ''}`}
-          onClick={() => startTransition(async () => { setOptimistic(v); await setRsvp(eventId, v); })}>{label}</button>
+        <button
+          key={v}
+          className={`btn sm ${optimistic === v ? (v === 'cant' ? '' : 'in') : ''}`}
+          onClick={() =>
+            startTransition(async () => {
+              setOptimistic(v);
+              await setRsvp(eventId, v);
+            })
+          }
+        >
+          {label}
+        </button>
       ))}
     </div>
   );
@@ -1419,14 +2150,20 @@ git add -A && git commit -m "feat: event actions + optimistic RSVP buttons"
 ### Task 5.2: EventCard + Discover screen
 
 **Files:**
+
 - Create: `components/EventCard.tsx`, `lib/format.ts`, `app/(app)/discover/page.tsx`, `components/DiscoverClient.tsx`
 
 - [ ] **Step 1: Write `lib/format.ts`** (ports `timeLabel`/`dayLabel`/`relTime` from `public/app.js:17-24,252-255`)
 
 ```ts
-export const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+export const timeLabel = (iso: string) =>
+  new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 export function dayLabel(iso: string) {
-  const day = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
+  const day = (d: Date) => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x.getTime();
+  };
   const diff = Math.round((day(new Date(iso)) - day(new Date())) / 864e5);
   const wd = new Date(iso).toLocaleDateString('en-US', { weekday: 'short' });
   if (diff === 0) return 'Today · ' + wd;
@@ -1435,7 +2172,10 @@ export function dayLabel(iso: string) {
 }
 export function relTime(iso: string) {
   const days = Math.round((Date.now() - new Date(iso).getTime()) / 864e5);
-  if (days <= 0) return 'today'; if (days === 1) return 'yesterday'; if (days < 14) return days + 'd ago'; return Math.round(days / 7) + 'w ago';
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 14) return days + 'd ago';
+  return Math.round(days / 7) + 'w ago';
 }
 ```
 
@@ -1449,20 +2189,56 @@ import Avatar from './primitives/Avatar';
 import RsvpButtons from './RsvpButtons';
 
 export default function EventCard({ ev, meId }: { ev: any; meId: string }) {
-  if (ev.busy) return (
-    <div className="card"><div className="row between"><Pill type="busy" /><span className="meta">{timeLabel(ev.startTime)}</span></div>
-      <div className="ev-title faint" style={{ marginBottom: 0 }}>A friend is busy</div></div>
+  if (ev.busy)
+    return (
+      <div className="card">
+        <div className="row between">
+          <Pill type="busy" />
+          <span className="meta">{timeLabel(ev.startTime)}</span>
+        </div>
+        <div className="ev-title faint" style={{ marginBottom: 0 }}>
+          A friend is busy
+        </div>
+      </div>
+    );
+  const proof = ev.proof?.count ? (
+    <div className="proof">
+      <div className="stack">
+        {ev.proof.sample.map((u: any) => (
+          <Avatar key={u.id} user={u} />
+        ))}
+      </div>
+      <span>{ev.proof.count} going</span>
+    </div>
+  ) : (
+    <div className="proof">
+      <span className="faint">be the first in</span>
+    </div>
   );
-  const proof = ev.proof?.count
-    ? <div className="proof"><div className="stack">{ev.proof.sample.map((u: any) => <Avatar key={u.id} user={u} />)}</div><span>{ev.proof.count} going</span></div>
-    : <div className="proof"><span className="faint">be the first in</span></div>;
   return (
     <div className="card">
-      <div className="row between"><Pill type={ev.type} recurring={!!ev.recurring} /><span className="meta">{timeLabel(ev.startTime)}</span></div>
+      <div className="row between">
+        <Pill type={ev.type} recurring={!!ev.recurring} />
+        <span className="meta">{timeLabel(ev.startTime)}</span>
+      </div>
       <div className="ev-title">{ev.title}</div>
-      <div className="meta">{ev.creator.displayName}{ev.location && <><span className="dot" />{ev.location}</>}</div>
-      <div className="row between" style={{ marginTop: 12 }}>{proof}
-        {ev.creator.id === meId ? <span className="btn sm in">Hosting</span> : <RsvpButtons eventId={ev.id} myRsvp={ev.myRsvp} />}</div>
+      <div className="meta">
+        {ev.creator.displayName}
+        {ev.location && (
+          <>
+            <span className="dot" />
+            {ev.location}
+          </>
+        )}
+      </div>
+      <div className="row between" style={{ marginTop: 12 }}>
+        {proof}
+        {ev.creator.id === meId ? (
+          <span className="btn sm in">Hosting</span>
+        ) : (
+          <RsvpButtons eventId={ev.id} myRsvp={ev.myRsvp} />
+        )}
+      </div>
     </div>
   );
 }
@@ -1481,11 +2257,18 @@ import DiscoverClient from '@/components/DiscoverClient';
 export default async function DiscoverPage() {
   const meId = (await getSession()).userId!;
   const ctx = await getGraphContext();
-  const from = startOfToday(); const to = new Date(from); to.setDate(to.getDate() + 7);
+  const from = startOfToday();
+  const to = new Date(from);
+  to.setDate(to.getDate() + 7);
   const conns = myConnectionIds(ctx.conns, meId);
   const all = await getEventsBetween(from.toISOString(), to.toISOString());
   const events = all
-    .filter((ev) => notExpired(ev) && (ev.creatorId === meId || conns.has(ev.creatorId) || ev.visibility === 'public') && canSeeContent(meId, ev, ctx.conns, ctx.places))
+    .filter(
+      (ev) =>
+        notExpired(ev) &&
+        (ev.creatorId === meId || conns.has(ev.creatorId) || ev.visibility === 'public') &&
+        canSeeContent(meId, ev, ctx.conns, ctx.places)
+    )
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
     .map((ev) => enrich(ev, meId, ctx));
   return <DiscoverClient events={events} meId={meId} />;
@@ -1503,18 +2286,76 @@ import WeekGrid from './WeekGrid';
 import MonthGrid from './MonthGrid';
 import { dayLabel } from '@/lib/format';
 
-export default function DiscoverClient({ events, meId, week, month }: { events: any[]; meId: string; week?: any; month?: any }) {
+export default function DiscoverClient({
+  events,
+  meId,
+  week,
+  month,
+}: {
+  events: any[];
+  meId: string;
+  week?: any;
+  month?: any;
+}) {
   const [view, setView] = useState('discover');
-  const seg = <Segmented options={[{ value: 'discover', label: 'Discover' }, { value: 'week', label: 'Week' }, { value: 'month', label: 'Month' }]} value={view} onChange={setView} />;
-  if (view === 'week') return <>{seg}<WeekGrid {...week} /></>;
-  if (view === 'month') return <>{seg}<MonthGrid {...month} /></>;
+  const seg = (
+    <Segmented
+      options={[
+        { value: 'discover', label: 'Discover' },
+        { value: 'week', label: 'Week' },
+        { value: 'month', label: 'Month' },
+      ]}
+      value={view}
+      onChange={setView}
+    />
+  );
+  if (view === 'week')
+    return (
+      <>
+        {seg}
+        <WeekGrid {...week} />
+      </>
+    );
+  if (view === 'month')
+    return (
+      <>
+        {seg}
+        <MonthGrid {...month} />
+      </>
+    );
   let last = '';
   return (
     <>
-      <div className="topbar"><div><div className="kicker">Discover</div><div className="h-title">This week</div></div></div>
+      <div className="topbar">
+        <div>
+          <div className="kicker">Discover</div>
+          <div className="h-title">This week</div>
+        </div>
+      </div>
       {seg}
-      {events.length === 0 && <div className="empty">Nothing on the radar this week.<br />Tap ＋ to start something.</div>}
-      {events.map((ev) => { const dl = dayLabel(ev.startTime); const head = dl !== last ? <div className="daylabel" key={'d' + ev.id}>{dl}</div> : null; last = dl; return <div key={ev.id}>{head}<EventCard ev={ev} meId={meId} /></div>; })}
+      {events.length === 0 && (
+        <div className="empty">
+          Nothing on the radar this week.
+          <br />
+          Tap ＋ to start something.
+        </div>
+      )}
+      {events.map((ev) => {
+        const dl = dayLabel(ev.startTime);
+        const head =
+          dl !== last ? (
+            <div className="daylabel" key={'d' + ev.id}>
+              {dl}
+            </div>
+          ) : null;
+        last = dl;
+        return (
+          <div key={ev.id}>
+            {head}
+            <EventCard ev={ev} meId={meId} />
+          </div>
+        );
+      })}
       {events.length > 0 && <div className="footnote">— that's your week —</div>}
     </>
   );
@@ -1535,6 +2376,7 @@ git add -A && git commit -m "feat: Discover screen (EventCard, optimistic RSVP, 
 ### Task 5.3: Week + Month grids + calendar data
 
 **Files:**
+
 - Create: `components/WeekGrid.tsx`, `components/MonthGrid.tsx`, `lib/calendar.ts`
 - Modify: `app/(app)/discover/page.tsx` (also load calendar windows for week/month)
 
@@ -1550,7 +2392,12 @@ export async function calendarWindow(meId: string, startISO: string, endISO: str
   const conns = myConnectionIds(ctx.conns, meId);
   const all = await getEventsBetween(startISO, endISO);
   return all
-    .filter((ev) => ev.creatorId === meId || ev.visibility === 'public' || (conns.has(ev.creatorId) && canSeeBusy(meId, ev, ctx.conns, ctx.places)))
+    .filter(
+      (ev) =>
+        ev.creatorId === meId ||
+        ev.visibility === 'public' ||
+        (conns.has(ev.creatorId) && canSeeBusy(meId, ev, ctx.conns, ctx.places))
+    )
     .map((ev) => enrich(ev, meId, ctx))
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 }
@@ -1565,11 +2412,26 @@ export async function calendarWindow(meId: string, startISO: string, endISO: str
 ```ts
 // add near the top of DiscoverPage, after meId:
 import { calendarWindow } from '@/lib/calendar';
-const mondayOf = (d: Date) => { const x = startOfToday(d); const wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); return x; };
-const ws = mondayOf(new Date()); const we = new Date(ws); we.setDate(we.getDate() + 7);
-const now = new Date(); const mFirst = new Date(now.getFullYear(), now.getMonth(), 1); const mNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-const week = { events: await calendarWindow(meId, ws.toISOString(), we.toISOString()), weekStartISO: ws.toISOString() };
-const month = { events: await calendarWindow(meId, mFirst.toISOString(), mNext.toISOString()), monthISO: mFirst.toISOString() };
+const mondayOf = (d: Date) => {
+  const x = startOfToday(d);
+  const wd = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - wd);
+  return x;
+};
+const ws = mondayOf(new Date());
+const we = new Date(ws);
+we.setDate(we.getDate() + 7);
+const now = new Date();
+const mFirst = new Date(now.getFullYear(), now.getMonth(), 1);
+const mNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+const week = {
+  events: await calendarWindow(meId, ws.toISOString(), we.toISOString()),
+  weekStartISO: ws.toISOString(),
+};
+const month = {
+  events: await calendarWindow(meId, mFirst.toISOString(), mNext.toISOString()),
+  monthISO: mFirst.toISOString(),
+};
 // pass: <DiscoverClient events={events} meId={meId} week={week} month={month} />
 ```
 
@@ -1584,6 +2446,7 @@ git add -A && git commit -m "feat: Week + Month calendar views"
 ### Task 5.4: Plans screen
 
 **Files:**
+
 - Create: `app/(app)/plans/page.tsx`, `components/PlansClient.tsx`
 
 - [ ] **Step 1: Write `app/(app)/plans/page.tsx`** — 60-day window via `calendarWindow`, filter to `!busy && (creator===me || myRsvp)`. Port `renderPlans()` `public/app.js:220-236`.
@@ -1595,7 +2458,9 @@ import { startOfToday } from '@/lib/domain/dates';
 import PlansClient from '@/components/PlansClient';
 export default async function PlansPage() {
   const meId = (await getSession()).userId!;
-  const from = startOfToday(); const to = new Date(from); to.setDate(to.getDate() + 60);
+  const from = startOfToday();
+  const to = new Date(from);
+  to.setDate(to.getDate() + 60);
   const all = await calendarWindow(meId, from.toISOString(), to.toISOString());
   const mine = all.filter((e: any) => !e.busy && (e.creator?.id === meId || e.myRsvp));
   return <PlansClient events={mine} meId={meId} />;
@@ -1607,6 +2472,7 @@ export default async function PlansPage() {
 - [ ] **Step 3: Verify + commit**
 
 Run: `npm run dev` → `/plans` shows Ed's hosted + joined events with Cancel on hosted ones.
+
 ```bash
 git add -A && git commit -m "feat: Plans screen"
 ```
@@ -1614,6 +2480,7 @@ git add -A && git commit -m "feat: Plans screen"
 ### Task 5.5: Regulars screen
 
 **Files:**
+
 - Create: `app/(app)/regulars/page.tsx`, `components/RegularsView.tsx`, `lib/actions/standing.ts` (optional helper to prefill create)
 
 - [ ] **Step 1: Write `app/(app)/regulars/page.tsx`** — load all events+attendance+users, call `computeRegulars(meId, …)`.
@@ -1627,7 +2494,11 @@ import RegularsView from '@/components/RegularsView';
 export default async function RegularsPage() {
   const meId = (await getSession()).userId!;
   const db = getDb();
-  const [events, attendance, users] = await Promise.all([db.select().from(E), db.select().from(A), db.select().from(U)]);
+  const [events, attendance, users] = await Promise.all([
+    db.select().from(E),
+    db.select().from(A),
+    db.select().from(U),
+  ]);
   const { regulars, rising } = computeRegulars(meId, events, attendance, users);
   return <RegularsView regulars={regulars} rising={rising} />;
 }
@@ -1638,6 +2509,7 @@ export default async function RegularsPage() {
 - [ ] **Step 3: Verify + commit**
 
 Run: `/regulars` → Maya surfaces as a regular (co-presence ≥3), insight card present. Compare `docs/mocks/app-live-regulars.png`.
+
 ```bash
 git add -A && git commit -m "feat: Regulars screen"
 ```
@@ -1645,6 +2517,7 @@ git add -A && git commit -m "feat: Regulars screen"
 ### Task 5.6: You (profile) + Circles + profile/connection actions
 
 **Files:**
+
 - Create: `app/(app)/you/page.tsx`, `app/(app)/circles/page.tsx`, `components/ProfileView.tsx`, `components/CirclesView.tsx`, `lib/actions/profile.ts`, `lib/actions/connections.ts`, `lib/db/profile.ts`
 
 - [ ] **Step 1: Write `lib/db/profile.ts`** — a `getProfileData(handleOrShareId, viewerId|null)` helper porting `/api/profile/:handle` (`server/index.js:349-375`): resolves user (404 if ghost & not self), upcoming visible events (≤12), and self-only `stats` (regulars/plans/scenes).
@@ -1662,6 +2535,7 @@ git add -A && git commit -m "feat: Regulars screen"
 - [ ] **Step 7: Verify + commit**
 
 Run: `/you` (profile matches `docs/mocks/app-live-you.png`; edit + share work) and `/circles` (Jordan's request is acceptable; tier toggles persist; add/remove people works).
+
 ```bash
 git add -A && git commit -m "feat: Profile (You) + Circles screens and actions"
 ```
@@ -1669,6 +2543,7 @@ git add -A && git commit -m "feat: Profile (You) + Circles screens and actions"
 ### Task 5.7: Create sheet
 
 **Files:**
+
 - Create: `components/CreateSheet.tsx`
 
 - [ ] **Step 1: Write `components/CreateSheet.tsx`** (client) — port `openCreate()`/`submitCreate()` `public/app.js:325-351`. A `Sheet` with: type chips (intention/plan/event), title, location, start/end datetime-local, "repeats weekly" checkbox, visibility chips (inner/orbit/public). On submit, compute `expiresAt` for intentions (same-day 23:59) and call `createEvent`, then close + navigate to `/plans`. Accepts optional `prefill` (used by Regulars). Reuse `.field .chips .chip.pick` classes.
@@ -1680,34 +2555,129 @@ import { useRouter } from 'next/navigation';
 import Sheet from './primitives/Sheet';
 import { createEvent } from '@/lib/actions/events';
 
-const TYPES = [['intention', 'Free / intention'], ['plan', 'Plan'], ['event', 'Event']] as const;
-const VIS = [['inner', 'Inner'], ['orbit', 'Orbit'], ['public', 'Public']] as const;
-const defaultStart = () => { const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+const TYPES = [
+  ['intention', 'Free / intention'],
+  ['plan', 'Plan'],
+  ['event', 'Event'],
+] as const;
+const VIS = [
+  ['inner', 'Inner'],
+  ['orbit', 'Orbit'],
+  ['public', 'Public'],
+] as const;
+const defaultStart = () => {
+  const d = new Date();
+  d.setHours(d.getHours() + 1, 0, 0, 0);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
 
-export default function CreateSheet({ open, onOpenChange, prefill }: { open: boolean; onOpenChange: (o: boolean) => void; prefill?: { type?: string; title?: string; recurring?: boolean } }) {
+export default function CreateSheet({
+  open,
+  onOpenChange,
+  prefill,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  prefill?: { type?: string; title?: string; recurring?: boolean };
+}) {
   const router = useRouter();
   const [type, setType] = useState(prefill?.type || 'event');
   const [vis, setVis] = useState('inner');
   const [pending, setPending] = useState(false);
   async function submit(form: FormData) {
-    const title = String(form.get('title') || ''); if (!title) return;
+    const title = String(form.get('title') || '');
+    if (!title) return;
     const start = String(form.get('start'));
-    const expiresAt = type === 'intention' ? (() => { const d = new Date(start); d.setHours(23, 59, 0, 0); return d.toISOString(); })() : null;
+    const expiresAt =
+      type === 'intention'
+        ? (() => {
+            const d = new Date(start);
+            d.setHours(23, 59, 0, 0);
+            return d.toISOString();
+          })()
+        : null;
     setPending(true);
-    await createEvent({ type, title, location: String(form.get('location') || ''), startTime: start, endTime: String(form.get('end') || '') || null, recurring: form.get('rec') ? 'weekly' : null, visibility: vis, expiresAt });
-    setPending(false); onOpenChange(false); router.push('/plans');
+    await createEvent({
+      type,
+      title,
+      location: String(form.get('location') || ''),
+      startTime: start,
+      endTime: String(form.get('end') || '') || null,
+      recurring: form.get('rec') ? 'weekly' : null,
+      visibility: vis,
+      expiresAt,
+    });
+    setPending(false);
+    onOpenChange(false);
+    router.push('/plans');
   }
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <h3>Make something</h3>
       <form action={submit}>
-        <div className="field"><label>Type</label><div className="chips">{TYPES.map(([v, l]) => <span key={v} className={`chip pick ${type === v ? 'on' : ''}`} onClick={() => setType(v)}>{l}</span>)}</div></div>
-        <div className="field"><label>Title</label><input name="title" type="text" defaultValue={prefill?.title || ''} placeholder="Natural wine night" /></div>
-        <div className="field"><label>Where</label><input name="location" type="text" placeholder="Ruffian, East Village" /></div>
-        <div className="row" style={{ gap: 10 }}><div className="field" style={{ flex: 1 }}><label>Start</label><input name="start" type="datetime-local" defaultValue={defaultStart()} /></div><div className="field" style={{ flex: 1 }}><label>End</label><input name="end" type="datetime-local" /></div></div>
-        <label className="row" style={{ gap: 9, margin: '0 0 14px' }}><input name="rec" type="checkbox" defaultChecked={!!prefill?.recurring} style={{ width: 'auto' }} /> <span className="muted">Repeats weekly (standing)</span></label>
-        <div className="field"><label>Who can see it</label><div className="chips">{VIS.map(([v, l]) => <span key={v} className={`chip pick ${vis === v ? 'on' : ''}`} onClick={() => setVis(v)}>{l}</span>)}</div></div>
-        <button className="btn solid block" disabled={pending}>Add to my calendar</button>
+        <div className="field">
+          <label>Type</label>
+          <div className="chips">
+            {TYPES.map(([v, l]) => (
+              <span
+                key={v}
+                className={`chip pick ${type === v ? 'on' : ''}`}
+                onClick={() => setType(v)}
+              >
+                {l}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="field">
+          <label>Title</label>
+          <input
+            name="title"
+            type="text"
+            defaultValue={prefill?.title || ''}
+            placeholder="Natural wine night"
+          />
+        </div>
+        <div className="field">
+          <label>Where</label>
+          <input name="location" type="text" placeholder="Ruffian, East Village" />
+        </div>
+        <div className="row" style={{ gap: 10 }}>
+          <div className="field" style={{ flex: 1 }}>
+            <label>Start</label>
+            <input name="start" type="datetime-local" defaultValue={defaultStart()} />
+          </div>
+          <div className="field" style={{ flex: 1 }}>
+            <label>End</label>
+            <input name="end" type="datetime-local" />
+          </div>
+        </div>
+        <label className="row" style={{ gap: 9, margin: '0 0 14px' }}>
+          <input
+            name="rec"
+            type="checkbox"
+            defaultChecked={!!prefill?.recurring}
+            style={{ width: 'auto' }}
+          />{' '}
+          <span className="muted">Repeats weekly (standing)</span>
+        </label>
+        <div className="field">
+          <label>Who can see it</label>
+          <div className="chips">
+            {VIS.map(([v, l]) => (
+              <span
+                key={v}
+                className={`chip pick ${vis === v ? 'on' : ''}`}
+                onClick={() => setVis(v)}
+              >
+                {l}
+              </span>
+            ))}
+          </div>
+        </div>
+        <button className="btn solid block" disabled={pending}>
+          Add to my calendar
+        </button>
       </form>
     </Sheet>
   );
@@ -1717,6 +2687,7 @@ export default function CreateSheet({ open, onOpenChange, prefill }: { open: boo
 - [ ] **Step 2: Verify + commit**
 
 Run: tap ＋ → create an event → lands in Plans. Intentions expire same day (disappear from Discover after 23:59).
+
 ```bash
 git add -A && git commit -m "feat: Create sheet (intentions/plans/events)"
 ```
@@ -1728,6 +2699,7 @@ git add -A && git commit -m "feat: Create sheet (intentions/plans/events)"
 ### Task 6.1: Account-free public pages
 
 **Files:**
+
 - Create: `app/u/[handle]/page.tsx`, `app/e/[id]/page.tsx`, `components/PublicCta.tsx`
 
 - [ ] **Step 1: Write `app/u/[handle]/page.tsx`** (RSC + `generateMetadata` for OG) — port `view.js renderProfile()`. Uses `getProfileData(handle, viewerId)` with `viewerId` from session if present (else null). Renders banner + profile + "Going to" list + CTA. 404 via `notFound()` when missing/ghost.
@@ -1741,10 +2713,19 @@ import Avatar from '@/components/primitives/Avatar';
 import PublicCta from '@/components/PublicCta';
 import { timeLabel } from '@/lib/format';
 
-export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
-  const { handle } = await params; const data = await getProfileData(handle, null);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}): Promise<Metadata> {
+  const { handle } = await params;
+  const data = await getProfileData(handle, null);
   if (!data) return { title: 'Orbit' };
-  return { title: `${data.user.displayName} · Orbit`, description: data.user.bio || 'on Orbit', openGraph: { title: data.user.displayName } };
+  return {
+    title: `${data.user.displayName} · Orbit`,
+    description: data.user.bio || 'on Orbit',
+    openGraph: { title: data.user.displayName },
+  };
 }
 export default async function PublicProfile({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -1753,21 +2734,53 @@ export default async function PublicProfile({ params }: { params: Promise<{ hand
   if (!data) notFound();
   const u = data.user;
   return (
-    <div className="shell"><div className="main">
-      <div className="banner" />
-      <div className="pf-head">
-        <Avatar user={{ ...u, initials: u.initials }} size="xl" className="pf-av" />
-        <div className="pf-name">{u.displayName}</div><div className="pf-handle">@{u.handle}</div>
-        {u.bio && <div className="pf-bio">{u.bio}</div>}
-        {u.scenes?.length > 0 && <div className="chips" style={{ marginTop: 13 }}>{u.scenes.map((s: string) => <span key={s} className="chip">{s}</span>)}</div>}
-        <div className="kicker" style={{ margin: '22px 0 6px' }}>Going to</div>
-        {data.upcoming.length ? data.upcoming.map((e: any) => (
-          <div className="up" key={e.id}><div className="when"><b>{new Date(e.startTime).getDate()}</b><span>{new Date(e.startTime).toLocaleDateString('en-US', { weekday: 'short' })}</span></div>
-            <div className="body"><div className="t">{e.title}</div><div className="s">{timeLabel(e.startTime)}{e.location && ' · ' + e.location}</div></div></div>
-        )) : <div className="empty" style={{ padding: 20 }}>Nothing public right now.</div>}
-        <PublicCta label={`Follow ${u.displayName.split(' ')[0]} on Orbit`} />
+    <div className="shell">
+      <div className="main">
+        <div className="banner" />
+        <div className="pf-head">
+          <Avatar user={{ ...u, initials: u.initials }} size="xl" className="pf-av" />
+          <div className="pf-name">{u.displayName}</div>
+          <div className="pf-handle">@{u.handle}</div>
+          {u.bio && <div className="pf-bio">{u.bio}</div>}
+          {u.scenes?.length > 0 && (
+            <div className="chips" style={{ marginTop: 13 }}>
+              {u.scenes.map((s: string) => (
+                <span key={s} className="chip">
+                  {s}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="kicker" style={{ margin: '22px 0 6px' }}>
+            Going to
+          </div>
+          {data.upcoming.length ? (
+            data.upcoming.map((e: any) => (
+              <div className="up" key={e.id}>
+                <div className="when">
+                  <b>{new Date(e.startTime).getDate()}</b>
+                  <span>
+                    {new Date(e.startTime).toLocaleDateString('en-US', { weekday: 'short' })}
+                  </span>
+                </div>
+                <div className="body">
+                  <div className="t">{e.title}</div>
+                  <div className="s">
+                    {timeLabel(e.startTime)}
+                    {e.location && ' · ' + e.location}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="empty" style={{ padding: 20 }}>
+              Nothing public right now.
+            </div>
+          )}
+          <PublicCta label={`Follow ${u.displayName.split(' ')[0]} on Orbit`} />
+        </div>
       </div>
-    </div></div>
+    </div>
   );
 }
 ```
@@ -1779,6 +2792,7 @@ export default async function PublicProfile({ params }: { params: Promise<{ hand
 - [ ] **Step 4: Verify + commit**
 
 Run: open `/u/ed` and `/e/<id>` while logged out — public content shows, private 404s. View source → OG title present.
+
 ```bash
 git add -A && git commit -m "feat: account-free public profile + event pages (SSR + OG)"
 ```
@@ -1786,6 +2800,7 @@ git add -A && git commit -m "feat: account-free public profile + event pages (SS
 ### Task 6.2: PWA (Serwist)
 
 **Files:**
+
 - Create: `app/sw.ts`, `app/manifest.ts`, `public/icon-192.png`, `public/icon-512.png`
 - Modify: `next.config.ts`
 
@@ -1804,7 +2819,13 @@ export default withSerwist(nextConfig);
 import { defaultCache } from '@serwist/next/worker';
 import { Serwist } from 'serwist';
 declare const self: ServiceWorkerGlobalScope & { __SW_MANIFEST: any };
-const serwist = new Serwist({ precacheEntries: self.__SW_MANIFEST, skipWaiting: true, clientsClaim: true, navigationPreload: true, runtimeCaching: defaultCache });
+const serwist = new Serwist({
+  precacheEntries: self.__SW_MANIFEST,
+  skipWaiting: true,
+  clientsClaim: true,
+  navigationPreload: true,
+  runtimeCaching: defaultCache,
+});
 serwist.addEventListeners();
 ```
 
@@ -1814,8 +2835,12 @@ serwist.addEventListeners();
 import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Orbit', short_name: 'Orbit', start_url: '/', display: 'standalone',
-    background_color: '#0C0B10', theme_color: '#0C0B10',
+    name: 'Orbit',
+    short_name: 'Orbit',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#0C0B10',
+    theme_color: '#0C0B10',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
@@ -1831,6 +2856,7 @@ export default function manifest(): MetadataRoute.Manifest {
 - [ ] **Step 6: Verify + commit**
 
 Run: `npm run build` then `npm run dev`; Chrome DevTools → Application → Manifest shows Orbit installable; service worker registers.
+
 ```bash
 git add -A && git commit -m "feat: installable PWA via Serwist (manifest + offline shell)"
 ```
@@ -1838,6 +2864,7 @@ git add -A && git commit -m "feat: installable PWA via Serwist (manifest + offli
 ### Task 6.3: Motion polish
 
 **Files:**
+
 - Create: `components/MotionAvatarStack.tsx`
 - Modify: `app/(app)/layout.tsx` (View Transitions already global via globals.css)
 
@@ -1852,8 +2879,19 @@ export default function MotionAvatarStack({ users }: { users: PublicUser[] }) {
     <LazyMotion features={domAnimation}>
       <div className="stack">
         {users.map((u, i) => (
-          <m.span key={u.id} className="av sm" style={{ background: `linear-gradient(135deg,${u.avatar})`, marginLeft: i === 0 ? 0 : -8 }}
-            initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 28, delay: i * 0.04 }}>{u.initials}</m.span>
+          <m.span
+            key={u.id}
+            className="av sm"
+            style={{
+              background: `linear-gradient(135deg,${u.avatar})`,
+              marginLeft: i === 0 ? 0 : -8,
+            }}
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 28, delay: i * 0.04 }}
+          >
+            {u.initials}
+          </m.span>
         ))}
       </div>
     </LazyMotion>
@@ -1866,6 +2904,7 @@ export default function MotionAvatarStack({ users }: { users: PublicUser[] }) {
 - [ ] **Step 3: Verify + commit**
 
 Run: navigate between tabs (smooth cross-fade), open Discover (avatar clusters spring in). Honor reduced-motion.
+
 ```bash
 git add -A && git commit -m "feat: motion polish (View Transitions + avatar-cluster spring)"
 ```

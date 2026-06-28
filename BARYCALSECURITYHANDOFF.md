@@ -2,7 +2,7 @@
 
 **Origin:** A cybersecurity review of `edjshen/plur-nyc` (2026-06-26). The Mayfly
 ephemeral-chat (`/rooms`) feature was migrated out of plur-nyc to **barycal** mid-review
-(plur-nyc PR #182), so the Mayfly-specific findings were *not* applied in plur-nyc — they
+(plur-nyc PR #182), so the Mayfly-specific findings were _not_ applied in plur-nyc — they
 belong here. The non-Mayfly fixes already shipped in plur-nyc PR #183.
 
 **Your job:** port the seven findings below into barycal, adapting to barycal's
@@ -28,7 +28,7 @@ Find and read these, and note the equivalents:
 5. **Rate limiting** — how barycal throttles the verify/SMS path.
 
 Confirm whether the relay is a Cloudflare **Durable Object with WebSocket Hibernation**
-(plur-nyc was). If the transport differs, the *concepts* below still apply but the API
+(plur-nyc was). If the transport differs, the _concepts_ below still apply but the API
 calls (`serializeAttachment`, `ctx.storage.sql`) will differ.
 
 ---
@@ -50,7 +50,7 @@ secret `ROOM_RELAY_SECRET` set on **both** the app and the relay Worker.
 - Token format: `<expMs>.<base64url(HMAC-SHA256(secret, "<roomId>.<expMs>"))>`.
 - Bound to `roomId` (a token for room A can't admit to room B) and time-limited.
 - TTL = 7 days (covers a room's whole life → no mid-session refresh needed).
-- **Rollout safety:** when the secret is unset the relay logs a warning and *allows*
+- **Rollout safety:** when the secret is unset the relay logs a warning and _allows_
   connections (gate inactive); enforcement turns on the moment the secret is set on both
   sides. Ends fail-closed-when-configured.
 
@@ -58,6 +58,7 @@ secret `ROOM_RELAY_SECRET` set on **both** the app and the relay Worker.
 Appendix A `room-token.js`.
 
 Wiring:
+
 1. **Gate route** mints after the gate passes and returns it:
    `const relayToken = await mintRoomToken(env.ROOM_RELAY_SECRET, roomId); return {ok:true, relayToken};`
    (plur-nyc wrapped this in `relay-admission.js`, Appendix B, which returns `null` +
@@ -73,7 +74,10 @@ Wiring:
      if (!(await verifyRoomToken(secret, roomId, token))) {
        return new Response('forbidden', { status: 403 });
      }
-   } else if (!warnedNoSecret) { console.warn('[relay] ROOM_RELAY_SECRET unset — gate inactive'); warnedNoSecret = true; }
+   } else if (!warnedNoSecret) {
+     console.warn('[relay] ROOM_RELAY_SECRET unset — gate inactive');
+     warnedNoSecret = true;
+   }
    ```
 
 **barycal adaptation:** if event rooms are open-join (no phone), the gate route still mints a
@@ -94,10 +98,11 @@ room's life and fanned out to every peer = amplification), spam unlimited messag
 the per-room log unboundedly.
 
 **Fix (in the DO / message handler):** see Appendix C (`room-do.js` diff).
-- **Frame size:** drop frames where `raw.length > 16 KB` *before* parse/persist/fan-out.
+
+- **Frame size:** drop frames where `raw.length > 16 KB` _before_ parse/persist/fan-out.
 - **Per-socket publish rate limit:** token bucket (cap 30, refill 5/s) keyed by the live
   socket. In-memory `Map` is fine (resets on DO eviction, acceptable for a flood guard).
-  Check it *after* the idempotent-retransmit short-circuit so legit retransmits are free.
+  Check it _after_ the idempotent-retransmit short-circuit so legit retransmits are free.
 - **Per-room log ceiling:** reject new publishes once the log hits 20 000 rows. plur-nyc used
   the monotonic `AUTOINCREMENT` seq as a row-count proxy (no extra COUNT).
 - Clean up the bucket entry in `webSocketClose`/`webSocketError`.
@@ -110,7 +115,7 @@ a hibernating DO, keep per-connection state wherever connection objects live.
 ### M-7 — One socket can impersonate many identities (roster sybil)
 
 **Problem:** the relay persisted whatever `profilePub` each `publish` frame carried. Message
-*content* spoofing is already blocked (peers verify Ed25519 sigs client-side), but one socket
+_content_ spoofing is already blocked (peers verify Ed25519 sigs client-side), but one socket
 could publish `presence` frames under many different pubkeys to flood/forge the roster.
 
 **Fix:** bind each socket to the `profilePub` it announces in its `hello`, and reject any
@@ -118,7 +123,7 @@ later `publish` from that socket under a different pubkey. plur-nyc used the DO'
 `ws.serializeAttachment({pub})` (survives hibernation) / `ws.deserializeAttachment()`. See
 Appendix C.
 
-**Note:** handles remain unauthenticated (only the pubkey is signed) — two *different*
+**Note:** handles remain unauthenticated (only the pubkey is signed) — two _different_
 pubkeys can still both claim handle "alice". Consider showing a short pubkey fingerprint
 next to handles in the UI. plur-nyc left this as a display-only follow-up.
 
@@ -132,9 +137,10 @@ traffic. The UI's blanket "end-to-end encrypted, the key never leaves your link"
 false for those room types.
 
 **Fix:** scope the E2E claim to **sealed** rooms; label open/event rooms public. plur-nyc:
+
 - Home footer reworded: sealed = E2E (key only in the link); open + per-event = public.
-- In-room banner for `mode==='open' || event`: *"public room — anyone with the
-  {event link / three words} can read along. not private."*
+- In-room banner for `mode==='open' || event`: _"public room — anyone with the
+  {event link / three words} can read along. not private."_
 - Don't reuse the E2E assurance string on open/event flows.
 
 **barycal adaptation:** wherever barycal shows the privacy messaging, differentiate by room
@@ -162,7 +168,7 @@ table raw.
 
 ### M-3 — SMS rate limiter TOCTOU (only if barycal reuses the pattern)
 
-**Problem:** plur-nyc's limiter did a read-only "check all keys" pass and *then* a "record"
+**Problem:** plur-nyc's limiter did a read-only "check all keys" pass and _then_ a "record"
 pass. The two are non-atomic, so a concurrent burst could all pass the check before any hit
 landed and exceed the SMS cap (real Twilio cost-amplification).
 
@@ -214,7 +220,13 @@ function b64url(bytes) {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 async function hmacBytes(secret, message) {
-  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
   return new Uint8Array(sig);
 }
@@ -251,7 +263,10 @@ let warnedAboutSecret = false;
 export async function mintRelayToken(roomId) {
   const secret = process.env.ROOM_RELAY_SECRET; // or env.ROOM_RELAY_SECRET in a Worker
   if (!secret) {
-    if (!warnedAboutSecret) { console.warn('[rooms] ROOM_RELAY_SECRET unset — gate inactive'); warnedAboutSecret = true; }
+    if (!warnedAboutSecret) {
+      console.warn('[rooms] ROOM_RELAY_SECRET unset — gate inactive');
+      warnedAboutSecret = true;
+    }
     return null;
   }
   return mintRoomToken(secret, roomId);
@@ -263,6 +278,7 @@ export async function mintRelayToken(roomId) {
 > Apply the concepts to barycal's relay. Full diffs from plur-nyc:
 
 **worker.js (verify on upgrade):**
+
 ```js
 import { verifyRoomToken } from '../../../lib/mayfly/shared/room-token.js';
 let warnedNoSecret = false;
@@ -271,11 +287,16 @@ const roomId = match[1];
 const secret = env.ROOM_RELAY_SECRET;
 if (secret) {
   const token = url.searchParams.get('t');
-  if (!(await verifyRoomToken(secret, roomId, token))) return new Response('forbidden', { status: 403 });
-} else if (!warnedNoSecret) { console.warn('[room-relay] ROOM_RELAY_SECRET unset — gate inactive'); warnedNoSecret = true; }
+  if (!(await verifyRoomToken(secret, roomId, token)))
+    return new Response('forbidden', { status: 403 });
+} else if (!warnedNoSecret) {
+  console.warn('[room-relay] ROOM_RELAY_SECRET unset — gate inactive');
+  warnedNoSecret = true;
+}
 ```
 
 **room-do.js (caps + identity binding):**
+
 ```js
 const MAX_FRAME_BYTES = 16 * 1024;
 const MAX_LOG_ROWS = 20000;
@@ -314,14 +335,29 @@ if (this.latestSeq() >= MAX_LOG_ROWS) return;         // M-1 row ceiling
 
 ```js
 const enc = new TextEncoder();
-function b64url(bytes) { let s=''; for (const b of bytes) s+=String.fromCharCode(b); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/g,''); }
+function b64url(bytes) {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
 async function pepperKey() {
   const secret = process.env.MAYFLY_PHONE_PEPPER || process.env.SESSION_SECRET;
   if (!secret) return null;
-  const base = await crypto.subtle.importKey('raw', enc.encode(secret), 'HKDF', false, ['deriveKey']);
+  const base = await crypto.subtle.importKey('raw', enc.encode(secret), 'HKDF', false, [
+    'deriveKey',
+  ]);
   return crypto.subtle.deriveKey(
-    { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: enc.encode('mayfly-phone-hash/v1') },
-    base, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign']);
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(0),
+      info: enc.encode('mayfly-phone-hash/v1'),
+    },
+    base,
+    { name: 'HMAC', hash: 'SHA-256', length: 256 },
+    false,
+    ['sign']
+  );
 }
 export async function hashPhoneForLog(phone) {
   if (!phone) return null;
@@ -345,10 +381,16 @@ test('round-trips for the same room', async () => {
   assert.equal(await verifyRoomToken(SECRET, ROOM, await mintRoomToken(SECRET, ROOM)), true);
 });
 test('does not admit to another room', async () => {
-  assert.equal(await verifyRoomToken(SECRET, 'OtherRoom0123456789xyz', await mintRoomToken(SECRET, ROOM)), false);
+  assert.equal(
+    await verifyRoomToken(SECRET, 'OtherRoom0123456789xyz', await mintRoomToken(SECRET, ROOM)),
+    false
+  );
 });
 test('expired token rejected', async () => {
-  assert.equal(await verifyRoomToken(SECRET, ROOM, await mintRoomToken(SECRET, ROOM, -1000)), false);
+  assert.equal(
+    await verifyRoomToken(SECRET, ROOM, await mintRoomToken(SECRET, ROOM, -1000)),
+    false
+  );
 });
 test('rejected after its expiry instant', async () => {
   const now = 1_000_000_000_000;
@@ -357,7 +399,10 @@ test('rejected after its expiry instant', async () => {
   assert.equal(await verifyRoomToken(SECRET, ROOM, t, now + 2000), false);
 });
 test('wrong secret rejected', async () => {
-  assert.equal(await verifyRoomToken('different-secret', ROOM, await mintRoomToken(SECRET, ROOM)), false);
+  assert.equal(
+    await verifyRoomToken('different-secret', ROOM, await mintRoomToken(SECRET, ROOM)),
+    false
+  );
 });
 test('tampered signature rejected', async () => {
   const [exp, sig] = (await mintRoomToken(SECRET, ROOM)).split('.');

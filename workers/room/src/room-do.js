@@ -222,7 +222,10 @@ export class RoomDO extends DurableObject {
       // socket never approaches the budget.
       const from = frame.resumeFromSeq ?? 0;
       const pending = Math.max(0, this.latestSeq() - from);
-      if (pending > 0 && this.durableConsume('replayrows', pending, REPLAY_ROWS_PER_MIN, RATE_WINDOW_MS)) {
+      if (
+        pending > 0 &&
+        this.durableConsume('replayrows', pending, REPLAY_ROWS_PER_MIN, RATE_WINDOW_MS)
+      ) {
         for (const row of this.sql.exec('SELECT * FROM log WHERE seq > ? ORDER BY seq ASC', from)) {
           ws.send(JSON.stringify(this.rowToEvent(row)));
         }

@@ -45,7 +45,12 @@ export default function CalendarApp({
   const loaded = useRef({ from: new Date(initialFromISO), to: new Date(initialToISO) });
   const [viewMenu, setViewMenu] = useState(false);
 
-  const [editor, setEditor] = useState<{ open: boolean; existing?: CalEvent; startISO?: string; endISO?: string }>({ open: false });
+  const [editor, setEditor] = useState<{
+    open: boolean;
+    existing?: CalEvent;
+    startISO?: string;
+    endISO?: string;
+  }>({ open: false });
   const [detail, setDetail] = useState<CalEvent | null>(null);
 
   // ---- which calendar dates are visible for the current view ----
@@ -55,7 +60,8 @@ export default function CalendarApp({
   useEffect(() => {
     const need = visible;
     const have = loaded.current;
-    if (need.start.getTime() >= have.from.getTime() && need.end.getTime() <= have.to.getTime()) return;
+    if (need.start.getTime() >= have.from.getTime() && need.end.getTime() <= have.to.getTime())
+      return;
     const from = new Date(Math.min(need.start.getTime(), have.from.getTime()) - 31 * DAY_MS);
     const to = new Date(Math.max(need.end.getTime(), have.to.getTime()) + 31 * DAY_MS);
     let cancelled = false;
@@ -118,11 +124,17 @@ export default function CalendarApp({
         </button>
         <div className="cal-nav">
           <button onClick={() => go(-1)} aria-label="Previous">
-            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
+            <svg viewBox="0 0 24 24">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           </button>
-          <button className="cal-today" onClick={today}>Today</button>
+          <button className="cal-today" onClick={today}>
+            Today
+          </button>
           <button onClick={() => go(1)} aria-label="Next">
-            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /></svg>
+            <svg viewBox="0 0 24 24">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
           </button>
         </div>
       </div>
@@ -157,7 +169,9 @@ export default function CalendarApp({
                 setView('day');
               }}
             >
-              <span className="cal-dh-wd">{WEEKDAYS[d.getDay()].slice(0, view === 'week' ? 1 : 3)}</span>
+              <span className="cal-dh-wd">
+                {WEEKDAYS[d.getDay()].slice(0, view === 'week' ? 1 : 3)}
+              </span>
               <span className="cal-dh-n">{d.getDate()}</span>
             </button>
           ))}
@@ -179,7 +193,11 @@ export default function CalendarApp({
               // base row genuinely moves).
               if (ev.occurrence) {
                 import('@/lib/actions/events').then(({ updateEvent }) =>
-                  updateEvent(ev.id, { startTime: startISO, endTime: endISO }, { scope: 'single' }).then(refresh)
+                  updateEvent(
+                    ev.id,
+                    { startTime: startISO, endTime: endISO },
+                    { scope: 'single' }
+                  ).then(refresh)
                 );
               } else {
                 optimisticMove(ev, startISO, endISO);
@@ -201,7 +219,9 @@ export default function CalendarApp({
             onOpenEvent={(ev) => setDetail(ev)}
           />
         )}
-        {view === 'schedule' && <ScheduleView anchor={anchor} events={events} onOpenEvent={(ev) => setDetail(ev)} />}
+        {view === 'schedule' && (
+          <ScheduleView anchor={anchor} events={events} onOpenEvent={(ev) => setDetail(ev)} />
+        )}
       </div>
 
       {/* FAB */}
@@ -210,14 +230,21 @@ export default function CalendarApp({
         aria-label="Create event"
         onClick={() => {
           const now = new Date();
-          const inView = now.getTime() >= visible.start.getTime() && now.getTime() < visible.end.getTime();
+          const inView =
+            now.getTime() >= visible.start.getTime() && now.getTime() < visible.end.getTime();
           const day = inView ? now : isGrid ? gridDays[0] || anchor : anchor;
           const base = startOfDay(day);
           base.setHours(now.getHours() + 1, 0, 0, 0);
-          setEditor({ open: true, startISO: base.toISOString(), endISO: new Date(base.getTime() + 3600000).toISOString() });
+          setEditor({
+            open: true,
+            startISO: base.toISOString(),
+            endISO: new Date(base.getTime() + 3600000).toISOString(),
+          });
         }}
       >
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+        <svg viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
       </button>
 
       {editor.open && (
@@ -247,7 +274,15 @@ export default function CalendarApp({
   function optimisticMove(ev: CalEvent, startISO: string, endISO: string) {
     const baseId = ev.seriesId || ev.id;
     setRaw((cur) =>
-      cur.map((e) => (e.id === baseId ? { ...e, startTime: shiftBase(e, ev, startISO), endTime: shiftBaseEnd(e, ev, startISO, endISO) } : e))
+      cur.map((e) =>
+        e.id === baseId
+          ? {
+              ...e,
+              startTime: shiftBase(e, ev, startISO),
+              endTime: shiftBaseEnd(e, ev, startISO, endISO),
+            }
+          : e
+      )
     );
   }
 }
@@ -258,7 +293,12 @@ function shiftBase(base: CalEvent, occ: CalEvent, newStartISO: string): string {
   const delta = new Date(newStartISO).getTime() - new Date(occ.startTime).getTime();
   return new Date(new Date(base.startTime).getTime() + delta).toISOString();
 }
-function shiftBaseEnd(base: CalEvent, occ: CalEvent, newStartISO: string, newEndISO: string): string {
+function shiftBaseEnd(
+  base: CalEvent,
+  occ: CalEvent,
+  newStartISO: string,
+  newEndISO: string
+): string {
   const dur = new Date(newEndISO).getTime() - new Date(newStartISO).getTime();
   return new Date(new Date(shiftBase(base, occ, newStartISO)).getTime() + dur).toISOString();
 }

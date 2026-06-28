@@ -16,20 +16,32 @@ export async function getProfileData(handleOrShareId: string, viewerId: string |
   const from = startOfToday();
   const own = await getEventsByCreator(u.id);
   const upcoming = own
-    .filter((ev) => new Date(ev.startTime) >= from && notExpired(ev) && canSeeContent(viewerId, ev, ctx.conns, ctx.places))
+    .filter(
+      (ev) =>
+        new Date(ev.startTime) >= from &&
+        notExpired(ev) &&
+        canSeeContent(viewerId, ev, ctx.conns, ctx.places)
+    )
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
     .slice(0, 12)
     .map((ev) => enrich(ev, viewerId, ctx));
   const pub = publicUser(u)!;
   const out: {
     user: typeof pub & { bio: string; scenes: string[]; ghost: boolean };
-    upcoming: any[]; isSelf: boolean; connection: string | null;
+    upcoming: any[];
+    isSelf: boolean;
+    connection: string | null;
     stats?: { regulars: number; plans: number; scenes: number };
   } = {
     // Expose the real ghost flag only to the owner (so their edit form reflects
     // current state); everyone else always sees false. Ghost users are already
     // 404'd for non-self viewers above, so their true flag never ships to others.
-    user: { ...pub, bio: u.bio, scenes: u.scenes || [], ghost: viewerId === u.id ? u.ghost : false },
+    user: {
+      ...pub,
+      bio: u.bio,
+      scenes: u.scenes || [],
+      ghost: viewerId === u.id ? u.ghost : false,
+    },
     upcoming,
     isSelf: viewerId === u.id,
     connection: viewerId && viewerId !== u.id ? connectionStatus(ctx.conns, viewerId, u.id) : null,

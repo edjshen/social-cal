@@ -1,0 +1,103 @@
+# Post-production-deploy verification + Telegram notification.
+#
+# Triggered on `workflow_run` after the `Deploy` workflow completes successfully
+# on `main` (wrangler-action emits no GitHub deployment_status event, so we hook
+# the workflow itself). Smokes both prod Workers — the app root and the relay
+# `/health` — and sends one Telegram message with the SHA + commit subject:
+# ✅ on smoke pass, ❌ on fail.
+#
+# Required repo Actions secrets (both OPTIONAL — if unset, the notify step warns
+# and skips; the smoke result still gates the workflow exit):
+#   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+#
+# Does NOT auto-rollback — the operator decides via rollback.yml. Auto-rolling
+# back on one failed smoke would mask transient flakes (cold start, propagation).
+name: Post-deploy verification
+
+on:
+  workflow_run:
+    workflows: ['Deploy']
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  smoke-and-notify:
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 1
+
+      - name: Resolve commit metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          subject=$(git log -1 --pretty=%s)
+          short=$(git rev-parse --short HEAD)
+          {
+            echo "subject=${subject}"
+            echo "short_sha=${short}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Smoke prod Workers
+        id: smoke
+        continue-on-error: true
+        env:
+          APP_URL: https://barycal.junting-mp3.workers.dev
+          ROOM_URL: https://barycal-room.junting-mp3.workers.dev
+        run: |
+          set -uo pipefail
+          fail=0
+          poll() { # $1=url $2=label
+            for _ in $(seq 1 10); do
+              code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "$1" || echo "000")
+              if [ "$code" = "200" ]; then printf "  200  %s\n" "$2"; return 0; fi
+              sleep 4
+            done
+            printf "  %s  %s\n" "$code" "$2"; echo "::error::$2 returned $code"; return 1
+          }
+          poll "${APP_URL}/" "app root" || fail=1
+          poll "${ROOM_URL}/health" "relay /health" || fail=1
+          [ "$fail" -eq 0 ] && echo "result=pass" >> "$GITHUB_OUTPUT" || echo "result=fail" >> "$GITHUB_OUTPUT"
+
+      - name: Notify Telegram
+        env:
+          BOT: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SHA: ${{ steps.meta.outputs.short_sha }}
+          SUBJECT: ${{ steps.meta.outputs.subject }}
+          RESULT: ${{ steps.smoke.outputs.result }}
+        run: |
+          set -uo pipefail
+          if [ -z "${BOT:-}" ] || [ -z "${CHAT:-}" ]; then
+            echo "::warning::TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notify."
+            exit 0
+          fi
+          esc_subject=$(printf '%s' "$SUBJECT" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')
+          if [ "${RESULT:-fail}" = "pass" ]; then
+            text="✅ <b>Prod deploy</b>: <code>${SHA}</code> — ${esc_subject}"
+          else
+            text=$(printf '❌ <b>Prod smoke FAILED</b>: <code>%s</code> — %s\n\nCheck the app + relay and consider running the Rollback workflow.' "$SHA" "$esc_subject")
+          fi
+          curl -sS --fail-with-body --max-time 15 \
+            "https://api.telegram.org/bot${BOT}/sendMessage" \
+            -d "chat_id=${CHAT}" \
+            -d "parse_mode=HTML" \
+            --data-urlencode "text=${text}" \
+            > /dev/null
+          echo "Telegram sent (${RESULT})."
+
+      - name: Mark step failed if smoke failed
+        if: steps.smoke.outputs.result == 'fail'
+        run: |
+          echo "::error::Production smoke failed — see prior step output."
+          exit 1

@@ -1,0 +1,105 @@
+# Production deploy on push to main: D1 migrations + both Workers.
+#
+# barycal ships two Cloudflare Workers:
+#   * the main Next.js app `barycal` (repo-root wrangler.jsonc, OpenNext build,
+#     bound to the `barycal-db` D1 database), and
+#   * the chat relay `barycal-room` (workers/room/, its own wrangler.toml).
+#
+# Jobs:
+#   gate         → typecheck + tests + mayfly. Nothing ships if these fail.
+#   deploy-app   → OpenNext build → apply pending D1 migrations (--remote) →
+#                  wrangler deploy. Migrations run AFTER a successful build and
+#                  BEFORE the worker deploy, so the new schema is live before the
+#                  new code that depends on it. D1 migrations are forward-only.
+#   deploy-room  → wrangler deploy from workers/room (its own wrangler.toml).
+#
+# Required repo secret:
+#   CLOUDFLARE_API_TOKEN — Cloudflare API token scoped to Workers Scripts:Edit +
+#                          D1:Edit + Account Settings:Read on the account in
+#                          wrangler.jsonc (1fb5ac4e609c1d4f4b9171e62d5127c1).
+# The account_id lives in wrangler.jsonc / workers/room/wrangler.toml, so no
+# CLOUDFLARE_ACCOUNT_ID secret is needed.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Never cancel an in-flight prod deploy; queue the next one behind it.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Gate (typecheck + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:mayfly
+
+  deploy-app:
+    name: Deploy app Worker (+ D1 migrations)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: gate
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Build (OpenNext)
+        run: npx opennextjs-cloudflare build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+      - name: Apply D1 migrations (remote)
+        # Forward-only; no-op when there's nothing pending. Runs before deploy
+        # so the schema precedes the code. account_id is read from wrangler.jsonc.
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: d1 migrations apply barycal-db --remote
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy
+
+  deploy-room:
+    name: Deploy room relay Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: gate
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: workers/room/package-lock.json
+      - name: Install dependencies (room)
+        working-directory: workers/room
+        run: npm ci
+      - name: Deploy (workers/room/wrangler.toml)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: workers/room
+          command: deploy

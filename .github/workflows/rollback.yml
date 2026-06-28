@@ -1,0 +1,94 @@
+# Manual one-click production rollback of the app Worker (Cloudflare).
+#
+# `wrangler rollback` re-points the live `barycal` Worker version instantly — no
+# rebuild, same artifact, an older version served. A forward-fix can re-deploy
+# the latest from `main` once the bug is found.
+#
+# Usage: GitHub UI → Actions → "Rollback production" → Run workflow.
+#   version EMPTY → roll back to the immediately previous version.
+#   version SET   → roll back to that specific Worker version-id (UUID).
+# Find a version-id: `npx wrangler versions list`, or Cloudflare dashboard →
+# Workers & Pages → barycal → Deployments.
+#
+# This rolls back ONLY the main app Worker. The `barycal-room` relay rarely
+# changes; roll it back if needed via `cd workers/room && npx wrangler rollback`
+# or the dashboard.
+#
+# Required repo secret: CLOUDFLARE_API_TOKEN (Workers Scripts:Edit).
+# Optional: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID.
+name: Rollback production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Worker version-id to roll back to (leave empty for previous version)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rollback
+        env:
+          # account_id is read from wrangler.jsonc; pass only the token.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VERSION:-}" ]; then
+            echo "Rolling back to previous version (actor: $ACTOR)..."
+            npx wrangler rollback --message "Rollback by $ACTOR via GitHub Actions" --yes
+          else
+            echo "Rolling back to version: $VERSION (actor: $ACTOR)..."
+            npx wrangler rollback "$VERSION" --message "Rollback to $VERSION by $ACTOR" --yes
+          fi
+
+      - name: Notify Telegram
+        # Best-effort — never fails the workflow over missing alerting.
+        if: always()
+        env:
+          BOT: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ACTOR: ${{ github.actor }}
+          VERSION: ${{ inputs.version }}
+          STATUS: ${{ job.status }}
+        run: |
+          set -uo pipefail
+          if [ -z "${BOT:-}" ] || [ -z "${CHAT:-}" ]; then
+            echo "::warning::TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notify."
+            exit 0
+          fi
+          target="${VERSION:-previous version}"
+          esc_target=$(printf '%s' "$target" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')
+          esc_actor=$(printf '%s' "$ACTOR" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')
+          if [ "$STATUS" = "success" ]; then
+            text="↩️ <b>Prod rollback</b> by <code>${esc_actor}</code> — target: <code>${esc_target}</code>"
+          else
+            text="⚠️ <b>Rollback workflow ${STATUS}</b> by <code>${esc_actor}</code> — target: <code>${esc_target}</code>"
+          fi
+          curl -sS --fail-with-body --max-time 15 \
+            "https://api.telegram.org/bot${BOT}/sendMessage" \
+            -d "chat_id=${CHAT}" \
+            -d "parse_mode=HTML" \
+            --data-urlencode "text=${text}" \
+            > /dev/null
+          echo "Telegram sent (${STATUS})."

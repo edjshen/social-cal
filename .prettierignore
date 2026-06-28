@@ -1,0 +1,16 @@
+# Generated / vendored — the generator is the source of truth, not Prettier.
+package-lock.json
+next-env.d.ts
+.next/
+.open-next/
+.wrangler/
+drizzle/
+public/sw.js
+public/swe-worker-*.js
+righteous-font/
+searider-falcon-font/
+patches/
+node_modules/
+
+# The room relay is a separate package with its own toolchain; format it there.
+workers/room/node_modules/

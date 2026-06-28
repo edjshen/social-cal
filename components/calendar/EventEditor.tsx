@@ -48,7 +48,11 @@ export default function EventEditor({
   const isEdit = !!ex;
 
   const s0 = ex ? new Date(ex.startTime) : init.startISO ? new Date(init.startISO) : defaultStart();
-  const e0 = ex?.endTime ? new Date(ex.endTime) : init.endISO ? new Date(init.endISO) : new Date(s0.getTime() + 3600000);
+  const e0 = ex?.endTime
+    ? new Date(ex.endTime)
+    : init.endISO
+      ? new Date(init.endISO)
+      : new Date(s0.getTime() + 3600000);
 
   const [title, setTitle] = useState(ex?.title || '');
   const [allDay, setAllDay] = useState(!!ex?.allDay);
@@ -134,17 +138,33 @@ export default function EventEditor({
         <div className="field" style={{ flex: 1 }}>
           <label>Starts</label>
           {allDay ? (
-            <input type="date" value={toDateInput(start)} onChange={(e) => setStart(syncDate(start, e.target.value))} />
+            <input
+              type="date"
+              value={toDateInput(start)}
+              onChange={(e) => setStart(syncDate(start, e.target.value))}
+            />
           ) : (
-            <input type="datetime-local" value={toLocalInput(start)} onChange={(e) => setStart(new Date(e.target.value))} />
+            <input
+              type="datetime-local"
+              value={toLocalInput(start)}
+              onChange={(e) => setStart(new Date(e.target.value))}
+            />
           )}
         </div>
         <div className="field" style={{ flex: 1 }}>
           <label>Ends</label>
           {allDay ? (
-            <input type="date" value={toDateInput(end)} onChange={(e) => setEnd(syncDate(end, e.target.value))} />
+            <input
+              type="date"
+              value={toDateInput(end)}
+              onChange={(e) => setEnd(syncDate(end, e.target.value))}
+            />
           ) : (
-            <input type="datetime-local" value={toLocalInput(end)} onChange={(e) => setEnd(new Date(e.target.value))} />
+            <input
+              type="datetime-local"
+              value={toLocalInput(end)}
+              onChange={(e) => setEnd(new Date(e.target.value))}
+            />
           )}
         </div>
       </div>
@@ -162,14 +182,23 @@ export default function EventEditor({
 
       <div className="field">
         <label>Location</label>
-        <input type="text" placeholder="Add location" value={location} onChange={(e) => setLocation(e.target.value)} />
+        <input
+          type="text"
+          placeholder="Add location"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        />
       </div>
 
       <div className="field">
         <label>Type</label>
         <div className="chips">
           {TYPES.map(([v, l]) => (
-            <span key={v} className={`chip pick ${type === v ? 'on' : ''}`} onClick={() => setType(v)}>
+            <span
+              key={v}
+              className={`chip pick ${type === v ? 'on' : ''}`}
+              onClick={() => setType(v)}
+            >
               {l}
             </span>
           ))}
@@ -202,7 +231,11 @@ export default function EventEditor({
         <label>Who can see it</label>
         <div className="chips">
           {VIS.map(([v, l]) => (
-            <span key={v} className={`chip pick ${vis === v ? 'on' : ''}`} onClick={() => setVis(v)}>
+            <span
+              key={v}
+              className={`chip pick ${vis === v ? 'on' : ''}`}
+              onClick={() => setVis(v)}
+            >
               {l}
             </span>
           ))}

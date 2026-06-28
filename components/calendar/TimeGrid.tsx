@@ -9,8 +9,23 @@ const SNAP_MIN = 15;
 type Draft = { startISO: string; endISO: string };
 type Drag =
   | { mode: 'create'; dayIndex: number; anchorMin: number; curMin: number }
-  | { mode: 'move'; ev: CalEvent; dayIndex: number; grabOffsetMin: number; curStartMin: number; durMin: number; moved: boolean }
-  | { mode: 'resize'; ev: CalEvent; dayIndex: number; startMin: number; curEndMin: number; moved: boolean };
+  | {
+      mode: 'move';
+      ev: CalEvent;
+      dayIndex: number;
+      grabOffsetMin: number;
+      curStartMin: number;
+      durMin: number;
+      moved: boolean;
+    }
+  | {
+      mode: 'resize';
+      ev: CalEvent;
+      dayIndex: number;
+      startMin: number;
+      curEndMin: number;
+      moved: boolean;
+    };
 
 function snap(min: number) {
   return Math.round(min / SNAP_MIN) * SNAP_MIN;
@@ -107,7 +122,12 @@ export default function TimeGrid({
       } else if (d.mode === 'move') {
         const newStart = snap(min - d.grabOffsetMin);
         const di = dayIndexFromPointer(e);
-        setDrag({ ...d, curStartMin: Math.max(0, Math.min(1440 - d.durMin, newStart)), dayIndex: di, moved: true });
+        setDrag({
+          ...d,
+          curStartMin: Math.max(0, Math.min(1440 - d.durMin, newStart)),
+          dayIndex: di,
+          moved: true,
+        });
       } else if (d.mode === 'resize') {
         setDrag({ ...d, curEndMin: Math.max(d.startMin + SNAP_MIN, snap(min)), moved: true });
       }
@@ -213,7 +233,8 @@ export default function TimeGrid({
                       endMin = dr.curStartMin + dr.durMin;
                     }
                     if (dr && dr.mode === 'resize' && dr.ev.id === ev.id) endMin = dr.curEndMin;
-                    if (dr && dr.mode === 'move' && dr.ev.id === ev.id && dr.dayIndex !== di) return null;
+                    if (dr && dr.mode === 'move' && dr.ev.id === ev.id && dr.dayIndex !== di)
+                      return null;
                     endMin = Math.min(1440, Math.max(endMin, startMin + 15));
                     const top = (startMin / 60) * HOUR_PX;
                     const height = Math.max(14, ((endMin - startMin) / 60) * HOUR_PX);
@@ -241,7 +262,15 @@ export default function TimeGrid({
                           }
                           const min = minFromPointer(e);
                           (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-                          setDrag({ mode: 'move', ev, dayIndex: di, grabOffsetMin: min - startMin, curStartMin: startMin, durMin: endMin - startMin, moved: false });
+                          setDrag({
+                            mode: 'move',
+                            ev,
+                            dayIndex: di,
+                            grabOffsetMin: min - startMin,
+                            curStartMin: startMin,
+                            durMin: endMin - startMin,
+                            moved: false,
+                          });
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -250,14 +279,23 @@ export default function TimeGrid({
                         }}
                       >
                         <div className="tg-ev-t">{ev.busy ? 'Busy' : ev.title || '(no title)'}</div>
-                        {height > 30 && !ev.busy && <div className="tg-ev-s">{fmtTime(ev.startTime)}</div>}
+                        {height > 30 && !ev.busy && (
+                          <div className="tg-ev-s">{fmtTime(ev.startTime)}</div>
+                        )}
                         {mine && !ev.busy && (
                           <div
                             className="tg-ev-resize"
                             onPointerDown={(e) => {
                               e.stopPropagation();
                               (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
-                              setDrag({ mode: 'resize', ev, dayIndex: di, startMin, curEndMin: endMin, moved: false });
+                              setDrag({
+                                mode: 'resize',
+                                ev,
+                                dayIndex: di,
+                                startMin,
+                                curEndMin: endMin,
+                                moved: false,
+                              });
                             }}
                           />
                         )}

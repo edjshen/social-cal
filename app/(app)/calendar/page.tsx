@@ -13,7 +13,9 @@ export default async function CalendarPage() {
   from.setHours(0, 0, 0, 0);
   const to = new Date(now);
   to.setDate(to.getDate() + 92);
-  const events = await calendarWindow(meId, from.toISOString(), to.toISOString());
+  const events = await calendarWindow(meId, from.toISOString(), to.toISOString(), {
+    includePastRecurring: true,
+  });
   return (
     <CalendarApp
       initialEvents={events as any}

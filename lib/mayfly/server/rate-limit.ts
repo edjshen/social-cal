@@ -31,7 +31,12 @@ type RLArgs = { scope: string; key: string; max: number; windowMs: number };
  * SQLite/D1 executes the statement atomically; the window resets in the same
  * statement when it has elapsed.
  */
-export async function consumeServerRateLimit({ scope, key, max, windowMs }: RLArgs): Promise<{ ok: boolean; retryAfterMs?: number }> {
+export async function consumeServerRateLimit({
+  scope,
+  key,
+  max,
+  windowMs,
+}: RLArgs): Promise<{ ok: boolean; retryAfterMs?: number }> {
   const db = getMayflyDb();
   const now = Date.now();
   const resetIf = sql`${now} - ${mayflyRateLimits.windowStart} >= ${windowMs}`;
