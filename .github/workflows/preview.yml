@@ -76,6 +76,28 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: '1'
 
+      # Per-PR previews deploy from the committed wrangler.jsonc. Once that file
+      # carries the production `routes` (barycal.com / www custom domains), an
+      # unguarded preview deploy would RE-POINT those globally-unique custom
+      # domains at the throwaway preview Worker — taking prod down. Strip the
+      # custom-domain routes (and workers_dev) before deploying so a preview can
+      # only ever own its own *.workers.dev URL.
+      - name: Strip prod custom domains from wrangler.jsonc (preview safety)
+        if: steps.preflight.outputs.skip != 'true'
+        run: |
+          node -e '
+            const fs = require("fs");
+            const raw = fs.readFileSync("wrangler.jsonc", "utf8")
+              .replace(/\/\*[\s\S]*?\*\//g, "")
+              .replace(/^\s*\/\/.*$/gm, "")
+              .replace(/,(\s*[}\]])/g, "$1");
+            const cfg = JSON.parse(raw);
+            delete cfg.routes;
+            delete cfg.workers_dev;
+            fs.writeFileSync("wrangler.jsonc", JSON.stringify(cfg, null, 2) + "\n");
+            console.log("Preview safety: stripped routes/workers_dev from wrangler.jsonc");
+          '
+
       - name: Deploy preview
         id: deploy
         if: steps.preflight.outputs.skip != 'true'
