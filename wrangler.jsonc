@@ -19,4 +19,9 @@
     },
   ],
   "observability": { "enabled": true },
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "barycal.com", "custom_domain": true },
+    { "pattern": "www.barycal.com", "custom_domain": true },
+  ],
 }

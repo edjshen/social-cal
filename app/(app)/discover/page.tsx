@@ -48,5 +48,13 @@ export default async function DiscoverPage() {
     monthISO: mFirst.toISOString(),
   };
 
-  return <DiscoverClient events={events} meId={meId} week={week} month={month} />;
+  return (
+    <DiscoverClient
+      events={events}
+      meId={meId}
+      week={week}
+      month={month}
+      todayISO={from.toISOString()}
+    />
+  );
 }

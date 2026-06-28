@@ -1,5 +1,5 @@
 'use client';
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Avatar from './primitives/Avatar';
@@ -48,12 +48,17 @@ export default function ProfileView({ data }: { data: ProfileData }) {
     });
   }
 
-  const fullLink =
-    typeof window !== 'undefined' ? location.origin + '/u/' + user.handle : '/u/' + user.handle;
-  const displayLink = fullLink.replace(/^https?:\/\//, '');
+  const [origin, setOrigin] = useState('');
+  useEffect(() => {
+    setOrigin(location.origin);
+  }, []);
+  const fullLink = (origin || '') + '/u/' + user.handle;
+  const displayLink = origin
+    ? (origin + '/u/' + user.handle).replace(/^https?:\/\//, '')
+    : user.handle;
 
   function copyLink() {
-    navigator.clipboard?.writeText(fullLink);
+    navigator.clipboard?.writeText(location.origin + '/u/' + user.handle);
   }
 
   const s: { regulars?: number; plans?: number; scenes?: number } = stats || {};

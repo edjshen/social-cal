@@ -11,11 +11,13 @@ export default function DiscoverClient({
   meId,
   week,
   month,
+  todayISO,
 }: {
   events: any[];
   meId: string;
   week?: any;
   month?: any;
+  todayISO?: string;
 }) {
   const [view, setView] = useState('discover');
   const seg = (
@@ -40,7 +42,7 @@ export default function DiscoverClient({
     return (
       <>
         {seg}
-        <MonthGrid events={month?.events ?? []} monthISO={month?.monthISO} />
+        <MonthGrid events={month?.events ?? []} monthISO={month?.monthISO} todayISO={todayISO} />
       </>
     );
   let last = '';

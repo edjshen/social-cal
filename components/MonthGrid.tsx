@@ -3,16 +3,24 @@ import { useState } from 'react';
 import { startOfDay } from '@/lib/domain/dates';
 import { timeLabel } from '@/lib/format';
 
-export default function MonthGrid({ events, monthISO }: { events: any[]; monthISO?: string }) {
-  const now = new Date();
-  const refDate = monthISO ? new Date(monthISO) : now;
+export default function MonthGrid({
+  events,
+  monthISO,
+  todayISO,
+}: {
+  events: any[];
+  monthISO?: string;
+  todayISO?: string;
+}) {
+  const todayAnchor = todayISO ? new Date(todayISO) : new Date();
+  const refDate = monthISO ? new Date(monthISO) : todayAnchor;
   const y = refDate.getFullYear();
   const m = refDate.getMonth();
   const first = new Date(y, m, 1);
   const next = new Date(y, m + 1, 1);
 
-  const today = startOfDay(new Date()).getTime();
-  const [selDay, setSelDay] = useState<string>(() => startOfDay(new Date()).toISOString());
+  const today = startOfDay(todayAnchor).getTime();
+  const [selDay, setSelDay] = useState<string>(startOfDay(todayAnchor).toISOString());
 
   // Build byDay map
   const byDay: Record<number, any[]> = {};
