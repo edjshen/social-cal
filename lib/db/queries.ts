@@ -1,4 +1,4 @@
-import { and, eq, gte, lt, or } from 'drizzle-orm';
+import { and, eq, gte, gt, lt, or, isNull, isNotNull } from 'drizzle-orm';
 import { getDb } from './index';
 import { users, connections, placements, events, attendance } from './schema';
 
@@ -33,6 +33,26 @@ export async function getEventsBetween(startISO: string, endISO: string) {
     .select()
     .from(events)
     .where(and(gte(events.startTime, startISO), lt(events.startTime, endISO)));
+}
+// Like getEventsBetween, but also pulls recurring series that STARTED before the
+// window and are still active (no recur_until, or it ends after the window
+// starts). Their generated occurrences can land inside the window even though
+// the stored base row's start_time predates it — needed so the calendar shows
+// long-running weekly/monthly events. The client expands these into occurrences.
+export async function getCalendarEventsBetween(startISO: string, endISO: string) {
+  return getDb()
+    .select()
+    .from(events)
+    .where(
+      or(
+        and(gte(events.startTime, startISO), lt(events.startTime, endISO)),
+        and(
+          isNotNull(events.recurring),
+          lt(events.startTime, startISO),
+          or(isNull(events.recurUntil), gt(events.recurUntil, startISO))
+        )
+      )
+    );
 }
 export async function getEventById(id: string) {
   return (await getDb().select().from(events).where(eq(events.id, id)).limit(1))[0] ?? null;
