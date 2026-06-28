@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Delete barycal-pr-<N>
         env:
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY }}
           # Account IDs are not secrets (visible in any workers.dev URL).
           # Hardcoded to match wrangler.jsonc.
           CF_ACCOUNT_ID: '1fb5ac4e609c1d4f4b9171e62d5127c1'

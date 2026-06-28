@@ -42,7 +42,7 @@ jobs:
       - name: Pre-flight diagnostic (token presence)
         id: preflight
         env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY }}
           # Dependabot PRs and fork PRs run in a restricted context that does NOT
           # expose repo Actions secrets, so a preview deploy is structurally
           # impossible. Detect those and skip gracefully (green check) instead of
@@ -83,7 +83,7 @@ jobs:
         env:
           # CLI env > config in wrangler's resolution order; account_id in
           # wrangler.jsonc is correct, so we pass only the token.
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY }}
         run: |
           set +e
           npx wrangler deploy \

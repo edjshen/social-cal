@@ -73,13 +73,13 @@ jobs:
         # so the schema precedes the code. account_id is read from wrangler.jsonc.
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY }}
           command: d1 migrations apply barycal-db --remote
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY }}
           command: deploy
 
   deploy-room:
@@ -100,7 +100,7 @@ jobs:
       - name: Deploy (workers/room/wrangler.toml)
         uses: cloudflare/wrangler-action@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY }}
           workingDirectory: workers/room
           # Pin --config so wrangler doesn't walk UP the tree and pick the
           # repo-root wrangler.jsonc (the OpenNext app worker). workingDirectory

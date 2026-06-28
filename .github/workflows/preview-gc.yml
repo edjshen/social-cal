@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Sweep
         env:
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_KEY }}
           # Account IDs are not secrets (visible in any workers.dev URL).
           CF_ACCOUNT_ID: '1fb5ac4e609c1d4f4b9171e62d5127c1'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
