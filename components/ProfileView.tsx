@@ -57,7 +57,8 @@ export default function ProfileView({ data }: { data: ProfileData }) {
   return (
     <>
       <div className="banner" />
-      <div className="pf-head">
+      <div className="pf-head pf-grid">
+        <div className="pf-aside">
         <Avatar user={user} size="xl" className="pf-av" />
         <div className="pf-name">{user.displayName}</div>
         <div className="pf-handle">@{user.handle}</div>
@@ -82,6 +83,8 @@ export default function ProfileView({ data }: { data: ProfileData }) {
             <button type="submit" className="btn sm">Log out</button>
           </form>
         </div>
+        </div>
+        <div className="pf-main">
         <div className="kicker" style={{ margin: '22px 0 6px' }}>What I&apos;m going to</div>
         {upcoming.length === 0 ? (
           <div className="empty" style={{ padding: 24 }}>Nothing upcoming yet.</div>
@@ -119,6 +122,7 @@ export default function ProfileView({ data }: { data: ProfileData }) {
             <div><b>{s.scenes || 0}</b><span>scenes</span></div>
           </div>
         )}
+        </div>
       </div>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>

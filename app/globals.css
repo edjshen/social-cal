@@ -313,3 +313,116 @@ select{appearance:none;-webkit-appearance:none;background-image:url("data:image/
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
+
+/* ============================================================
+   Responsive base — affordances that only surface on desktop
+   ============================================================ */
+/* sidebar-only chrome stays hidden in the mobile bottom bar */
+.nav .brand{display:none}
+.nav .cal-tab .nav-label{display:none}
+
+/* ephemeral-rooms launcher (mobile: floats above the tab bar) */
+.rooms-fab{position:fixed;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:40;
+  width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:1px solid var(--bd);backdrop-filter:blur(12px);color:var(--ink);
+  box-shadow:0 8px 22px -8px rgba(0,0,0,.6);font-size:20px;text-decoration:none}
+
+/* pointer-device polish — touch screens stay untouched */
+@media (hover:hover){
+  .card{transition:border-color .16s ease, background .16s ease}
+  .app-shell .card:hover{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.06)}
+  .btn{transition:opacity .15s ease, background .15s ease, border-color .15s ease, transform .15s ease}
+  .btn:hover{border-color:rgba(255,255,255,.22)}
+  .btn.solid:hover{filter:brightness(1.05)}
+  .btn:active{transform:translateY(1px)}
+  .nav a, .nav button{transition:background .15s ease, color .15s ease}
+  .reg, .up{transition:background .15s ease}
+  .rooms-fab{transition:transform .15s ease, background .15s ease}
+  .rooms-fab:hover{transform:translateY(-2px)}
+  .seg button{transition:background .15s ease, color .15s ease}
+}
+
+/* ============================================================
+   Desktop — turn the phone column into a real desktop app:
+   a persistent left rail + a de-capped, editorial content area
+   ============================================================ */
+@media (min-width:860px){
+  :root{ --sbw:248px; --navh:0px; }
+
+  /* ---- left rail (the old bottom nav, re-laid-out) ---- */
+  .nav{
+    top:0;bottom:0;left:0;right:auto;transform:none;
+    width:var(--sbw);max-width:var(--sbw);height:100vh;
+    flex-direction:column;align-items:stretch;justify-content:flex-start;
+    gap:3px;padding:26px 16px;
+    border-top:0;border-right:1px solid var(--bd2);
+    background:linear-gradient(180deg,var(--bg2),var(--bg));backdrop-filter:none;
+    overflow-y:auto;
+  }
+  .nav .brand{display:flex;align-items:center;gap:11px;padding:4px 12px 24px;color:var(--ink)}
+  .nav .brand-mark{width:26px;height:26px;border-radius:50%;background:var(--grad);position:relative;
+    box-shadow:0 0 22px rgba(255,94,135,.45);flex:none}
+  .nav .brand-mark::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--bg2)}
+  .nav .brand-name{font-family:var(--serif);font-weight:500;font-size:22px;letter-spacing:-.01em}
+
+  .nav a, .nav button{
+    flex-direction:row;justify-content:flex-start;gap:13px;width:100%;
+    font-size:14.5px;font-weight:600;color:var(--dim);
+    padding:11px 13px;border-radius:13px;
+  }
+  .nav a:hover{background:var(--card2);color:var(--ink)}
+  .nav a.on, .nav button.on{background:var(--card);color:var(--ink)}
+  .nav svg{width:21px;height:21px;stroke-width:1.8}
+  /* un-FAB the calendar entry so it reads as a normal rail item */
+  .nav .cal-tab{margin:0}
+  .nav .cal-tab .create{width:auto;height:auto;border-radius:0;background:none;box-shadow:none;margin:0;display:inline-flex}
+  .nav .cal-tab .create svg{stroke:currentColor;stroke-width:1.8;width:21px;height:21px}
+  .nav .cal-tab.on .create svg{stroke:currentColor}
+  .nav .cal-tab .nav-label{display:inline}
+
+  /* ---- content shell: drop the 480 cap, sit beside the rail ---- */
+  .app-shell{
+    max-width:none;margin:0 0 0 var(--sbw);
+    border-left:0;border-right:0;min-height:100vh;
+    background:
+      radial-gradient(1100px 700px at 28% -12%,#16121f 0%,rgba(22,18,31,0) 60%),
+      linear-gradient(180deg,var(--bg2),var(--bg));
+  }
+  .app-shell .main{max-width:780px;margin:0 auto;padding:48px 48px 88px;min-height:auto}
+  .app-shell .h-title{font-size:42px}
+  .app-shell .seg{max-width:440px}
+
+  /* ---- card & people feeds flow into a responsive grid ---- */
+  .feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:start}
+  .feed .daylabel{grid-column:1/-1;margin:20px 2px 4px}
+  .feed .card{margin-bottom:0}
+
+  /* ---- profile: identity rail + upcoming, side by side ---- */
+  .app-shell .banner{height:152px;margin:-48px -48px 0;border-radius:0 0 26px 26px}
+  .pf-grid{display:grid;grid-template-columns:300px 1fr;gap:44px;align-items:start;margin-top:0}
+  .pf-grid .pf-aside{margin-top:-48px;position:sticky;top:48px}
+  .pf-grid .pf-main{padding-top:8px}
+  .pf-grid .pf-main .kicker:first-child{margin-top:0 !important}
+  .pf-grid .statline{margin-top:26px;border-top:1px solid var(--bd2)}
+
+  /* ---- full-bleed calendar inside the content area ---- */
+  .app-shell .main:has(.cal-app){max-width:none;margin:0;padding:0}
+
+  /* ---- floating actions: anchor to the viewport corner ---- */
+  .rooms-fab{right:24px;bottom:24px}
+  .cal-fab{right:24px;bottom:88px}
+
+  /* ---- modals become centered dialogs instead of bottom sheets ---- */
+  .scrim{align-items:center}
+  .sheet{max-width:460px;border-radius:22px;max-height:86vh;margin:0 20px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+  .sheet .grab{display:none}
+
+  /* ---- auth screens read as a centered card ---- */
+  .auth{max-width:400px;margin:0 auto}
+}
+
+/* roomier rail + content on very wide screens */
+@media (min-width:1280px){
+  .app-shell .main{max-width:840px;padding-left:64px;padding-right:64px}
+}

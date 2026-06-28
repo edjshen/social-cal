@@ -1,5 +1,5 @@
 'use client';
-import { useState, useTransition } from 'react';
+import { Fragment, useState, useTransition } from 'react';
 import { dayLabel, timeLabel } from '@/lib/format';
 import Pill from './primitives/Pill';
 import { deleteEvent } from '@/lib/actions/events';
@@ -24,13 +24,14 @@ export default function PlansClient({ events, meId }: { events: any[]; meId: str
       {events.length === 0 && (
         <div className="empty">No plans yet.<br />Tap ＋ to make one — or set an intention like "free for lunch".</div>
       )}
+      <div className="feed">
       {events.map((ev) => {
         const dl = dayLabel(ev.startTime);
         const head = dl !== last ? <div className="daylabel" key={'d' + ev.id}>{dl}</div> : null;
         last = dl;
         const role = ev.creator?.id === meId ? 'Hosting' : (ev.myRsvp === 'going' ? "You're in" : ev.myRsvp);
         return (
-          <div key={ev.id}>
+          <Fragment key={ev.id}>
             {head}
             <div className="card">
               <div className="row between">
@@ -49,9 +50,10 @@ export default function PlansClient({ events, meId }: { events: any[]; meId: str
                 )}
               </div>
             </div>
-          </div>
+          </Fragment>
         );
       })}
+      </div>
       <CreateSheet open={open} onOpenChange={setOpen} />
     </>
   );
