@@ -26,6 +26,16 @@ account_id = "1fb5ac4e609c1d4f4b9171e62d5127c1"
 # runtime behavior.
 compatibility_date = "2025-06-01"
 
+# room-do.js imports the shared frame schema from ../../../lib/mayfly/shared/
+# protocol.js, which does `import { z } from 'zod'`. esbuild resolves that bare
+# import from the shared file's location (repo root), but only workers/room has
+# its deps installed in the deploy-room job — the repo-root node_modules isn't
+# there. Pin zod to this package's own copy so the bundle resolves. zod IS a
+# direct dependency here (see package.json), so ./node_modules/zod exists after
+# `npm ci`.
+[alias]
+zod = "./node_modules/zod"
+
 # Page origins allowed to open WebSocket upgrades / hit /health with CORS.
 # Comma-separated. Read at request time in src/worker.js. Add Orbit's PAGE
 # origin (the app's workers.dev host, or its custom domain once attached) — not
