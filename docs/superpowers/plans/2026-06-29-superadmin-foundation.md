@@ -491,11 +491,15 @@ export function verifyTotp(secretBase32: string, token: string): boolean {
   return totp.validate({ token, window: 1 }) !== null;
 }
 
-// 10 codes, formatted xxxx-xxxx (Crockford-ish, no ambiguous chars).
+// 10 codes, formatted xxxx-xxxx. Crockford base32 (32 chars, no i/l/o/u) so
+// `byte & 31` is bias-free; CRYPTO randomness — these are a real auth credential.
 export function newRecoveryCodes(n = 10): string[] {
-  const alphabet = '23456789abcdefghjkmnpqrstuvwxyz';
-  const one = () =>
-    Array.from({ length: 8 }, (_, i) => (i === 4 ? '-' : '') + alphabet[(Math.random() * alphabet.length) | 0]).join('');
+  const A = '0123456789abcdefghjkmnpqrstvwxyz';
+  const one = () => {
+    const b = crypto.getRandomValues(new Uint8Array(8));
+    const c = Array.from(b, (x) => A[x & 31]);
+    return c.slice(0, 4).join('') + '-' + c.slice(4).join('');
+  };
   return Array.from({ length: n }, one);
 }
 
@@ -503,7 +507,7 @@ export const hashRecoveryCode = (code: string) => hashPassword(code);
 export const verifyRecoveryCode = (code: string, hash: string) => verifyPassword(code, hash);
 ```
 
-> ponytail: recovery-code RNG uses `Math.random()` — fine for one-time codes that are also scrypt-hashed and rate-limited. If these ever gate higher-value flows, swap to `crypto.getRandomValues`. (`Math.random` is unavailable in Workflow scripts but works at app runtime.)
+> Recovery codes use `crypto.getRandomValues` (not `Math.random`) — they're a backup auth factor, so they must be cryptographically random. 8 base32 chars ≈ 40 bits each.
 
 - [ ] **Step 5: Run test — expect PASS**
 
