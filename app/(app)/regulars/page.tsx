@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import { getSession } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'Regulars · Barycal' };
 import { getDb } from '@/lib/db';
 import { events as E, attendance as A, users as U } from '@/lib/db/schema';
 import { computeRegulars } from '@/lib/domain/regulars';

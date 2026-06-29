@@ -3,6 +3,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    exclude: ['node_modules/**', '.claude/**', 'lib/mayfly/shared/**', 'workers/**'],
+    exclude: ['node_modules/**', '.claude/**', 'lib/mayfly/shared/**', 'workers/**', 'e2e/**'],
   },
 });

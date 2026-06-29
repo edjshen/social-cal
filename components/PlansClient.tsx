@@ -8,11 +8,17 @@ import CreateSheet from './CreateSheet';
 export default function PlansClient({ events, meId }: { events: any[]; meId: string }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   function handleCancel(id: string) {
-    if (!window.confirm('Cancel this plan?')) return;
+    setConfirmingId(id);
+  }
+
+  function confirmCancel() {
+    if (!confirmingId) return;
     startTransition(() => {
-      deleteEvent(id);
+      deleteEvent(confirmingId);
+      setConfirmingId(null);
     });
   }
 
@@ -45,8 +51,18 @@ export default function PlansClient({ events, meId }: { events: any[]; meId: str
               </div>
             ) : null;
           last = dl;
+          const RSVP_LABELS: Record<string, string> = {
+            going: "You're in",
+            down: "I'm down",
+            maybe: 'Maybe',
+            cant: "Can't go",
+          };
           const role =
-            ev.creator?.id === meId ? 'Hosting' : ev.myRsvp === 'going' ? "You're in" : ev.myRsvp;
+            ev.creator?.id === meId
+              ? 'Hosting'
+              : ev.myRsvp
+                ? (RSVP_LABELS[ev.myRsvp] ?? ev.myRsvp)
+                : null;
           return (
             <Fragment key={ev.id}>
               {head}
@@ -67,15 +83,28 @@ export default function PlansClient({ events, meId }: { events: any[]; meId: str
                 </div>
                 <div className="row between" style={{ marginTop: 10 }}>
                   <span className="btn sm in">{role}</span>
-                  {ev.creator?.id === meId && (
-                    <button
-                      className="btn sm"
-                      onClick={() => handleCancel(ev.id)}
-                      disabled={isPending}
-                    >
-                      Cancel
-                    </button>
-                  )}
+                  {ev.creator?.id === meId &&
+                    (confirmingId === ev.id ? (
+                      <div className="row" style={{ gap: 6 }}>
+                        <span className="muted" style={{ fontSize: 13 }}>
+                          Sure?
+                        </span>
+                        <button className="btn sm" onClick={confirmCancel} disabled={isPending}>
+                          Yes, cancel
+                        </button>
+                        <button className="btn sm" onClick={() => setConfirmingId(null)}>
+                          Keep
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn sm"
+                        onClick={() => handleCancel(ev.id)}
+                        disabled={isPending}
+                      >
+                        Cancel
+                      </button>
+                    ))}
                 </div>
               </div>
             </Fragment>

@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import { getSession } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'Plans · Barycal' };
 import { calendarWindow } from '@/lib/calendar';
 import { startOfToday } from '@/lib/domain/dates';
 import PlansClient from '@/components/PlansClient';

@@ -35,6 +35,7 @@ export default function EventDetail({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [scopeAsk, setScopeAsk] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [rsvp, setLocalRsvp] = useState(ev.myRsvp || null);
   const mine = ev.creator?.id === meId;
   const isOccurrence = !!ev.occurrence;
@@ -50,8 +51,7 @@ export default function EventDetail({
       setScopeAsk(true);
       return;
     }
-    if (!window.confirm('Delete this event?')) return;
-    void doDelete();
+    setConfirmDelete(true);
   }
   async function doDelete(scope?: Scope) {
     setPending(true);
@@ -109,12 +109,28 @@ export default function EventDetail({
 
       {mine && !ev.busy && (
         <div className="row" style={{ gap: 10, marginTop: 18 }}>
-          <button className="btn block" onClick={() => onEdit(ev)} style={{ marginTop: 0 }}>
-            Edit
-          </button>
-          <button className="btn" onClick={remove} disabled={pending}>
-            Delete
-          </button>
+          {confirmDelete ? (
+            <>
+              <span className="muted" style={{ fontSize: 13, alignSelf: 'center' }}>
+                Delete?
+              </span>
+              <button className="btn" onClick={() => doDelete()} disabled={pending}>
+                Yes, delete
+              </button>
+              <button className="btn" onClick={() => setConfirmDelete(false)}>
+                Keep
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn block" onClick={() => onEdit(ev)} style={{ marginTop: 0 }}>
+                Edit
+              </button>
+              <button className="btn" onClick={remove} disabled={pending}>
+                Delete
+              </button>
+            </>
+          )}
         </div>
       )}
 

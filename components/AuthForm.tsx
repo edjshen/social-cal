@@ -25,20 +25,33 @@ export default function AuthForm({
       </div>
       <p className="tag">your life in orbit</p>
       <div className="field">
-        <label>Username</label>
-        <input name="username" type="text" autoCapitalize="off" placeholder="ed" />
+        <label htmlFor="auth-username">Username</label>
+        <input
+          id="auth-username"
+          name="username"
+          type="text"
+          autoCapitalize="off"
+          autoComplete="username"
+          placeholder="ed"
+        />
       </div>
       {reg && (
         <div className="field">
-          <label>Display name</label>
-          <input name="displayName" type="text" placeholder="Ed Shen" />
+          <label htmlFor="auth-displayname">Display name</label>
+          <input id="auth-displayname" name="displayName" type="text" placeholder="Ed Shen" />
         </div>
       )}
       <div className="field">
-        <label>Password</label>
-        <input name="password" type="password" placeholder="••••••••" />
+        <label htmlFor="auth-password">Password</label>
+        <input
+          id="auth-password"
+          name="password"
+          type="password"
+          autoComplete={reg ? 'new-password' : 'current-password'}
+          placeholder="••••••••"
+        />
       </div>
-      <button className="btn solid block" disabled={pending}>
+      <button type="submit" className="btn solid block" disabled={pending}>
         {reg ? 'Create account' : 'Log in'}
       </button>
       {state?.error && <div className="error">{state.error}</div>}

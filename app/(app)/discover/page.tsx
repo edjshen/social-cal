@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import { getSession } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'Discover · Barycal' };
 import { getGraphContext, getEventsBetween } from '@/lib/db/queries';
 import { canSeeContent, myConnectionIds } from '@/lib/domain/visibility';
 import { enrich } from '@/lib/domain/enrich';

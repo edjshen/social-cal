@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import { getSession } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'You · Barycal' };
 import { getProfileData } from '@/lib/db/profile';
 import ProfileView from '@/components/ProfileView';
 export default async function YouPage() {

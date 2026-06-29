@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import { getSession } from '@/lib/auth/session';
+
+export const metadata: Metadata = { title: 'Circles · Barycal' };
 import { getGraphContext } from '@/lib/db/queries';
 import { myConnectionIds, tierOf, connectionStatus } from '@/lib/domain/visibility';
 import { publicUser } from '@/lib/domain/helpers';

@@ -194,13 +194,14 @@ export default function EventEditor({
         <label>Type</label>
         <div className="chips">
           {TYPES.map(([v, l]) => (
-            <span
+            <button
               key={v}
+              type="button"
               className={`chip pick ${type === v ? 'on' : ''}`}
               onClick={() => setType(v)}
             >
               {l}
-            </span>
+            </button>
           ))}
         </div>
       </div>
@@ -208,16 +209,18 @@ export default function EventEditor({
       <div className="field">
         <label>Color</label>
         <div className="ce-colors">
-          <span
+          <button
+            type="button"
             className={`ce-sw ce-auto${color === '' ? ' on' : ''}`}
             onClick={() => setColor('')}
             title="Default (by type)"
           >
             A
-          </span>
+          </button>
           {CAL_COLORS.map((c) => (
-            <span
+            <button
               key={c.key}
+              type="button"
               className={`ce-sw${color === c.key ? ' on' : ''}`}
               style={{ background: c.hex }}
               onClick={() => setColor(c.key)}
@@ -231,13 +234,14 @@ export default function EventEditor({
         <label>Who can see it</label>
         <div className="chips">
           {VIS.map(([v, l]) => (
-            <span
+            <button
               key={v}
+              type="button"
               className={`chip pick ${vis === v ? 'on' : ''}`}
               onClick={() => setVis(v)}
             >
               {l}
-            </span>
+            </button>
           ))}
         </div>
       </div>

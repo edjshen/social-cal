@@ -18,3 +18,5 @@ public/sw.js
 public/swe-worker-*.js
 workers/room/node_modules/
 .claire/
+test-results/
+playwright-report/
