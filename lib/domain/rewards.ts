@@ -156,9 +156,7 @@ export function computeGrant(
   const xstreak = bonusCfg(gBonuses, 'crossOrgStreak');
   if (bonusOn(xstreak)) {
     const windowMs = num(xstreak!.windowDays, 14) * 86400_000;
-    const recent = ctx.priorCheckIns.some(
-      (c) => ctx.nowMs - Date.parse(c.createdAt) <= windowMs
-    );
+    const recent = ctx.priorCheckIns.some((c) => ctx.nowMs - Date.parse(c.createdAt) <= windowMs);
     if (recent) gBreak.crossOrgStreak = num(xstreak!.points);
   }
 
@@ -185,8 +183,7 @@ export function computeGrant(
     }
 
     const friend = bonusCfg(ob, 'bringFriend');
-    if (bonusOn(friend) && ctx.referredFriendCheckedIn)
-      oBreak.bringFriend = num(friend!.points);
+    if (bonusOn(friend) && ctx.referredFriendCheckedIn) oBreak.bringFriend = num(friend!.points);
   }
 
   const sum = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
@@ -199,7 +196,9 @@ export function computeGrant(
 
 /** Is `now` inside the event's check-in window? */
 export function checkinWindowOpen(event: RewardEvent, nowMs: number): boolean {
-  const opens = event.checkinOpensAt ? Date.parse(event.checkinOpensAt) : Date.parse(event.startsAt);
+  const opens = event.checkinOpensAt
+    ? Date.parse(event.checkinOpensAt)
+    : Date.parse(event.startsAt);
   const closes = event.checkinClosesAt
     ? Date.parse(event.checkinClosesAt)
     : event.endsAt

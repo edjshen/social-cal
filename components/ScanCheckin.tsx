@@ -33,8 +33,9 @@ export default function ScanCheckin({ onClose }: { onClose?: () => void }) {
 
   async function startCamera() {
     setError(null);
-    const Ctor = (globalThis as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => Detector })
-      .BarcodeDetector;
+    const Ctor = (
+      globalThis as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => Detector }
+    ).BarcodeDetector;
     if (!Ctor) {
       setError('Camera scanning is not supported here — paste the code below.');
       return;
@@ -85,7 +86,9 @@ export default function ScanCheckin({ onClose }: { onClose?: () => void }) {
         {result.ok ? (
           <>
             <div className="scan-big">✅</div>
-            <div className="h-title">You&apos;re in{result.orgName ? ` at ${result.orgName}` : ''}!</div>
+            <div className="h-title">
+              You&apos;re in{result.orgName ? ` at ${result.orgName}` : ''}!
+            </div>
             <div className="scan-points">
               +{result.globalAwarded ?? 0} points
               {result.orgAwarded ? ` · +${result.orgAwarded} with this org` : ''}

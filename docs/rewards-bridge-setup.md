@@ -4,11 +4,11 @@ The rewards feature talks to poisys over a signed Worker-to-Worker bridge. Three
 values drive it. Secrets are set with `wrangler secret put <NAME>` (prod) or in
 `.dev.vars` (local, gitignored); the non-secret URL lives in `wrangler.jsonc`.
 
-| Name | Kind | Where | Purpose |
-| --- | --- | --- | --- |
-| `POISYS_BRIDGE_URL` | var (non-secret) | `wrangler.jsonc` → `vars` | Base URL of the poisys Worker's `/bridge` router. barycal POSTs check-in + redemption-issued reports here. |
-| `BRIDGE_SECRET` | secret | `wrangler secret put` / `.dev.vars` | HMAC-SHA256 signing key. **Must be byte-identical** to poisys's `BRIDGE_SECRET`. Signs/verifies every bridge call. |
-| `SESSION_SECRET` | secret | already in use | iron-session cookie key (unchanged by this feature). |
+| Name                | Kind             | Where                               | Purpose                                                                                                            |
+| ------------------- | ---------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `POISYS_BRIDGE_URL` | var (non-secret) | `wrangler.jsonc` → `vars`           | Base URL of the poisys Worker's `/bridge` router. barycal POSTs check-in + redemption-issued reports here.         |
+| `BRIDGE_SECRET`     | secret           | `wrangler secret put` / `.dev.vars` | HMAC-SHA256 signing key. **Must be byte-identical** to poisys's `BRIDGE_SECRET`. Signs/verifies every bridge call. |
+| `SESSION_SECRET`    | secret           | already in use                      | iron-session cookie key (unchanged by this feature).                                                               |
 
 ## How the two sides line up
 

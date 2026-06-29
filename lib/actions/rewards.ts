@@ -46,16 +46,26 @@ export async function checkInByQr(rawQr: string): Promise<CheckinResult> {
 
   const event = (await db.select().from(RE).where(eq(RE.id, parsed.eventId)).limit(1))[0];
   if (!event || event.status !== 'published') return { ok: false, reason: 'Event not found' };
-  if (!checkinWindowOpen(event, now)) return { ok: false, reason: 'Check-in is closed for this event' };
+  if (!checkinWindowOpen(event, now))
+    return { ok: false, reason: 'Check-in is closed for this event' };
 
   const secret = (await db.select().from(RES).where(eq(RES.eventId, event.id)).limit(1))[0];
   if (!secret) return { ok: false, reason: 'Check-in unavailable' };
-  const valid = await verifyRotatingCode(secret.rotatingSecret, secret.stepSeconds, parsed.code, now);
+  const valid = await verifyRotatingCode(
+    secret.rotatingSecret,
+    secret.stepSeconds,
+    parsed.code,
+    now
+  );
   if (!valid) return { ok: false, reason: 'Code expired — scan the live QR again' };
 
   // One earning check-in per user per event.
   const dupe = (
-    await db.select().from(CI).where(and(eq(CI.userId, uid), eq(CI.eventId, event.id))).limit(1)
+    await db
+      .select()
+      .from(CI)
+      .where(and(eq(CI.userId, uid), eq(CI.eventId, event.id)))
+      .limit(1)
   )[0];
   if (dupe) return { ok: false, reason: 'Already checked in' };
 
@@ -64,7 +74,11 @@ export async function checkInByQr(rawQr: string): Promise<CheckinResult> {
     db.select().from(GRR).where(eq(GRR.active, true)).limit(1),
     db.select().from(U).where(eq(U.id, uid)).limit(1),
     db.select().from(ORG).where(eq(ORG.id, event.orgId)).limit(1),
-    db.select().from(RR).where(and(eq(RR.userId, uid), eq(RR.eventId, event.id))).limit(1),
+    db
+      .select()
+      .from(RR)
+      .where(and(eq(RR.userId, uid), eq(RR.eventId, event.id)))
+      .limit(1),
   ]);
 
   // A 'going' RSVP's commit time drives the early-RSVP bonus (no active global
@@ -167,8 +181,13 @@ export async function redeemPerk(input: {
   if (spendable < perk.pointCost) return { ok: false, reason: 'Not enough points' };
 
   // Per-user limit + inventory.
-  const existing = await db.select().from(RD).where(and(eq(RD.userId, uid), eq(RD.perkId, perk.id)));
-  const liveByUser = existing.filter((r) => r.status === 'issued' || r.status === 'redeemed').length;
+  const existing = await db
+    .select()
+    .from(RD)
+    .where(and(eq(RD.userId, uid), eq(RD.perkId, perk.id)));
+  const liveByUser = existing.filter(
+    (r) => r.status === 'issued' || r.status === 'redeemed'
+  ).length;
   if (perk.perUserLimit != null && liveByUser >= perk.perUserLimit)
     return { ok: false, reason: 'Redemption limit reached' };
   if (perk.totalInventory != null) {
@@ -231,7 +250,11 @@ export async function setRewardRsvp(
   if (!event) throw new Error('Event not found');
 
   const existing = (
-    await db.select().from(RR).where(and(eq(RR.userId, uid), eq(RR.eventId, eventId))).limit(1)
+    await db
+      .select()
+      .from(RR)
+      .where(and(eq(RR.userId, uid), eq(RR.eventId, eventId)))
+      .limit(1)
   )[0];
   if (existing) {
     await db.update(RR).set({ status }).where(eq(RR.id, existing.id));
@@ -253,7 +276,11 @@ export async function toggleFollowOrg(orgId: string): Promise<{ following: boole
   const uid = await requireUserId();
   const db = getDb();
   const existing = (
-    await db.select().from(OF).where(and(eq(OF.userId, uid), eq(OF.orgId, orgId))).limit(1)
+    await db
+      .select()
+      .from(OF)
+      .where(and(eq(OF.userId, uid), eq(OF.orgId, orgId)))
+      .limit(1)
   )[0];
   if (existing) {
     await db.delete(OF).where(eq(OF.id, existing.id));

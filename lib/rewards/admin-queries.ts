@@ -14,12 +14,7 @@ import {
   users,
 } from '../db/schema';
 import { PLATFORM_SCOPE } from '../domain/rewards';
-import type {
-  PlatformPerk,
-  GlobalRewardRules,
-  Redemption,
-  CheckIn,
-} from '../db/schema';
+import type { PlatformPerk, GlobalRewardRules, Redemption, CheckIn } from '../db/schema';
 
 // ------------------------------- Dashboard -------------------------------
 
@@ -54,10 +49,7 @@ export async function getAdminCounts(): Promise<AdminCounts> {
 // --------------------------------- Perks ---------------------------------
 
 export async function listPlatformPerks(): Promise<PlatformPerk[]> {
-  return getDb()
-    .select()
-    .from(platformPerks)
-    .orderBy(desc(platformPerks.createdAt));
+  return getDb().select().from(platformPerks).orderBy(desc(platformPerks.createdAt));
 }
 
 export async function getPlatformPerk(id: string): Promise<PlatformPerk | undefined> {
@@ -95,9 +87,7 @@ export async function getCatalogAnalytics(): Promise<CatalogAnalytics> {
   const db = getDb();
   const [perks, reds, ledger] = await Promise.all([
     db.select().from(platformPerks),
-    db
-      .select({ perkId: redemptions.perkId, scope: redemptions.scope })
-      .from(redemptions),
+    db.select({ perkId: redemptions.perkId, scope: redemptions.scope }).from(redemptions),
     db
       .select({ delta: pointsLedger.delta, kind: pointsLedger.kind, scope: pointsLedger.scope })
       .from(pointsLedger),

@@ -113,7 +113,13 @@ export default function PerkEditor({
 
   return (
     <div className="card" style={{ marginTop: 10 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 12 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
+          gap: 12,
+        }}
+      >
         <div className="field">
           <label>Title</label>
           <input type="text" value={d.title} onChange={(e) => set('title', e.target.value)} />
@@ -146,7 +152,10 @@ export default function PerkEditor({
         </div>
         <div className="field">
           <label>Source</label>
-          <select value={d.source} onChange={(e) => set('source', e.target.value as Draft['source'])}>
+          <select
+            value={d.source}
+            onChange={(e) => set('source', e.target.value as Draft['source'])}
+          >
             {SOURCES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -156,7 +165,11 @@ export default function PerkEditor({
         </div>
         <div className="field">
           <label>Sponsor ID (optional)</label>
-          <input type="text" value={d.sponsorId} onChange={(e) => set('sponsorId', e.target.value)} />
+          <input
+            type="text"
+            value={d.sponsorId}
+            onChange={(e) => set('sponsorId', e.target.value)}
+          />
         </div>
         <div className="field">
           <label>Placement</label>

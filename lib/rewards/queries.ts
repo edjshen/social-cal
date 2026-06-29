@@ -39,7 +39,10 @@ export async function getOrgsForIndex(meId: string, nowISO: string): Promise<Org
   const db = getDb();
   const [orgs, events, tiers, follows, ledger] = await Promise.all([
     db.select().from(ORG),
-    db.select().from(RE).where(and(eq(RE.status, 'published'), gte(RE.startsAt, nowISO))),
+    db
+      .select()
+      .from(RE)
+      .where(and(eq(RE.status, 'published'), gte(RE.startsAt, nowISO))),
     db.select().from(OT),
     db.select().from(OF).where(eq(OF.userId, meId)),
     db.select().from(PL).where(eq(PL.userId, meId)),
@@ -88,7 +91,11 @@ export interface OrgDetail {
   goingCounts: Record<string, number>;
 }
 
-export async function getOrgDetail(slug: string, meId: string, nowISO: string): Promise<OrgDetail | null> {
+export async function getOrgDetail(
+  slug: string,
+  meId: string,
+  nowISO: string
+): Promise<OrgDetail | null> {
   const db = getDb();
   const org = (await db.select().from(ORG).where(eq(ORG.slug, slug)).limit(1))[0];
   if (!org) return null;
@@ -97,12 +104,25 @@ export async function getOrgDetail(slug: string, meId: string, nowISO: string): 
       .select()
       .from(RE)
       .where(and(eq(RE.orgId, org.id), eq(RE.status, 'published'), gte(RE.startsAt, nowISO))),
-    db.select().from(OP).where(and(eq(OP.orgId, org.id), eq(OP.active, true))),
+    db
+      .select()
+      .from(OP)
+      .where(and(eq(OP.orgId, org.id), eq(OP.active, true))),
     db.select().from(OT).where(eq(OT.orgId, org.id)),
-    db.select().from(OF).where(and(eq(OF.userId, meId), eq(OF.orgId, org.id))).limit(1),
+    db
+      .select()
+      .from(OF)
+      .where(and(eq(OF.userId, meId), eq(OF.orgId, org.id)))
+      .limit(1),
     db.select().from(PL).where(eq(PL.userId, meId)),
-    db.select().from(CI).where(and(eq(CI.userId, meId), eq(CI.orgId, org.id))),
-    db.select().from(RD).where(and(eq(RD.userId, meId), eq(RD.scope, orgScope(org.id)))),
+    db
+      .select()
+      .from(CI)
+      .where(and(eq(CI.userId, meId), eq(CI.orgId, org.id))),
+    db
+      .select()
+      .from(RD)
+      .where(and(eq(RD.userId, meId), eq(RD.scope, orgScope(org.id)))),
   ]);
   upcoming.sort((a, b) => (a.startsAt < b.startsAt ? -1 : 1));
 
@@ -160,8 +180,12 @@ export async function getWallet(meId: string, nowISO: string): Promise<Wallet> {
     .filter((s) => s.startsWith('org:'))
     .map((s) => s.slice('org:'.length));
   const [orgs, tiers, perks] = await Promise.all([
-    orgScopes.length ? db.select().from(ORG).where(inArray(ORG.id, orgScopes)) : Promise.resolve([]),
-    orgScopes.length ? db.select().from(OT).where(inArray(OT.orgId, orgScopes)) : Promise.resolve([]),
+    orgScopes.length
+      ? db.select().from(ORG).where(inArray(ORG.id, orgScopes))
+      : Promise.resolve([]),
+    orgScopes.length
+      ? db.select().from(OT).where(inArray(OT.orgId, orgScopes))
+      : Promise.resolve([]),
     db.select().from(PP).where(eq(PP.active, true)),
   ]);
   const tiersByOrg = groupBy(tiers, (t) => t.orgId);

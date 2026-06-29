@@ -123,8 +123,7 @@ export async function savePlatformPerk(input: PerkInput): Promise<{ id: string }
   const validFrom = optDate(input.validFrom);
   const validTo = optDate(input.validTo);
 
-  const id =
-    typeof input.id === 'string' && input.id ? input.id : crypto.randomUUID();
+  const id = typeof input.id === 'string' && input.id ? input.id : crypto.randomUUID();
 
   const set = {
     title,
@@ -254,11 +253,7 @@ export async function voidRedemption(redemptionId: unknown): Promise<void> {
   await requireAdmin();
   if (typeof redemptionId !== 'string' || !redemptionId) throw new Error('Bad request');
   const db = getDb();
-  const rows = await db
-    .select()
-    .from(redemptions)
-    .where(eq(redemptions.id, redemptionId))
-    .limit(1);
+  const rows = await db.select().from(redemptions).where(eq(redemptions.id, redemptionId)).limit(1);
   const r = rows[0];
   if (!r) throw new Error('Not found');
   if (r.status === 'voided') return; // idempotent

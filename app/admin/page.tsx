@@ -13,8 +13,8 @@ export default async function AdminDashboardPage() {
     <>
       <h1 className={styles.title}>Dashboard</h1>
       <p className={styles.muted}>
-        Platform-wide rewards at a glance. Manage the global currency, the first-party perks catalog,
-        and moderation from the nav above.
+        Platform-wide rewards at a glance. Manage the global currency, the first-party perks
+        catalog, and moderation from the nav above.
       </p>
       <div className={styles.cards}>
         {cards.map((card) => (

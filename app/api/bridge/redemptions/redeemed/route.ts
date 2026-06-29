@@ -9,11 +9,7 @@ import { and, eq } from 'drizzle-orm';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getDb } from '@/lib/db';
 import { redemptions } from '@/lib/db/schema';
-import {
-  verifyPayload,
-  BRIDGE_TS_HEADER,
-  BRIDGE_SIG_HEADER,
-} from '@/lib/rewards/bridge';
+import { verifyPayload, BRIDGE_TS_HEADER, BRIDGE_SIG_HEADER } from '@/lib/rewards/bridge';
 
 function bridgeSecret(): string | undefined {
   const env = getCloudflareContext().env as unknown as { BRIDGE_SECRET?: string };
