@@ -12,12 +12,15 @@
 Organizers on **poisys** designate events as *rewards-eligible* and push them to **barycal** with the
 new **"Send to Barycal"** action. Partygoers on **barycal** discover those events (grouped by
 organizer), show up, and **self-scan a rotating event QR** at the venue to earn **points**. Points
-accrue **per-organizer** (a loyalty-card balance, with named tiers Regular → Gold → VIP) and roll up
-into a **global lifetime score** for status/leaderboard. Organizers define a **perks catalog**
-(free entry, skip-the-line, drink, merch) that partygoers redeem with a **one-time redemption code**
-honored by a staff scanner. Check-ins, points, and redemptions **sync back to poisys** so organizers
-get full attendance & loyalty analytics. The integration itself is a headline selling point for both
-products.
+accrue in **two spendable currencies**: a **per-organizer** balance (a loyalty card — raw points
+*and* named tiers Regular → Gold → VIP) **and** a **global** balance that is both a lifetime
+status/leaderboard score and spendable against a **platform-wide (barycal-run) perks catalog**.
+Organizers define a **per-org perks catalog** (free entry, skip-the-line, drink, merch); the platform
+runs its **own catalog** that any partygoer can redeem with global points. Both redeem via a
+**one-time redemption code**: org perks are honored by the organizer's door scanner, platform perks
+by the barycal fulfillment path. Check-ins, points, and redemptions **sync back to poisys** so
+organizers get full attendance & loyalty analytics. The integration itself is a headline selling
+point for both products.
 
 This PRD specifies **both sides** and the **cross-app bridge** between two independent backends.
 
@@ -58,17 +61,17 @@ need a poisys account, and organizers never need a barycal account.
 | 10 | Anti-fraud | **Rotating (TOTP-style) QR + event time window**, one claim per user |
 | 11 | Bonuses in v1 | **All four:** attendance streak/regular, early RSVP, bring-a-friend, first-time |
 
-### Assumed defaults (interview tool failed on the last round — please confirm or override)
+### Confirmed in follow-up (the remaining four)
 
-| # | Question | Assumed default for this draft |
+| # | Question | Decision |
 |---|---|---|
 | A | poisys Rewards tab scope | **All four surfaces:** per-event rule config, perks catalog manager, attendance & redemption analytics, redemption scanner |
-| B | Tiers | **Named tiers per org** (Regular → Gold → VIP), organizer-defined thresholds |
-| C | Global points purpose | **Status & leaderboard only** (redemption stays per-organizer) |
-| D | Join model | **Automatic on first check-in** (following an org is optional, curates the feed) |
+| B | Tiers | **Both** — named tiers per org (Regular → Gold → VIP) **and** raw point balances are surfaced together |
+| C | Global points purpose | **Spendable second currency** — a substantial **platform-wide perks catalog** (barycal-run) alongside per-org perks, **plus** status/leaderboard |
+| D | Join model | **Automatic** — any partygoer with a barycal account earns on check-in; **no follow required** |
 
-> These four are isolated and easy to change before build. They are called out again in
-> **Section 13 (Open Questions)**.
+> Decision C is the largest scope change from the original draft: the global score is now a real,
+> spendable currency with its own catalog and fulfillment path — see §6.7, §7, §8.3, §11.
 
 ---
 
@@ -82,10 +85,10 @@ need a poisys account, and organizers never need a barycal account.
 - Ship a defensible anti-fraud check-in that does not require GPS permissions in v1.
 
 ### Non-goals (v1)
-- No money/payments inside the points economy (perks are organizer-fulfilled; no cash value, no
-  payouts). Mercury/ticketing integration is out of scope.
-- No platform-wide (barycal-run) perks catalog — global points are status-only in v1.
+- No money/payments inside the points economy. Perks (org **and** platform) carry no cash value and
+  no payouts; they are fulfilled in-kind. Mercury/ticketing integration is out of scope.
 - No transfer/gifting of points between users.
+- No conversion between per-org and global currencies (you can't move points between the two pools).
 - No retroactive points for pre-existing barycal events that didn't originate from poisys.
 - No partygoer→poisys account merge or SSO.
 - No native mobile app work beyond barycal's existing PWA (QR scanning uses the web camera API).
@@ -246,8 +249,9 @@ The reframed discovery surface. **Organizer-focused, not loose-event-based.**
   - **Upcoming events** (rewards-eligible, RSVP-able) — absorbs old Discover/Plans.
   - **Perks** — the org's catalog with point costs; eligible perks show **Redeem**.
   - **Your history** with this org (check-ins, points earned, redemptions).
-- **Follow** is optional and only curates feeds/notifications. Per the join model (default D),
-  **points start automatically on first check-in** — no follow required to earn.
+- **Follow** is optional and only curates feeds/notifications. Per the join model, **any partygoer
+  with a barycal account earns automatically on check-in** — no follow, join, or prior relationship
+  required. (A walk-up with no account must create one to earn; see §7.6 on claim windows.)
 
 ### 6.3 Check-in (event QR self-scan)
 - On an event detail page, during the **event window**, a **Check in** button opens the camera and
@@ -259,33 +263,67 @@ The reframed discovery surface. **Organizer-focused, not loose-event-based.**
 - Accessibility/fallback: a numeric short-code entry as a backup to the camera (still rotating).
 
 ### 6.4 Points wallet & tiers
-- **Per-org balance** is the spendable currency; **global score** is lifetime status (sum of points
-  ever earned; not spent down by redemptions) shown on **Profile** + a leaderboard.
-- **Tiers per org** (default B): organizer-defined thresholds map points → named tier; tier can gate
-  perks and is shown as a badge in Organizations and on co-presence surfaces.
-- Points are an **append-only ledger** (earn/spend/void rows) — never a mutable counter — so balances
-  are auditable and reversible (fraud voids).
+- **Two spendable balances**:
+  - **Per-org balance** — earned at and spent at that org. Shown with **both** the raw point number
+    **and** the named tier (decision B): the Organizations tab and org detail surface both.
+  - **Global balance** — sum of points earned across all orgs; spendable on the **platform perks
+    catalog** (§6.7). Also drives the **leaderboard / lifetime rank** on Profile.
+- **Earned vs. spendable.** Tiers (per-org) and rank (global) derive from **lifetime *earned*** points
+  so spending perks never demotes you; the **spendable** balance is earned minus redemptions. Track
+  both as derived sums over the ledger.
+- **Tiers per org** (decision B): organizer-defined thresholds map lifetime-earned points → named
+  tier; tier can gate perks and shows as a badge in Organizations and on co-presence surfaces.
+- Points are an **append-only ledger** (earn/spend/void/refund rows, each scoped to an org **or** to
+  `platform`) — never a mutable counter — so balances are auditable and reversible (fraud voids).
 
-### 6.5 Redemption (one-time code)
-- From a perk, **Redeem** debits the per-org balance (ledger spend row, guarded against
-  insufficient balance / per-user limit / inventory) and issues a **single-use code/QR with short
-  TTL**. UI shows a countdown and "show this at the door."
-- Marked **redeemed** only when poisys staff scans it (server-authoritative via bridge). If it
-  expires unused, the spend is **refunded** (void + re-credit).
+### 6.5 Redemption (one-time code) — org **and** platform perks
+- From any perk (org or platform), **Redeem** debits the matching balance (ledger spend row, guarded
+  against insufficient balance / per-user limit / inventory) and issues a **single-use code/QR with
+  short TTL**. UI shows a countdown.
+- **Org perk** → "show this at the door"; marked **redeemed** only when **poisys staff scan** it
+  (server-authoritative via bridge).
+- **Platform perk** → honored by the **barycal fulfillment path** (§6.7): digital perks (partner
+  codes, in-app unlocks) can auto-fulfill; physical/partner perks mark redeemed via a platform
+  verification step. No poisys door scan involved.
+- If a code expires unused, the spend is **refunded** (void + re-credit).
 
 ### 6.6 Profile (`/you` → "Profile")
-- Adds: **global points + rank**, **per-org tier badges**, lifetime check-in count, recent perks.
+- Adds: **global points + spendable balance + rank**, **per-org tier badges** (with raw balances),
+  lifetime check-in count, recent perks, entry point to the **platform perks catalog** (§6.7).
 - Existing profile content (bio, scenes, upcoming, regulars stats) stays.
 - Reinforces the **Regulars** tie-in: tiers and points are the "scene status" layer atop co-presence.
+
+### 6.7 Platform perks catalog (global currency payoff)
+A substantial, **barycal-operated** rewards store spendable with **global** points — the cross-scene
+payoff that makes attending *any* organizer's events feel cumulative.
+- **Surface:** a catalog reachable from **Profile** (the global wallet). Not tied to one org.
+- **Contents (examples):** platform/partner-funded perks — merch, partner discounts, early access to
+  hyped events, profile cosmetics/badges, "scene VIP" cosmetic status. Carries no cash value (§2).
+- **Catalog management:** owned by a **barycal platform admin** surface (new — barycal has no admin
+  UI today; see §13 open question 11). Each perk: title, point cost, inventory/per-user limits,
+  validity window, fulfillment type (`auto-digital` | `partner-code` | `manual`).
+- **Fulfillment:** `auto-digital` unlocks instantly on redeem; `partner-code` reveals a code and
+  marks redeemed; `manual` enters a platform fulfillment queue.
+- **Optional global tier** (extension, not required for v1): global lifetime-earned points can power a
+  barycal-wide "scene" status tier on Profile, parallel to per-org tiers (flagged in §13).
 
 ---
 
 ## 7. Points economy
 
-### 7.1 Currencies
-- **Per-org points** — earned at that org's events; **spent** on that org's perks. The real economy.
-- **Global score** — lifetime sum of all points earned across orgs; **status only** (default C),
-  drives leaderboard + profile rank. Not spendable. Not reduced by redemptions.
+### 7.1 Currencies (two pools, both spendable, no conversion)
+- **Per-org points** — earned at an org's events; spent on **that org's** perks. The loyalty card.
+- **Global points** — every earned point *also* adds to the global pool. The global pool is **both**
+  a lifetime status/leaderboard score (from lifetime *earned*) **and** a spendable balance against
+  the **platform perks catalog** (from earned minus platform redemptions).
+- **No conversion** between pools — earning credits both at once; spending one never touches the
+  other. (A single check-in earns N per-org points **and** N global points; they are separate ledgers
+  drawn down independently.)
+
+> **Design note — double-credit, not split.** A check-in credits the full amount to the per-org pool
+> *and* the full amount to the global pool. This is deliberate: it keeps both loyalty loops strong
+> without forcing partygoers to choose where points land. Confirm this vs. a split/single-pool model
+> if the economics feel too generous (§13).
 
 ### 7.2 Earning (per valid check-in)
 `points = base + Σ(active qualifying bonuses)`, capped by optional per-event/per-user caps.
@@ -297,10 +335,12 @@ The reframed discovery surface. **Organizer-focused, not loose-event-based.**
 | Bring-a-friend | A referred friend also checks in | Referral attribution (§7.4) |
 | First-time | First-ever check-in with this org | Mutually exclusive with streak |
 
-### 7.3 Tiers (default B)
+### 7.3 Tiers (decision B — tiers **and** raw balances)
 Organizer defines ordered thresholds (e.g. Regular 0 / Gold 1,000 / VIP 5,000). Tier is derived from
 **lifetime per-org earned points** (not current spendable balance) so spending perks never demotes a
-partygoer. Perks may require a minimum tier.
+partygoer. Perks may require a minimum tier. Per decision B, the UI shows the **named tier and the
+raw point number together** everywhere a balance appears (not the tier alone). An **optional global
+tier** from lifetime global points is an extension (§6.7, §13).
 
 ### 7.4 Bring-a-friend attribution
 - A partygoer shares an event invite carrying their referral token. If the invitee checks into that
@@ -308,9 +348,20 @@ partygoer. Perks may require a minimum tier.
   check-in). Anti-abuse: friend must be a distinct, non-fraud-flagged account; cap referrals/event.
 
 ### 7.5 Integrity rules
-- One earning check-in per user per event. Idempotent credit (safe against double-scan/retries).
-- All point mutations are ledger rows with a reason + source ref; balances are derived sums.
-- Admin/organizer can **void** a check-in or redemption → compensating ledger entry; tier recomputed.
+- One earning check-in per user per event. Idempotent credit (safe against double-scan/retries) —
+  credits **both** the per-org and the global ledgers atomically.
+- All point mutations are ledger rows with a reason + source ref + scope (`org:<id>` | `platform`);
+  balances are derived sums per scope.
+- Admin/organizer can **void** a check-in or redemption → compensating ledger entry in **both**
+  affected scopes; tier/rank recomputed.
+
+### 7.6 Account requirement & claim window (decision D)
+- Earning requires a **barycal account at check-in time**. Following/joining an org is **not**
+  required — any account earns automatically on a valid scan.
+- A walk-up without an account can't scan-to-earn. **Optional (flag in §13):** the venue QR's
+  landing can prompt sign-up and award the just-scanned event's points on account creation within a
+  short post-event **claim window**, so first-timers aren't lost. v1 may ship without retroactive
+  claim and simply require an account first.
 
 ---
 
@@ -429,12 +480,15 @@ export const rewardEvents = sqliteTable('reward_events', {
   status: text(),                          // published|unpublished
 });
 
-// append-only points ledger (per-org + global derived from rows)
+// append-only points ledger. Two scopes per row so per-org AND global/platform
+// balances derive from the same table. A check-in writes TWO rows: scope='org:<id>'
+// and scope='platform' (the global pool), each with the full points amount.
 export const pointsLedger = sqliteTable('points_ledger', {
   id: text().primaryKey(),
   userId: text().notNull(),
-  orgId: text().notNull(),                 // org scope for the balance
-  delta: integer().notNull(),              // + earn, - spend, +/- void
+  scope: text().notNull(),                 // 'org:<orgId>' | 'platform'
+  delta: integer().notNull(),              // + earn, - spend, +/- void/refund
+  kind: text().notNull(),                  // 'earned' | 'spend'  (status/tier use earned-only)
   reason: text().notNull(),                // checkin|bonus:*|redeem|void|refund
   sourceRef: text(),                       // event id / redemption id
   createdAt: text().notNull(),
@@ -451,23 +505,49 @@ export const checkIns = sqliteTable('check_ins', {
   // unique (userId, eventId) enforced via index
 });
 
+// platform-run perks (barycal-owned, NOT projected from poisys). Spent with global points.
+export const platformPerks = sqliteTable('platform_perks', {
+  id: text().primaryKey(),
+  title: text().notNull(),
+  description: text(),
+  pointCost: integer().notNull(),
+  fulfillment: text().notNull().default('auto-digital'), // auto-digital|partner-code|manual
+  totalInventory: integer(),               // nullable = unlimited
+  perUserLimit: integer(),
+  active: integer({ mode: 'boolean' }).notNull().default(true),
+  validFrom: text(), validTo: text(),
+  createdAt: text(),
+});
+
 export const redemptions = sqliteTable('redemptions', {
   id: text().primaryKey(),
   userId: text().notNull(),
-  orgId: text().notNull(),
-  perkId: text().notNull(),
+  scope: text().notNull(),                 // 'org:<orgId>' (org perk) | 'platform' (platform perk)
+  perkId: text().notNull(),                // reward_perks (org) or platform_perks (platform)
   codeHash: text().notNull(),
   status: text().notNull().default('issued'), // issued|redeemed|expired|voided
+  fulfillment: text(),                     // copied from the perk for the redeem flow
   issuedAt: text().notNull(),
   expiresAt: text().notNull(),
   redeemedAt: text(),
 });
 ```
-Indexes: `check_ins(userId,eventId)` unique; `points_ledger(userId,orgId)`; `reward_events(orgId,startsAt)`.
+Indexes: `check_ins(userId,eventId)` unique; `points_ledger(userId,scope)`; `reward_events(orgId,startsAt)`;
+`platform_perks(active,validTo)`.
 
-> **Perks/tiers source of truth = poisys**, projected into barycal for display (like `reward_events`).
-> The **ledger, check-ins, redemptions** are authored in barycal (that's where the partygoer acts) and
-> synced back. This keeps each write where its actor lives and avoids two-master conflicts.
+> **Source of truth.** Org perks/tiers/events = **poisys**, projected into barycal for display.
+> **Platform perks = barycal** (no poisys projection). The **ledger, check-ins, redemptions** are
+> authored in barycal (where the partygoer acts); org-scoped ones sync back to poisys, platform-scoped
+> ones stay in barycal. This keeps each write where its actor lives and avoids two-master conflicts.
+
+### 8.3 Platform perks management & admin (new for barycal)
+Platform perks need an **admin surface barycal does not have today**. v1 options, smallest first:
+1. **Seed/config-driven** — manage the catalog via a config table + internal tooling (no UI). Fastest.
+2. **Minimal admin route** — a gated `/admin/perks` for platform staff (new role/flag on `users`).
+3. **Full admin console** — broader platform ops surface (overkill for v1).
+Recommendation: ship (1) or (2) for v1; the partygoer-facing redeem flow is identical regardless.
+Platform perk **redemptions are verified by barycal** (server-authoritative), never the poisys door
+scanner.
 
 ---
 
@@ -551,7 +631,7 @@ in the publish payload over the signed channel and stored Worker-side only.
   (`wrangler secret`), never DB, never browser (mirrors poisys invariant #5).
 - **Minimal cross-app PII.** Only `barycal_user_ref` + display name leave barycal. A privacy-stricter
   **"counts only"** mode (aggregate attendance, no per-user identity to poisys) is a supported config
-  if desired (§13, decision A-variant).
+  if desired (§13, open question 6). Platform-perk redemptions never touch poisys at all.
 - **Two grants rule (poisys).** Grant new tables to **both** `authenticated` and `service_role`.
 - **Auth re-verification (poisys Worker).** Continue the existing pattern: verify JWT + re-check
   membership before any organizer-side mutation.
@@ -569,33 +649,47 @@ organizations/regulars/profile; Discover/Plans fold in with redirects).
 **M2 — Earning loop.** Rotating event QR (+ Door QR screen in poisys), barycal self-scan check-in,
 points ledger, per-org balances + global score, return sync to poisys, basic organizer analytics.
 
-**M3 — Tiers + perks + redemption.** Tier thresholds, perks catalog manager, barycal redemption
-codes, poisys redemption scanner, redemption analytics.
+**M3 — Tiers + org perks + redemption.** Per-org tier thresholds (with raw balances), org perks
+catalog manager, barycal redemption codes, poisys door redemption scanner, redemption analytics.
 
-**M4 — Bonuses + leaderboard + hardening.** All four bonuses, bring-a-friend referrals, leaderboard,
-abuse signals/voids, static-fallback mode, accessibility/short-code path.
+**M4 — Platform perks + global wallet.** Platform perks catalog + admin surface (§8.3), global
+spendable balance on Profile, platform redemption/fulfillment flow, leaderboard.
 
-> Each milestone is independently demoable; the integration story is showable at M1.
+**M5 — Bonuses + hardening.** All four bonuses, bring-a-friend referrals, abuse signals/voids,
+static-fallback mode, accessibility/short-code path, optional global tier + claim-window.
+
+> Each milestone is independently demoable; the integration story is showable at M1. M4 (platform
+> perks) is now first-class scope, not a stretch — sequence it before the leaderboard so the global
+> currency has a payoff the moment it's visible.
 
 ---
 
 ## 13. Open questions / assumptions to confirm
 
-1. **(Default A)** Confirm the poisys Rewards tab includes all four surfaces vs. a leaner v1
-   (e.g. defer the analytics dashboard).
-2. **(Default B)** Named tiers in v1 vs. raw balances first, tiers as fast-follow.
-3. **(Default C)** Global points = status/leaderboard only — confirm no platform-run perks in v1.
-4. **(Default D)** Earn automatically on first check-in vs. require follow/join first.
-5. **Privacy posture:** full per-user attendance to poisys (richest analytics) vs. **counts-only**
+**Resolved in the interview** (A–D, now baked in): Rewards tab = all four surfaces; tiers **and** raw
+balances; global points spendable on a **platform-wide perks catalog**; earn automatically with any
+barycal account. The remaining items:
+
+1. **Double-credit economics (§7.1):** a check-in credits the full amount to **both** the per-org and
+   the global pool. Confirm this generosity vs. a split or single-pool model.
+2. **Platform perks ownership & funding:** who funds/curates the platform catalog (barycal ops,
+   partners)? And the admin surface level (§8.3 — config-only, minimal `/admin/perks`, or full
+   console)? PRD recommends config or minimal route for v1.
+3. **Platform perk fulfillment mix:** which of `auto-digital` / `partner-code` / `manual` ship in v1?
+   PRD assumes at least `auto-digital` + `partner-code`.
+4. **Optional global tier:** should lifetime global points drive a barycal-wide "scene" status tier
+   on Profile (parallel to per-org tiers), or is the leaderboard rank enough for v1?
+5. **Claim window (§7.6):** ship retroactive points-on-signup for walk-ups, or require an account
+   first with no retroactive claim in v1?
+6. **Privacy posture:** full per-user attendance to poisys (richest analytics) vs. **counts-only**
    (no per-user identity crosses the bridge). PRD assumes full + `barycal_user_ref`; easy to switch.
-6. **Org provisioning in barycal:** are barycal `organizations` auto-created when poisys publishes,
-   or does an organizer claim/curate a barycal presence (avatar/bio)? PRD assumes auto-create from
-   the projection, organizer can enrich.
-7. **Calendar as center button vs. normal tab** in the reworked TabBar (cosmetic; PRD keeps center).
-8. **Profile route:** keep `/you` (label "Profile") or migrate to `/profile` with a redirect.
-9. **Rotating-QR display device:** assumes a venue screen/phone shows the Door QR; confirm every
-   target venue can show a live screen, else lean on the static fallback.
-10. **Entitlement/billing:** is Rewards a paid poisys entitlement (like marketplace/promotion) or on
+7. **Org provisioning in barycal:** auto-create `organizations` from the poisys projection (PRD
+   assumption, organizer can enrich) vs. organizer explicitly claims/curates the barycal presence.
+8. **Calendar as center button vs. normal tab** in the reworked TabBar (cosmetic; PRD keeps center).
+9. **Profile route:** keep `/you` (label "Profile") or migrate to `/profile` with a redirect.
+10. **Rotating-QR display device:** assumes a venue screen/phone shows the Door QR; confirm every
+    target venue can show a live screen, else lean on the static fallback.
+11. **Entitlement/billing:** is Rewards a paid poisys entitlement (like marketplace/promotion) or on
     by default? PRD assumes feature-gated, rollout-controlled.
 
 ---
@@ -604,9 +698,10 @@ abuse signals/voids, static-fallback mode, accessibility/short-code path.
 - **Activation:** % of confirmed events sent to barycal; orgs with ≥1 rewards event.
 - **Earning loop:** check-ins per rewards event; check-in rate vs. RSVPs; repeat check-in rate.
 - **Loyalty:** tier progression; share of attendees who are returning (regulars) per org.
-- **Payoff:** perks redeemed; redemption→reattendance lift.
+- **Payoff:** org perks redeemed; **platform perks redeemed** & global-points spend rate;
+  redemption→reattendance lift.
 - **Integration pull:** orgs citing barycal reach as a reason to adopt; barycal MAU lift from org
-  audiences.
+  audiences; cross-org attendance (partygoers earning global points across ≥2 orgs).
 - **Integrity:** fraud-void rate; suspected-abuse flags per 1k check-ins.
 
 ---
@@ -624,8 +719,11 @@ abuse signals/voids, static-fallback mode, accessibility/short-code path.
 **barycal**
 - `components/TabBar.tsx` + `components/primitives/Icon.tsx` — tab rework + `organizations` icon.
 - `app/(app)/organizations/` — index (org-sorted-by-upcoming) + `[slug]` detail (events/perks/history).
-- `app/(app)/you/` — points/tier/leaderboard additions (label → "Profile").
-- Check-in scanner UI (camera) on event detail; redemption code UI.
-- `lib/db/schema.ts` + `drizzle/` migration — reward tables (§8.2).
-- `workers/` — bridge client (signed), check-in validate + credit, redemption issue, return-sync push.
+- `app/(app)/you/` — global wallet (spendable + rank), per-org tier badges + raw balances, entry to
+  platform perks (label → "Profile").
+- `app/(app)/organizations/[slug]/` — org perks redeem UI; check-in scanner UI (camera) on event detail.
+- **Platform perks**: partygoer catalog under Profile + admin surface (§8.3) + fulfillment flow.
+- `lib/db/schema.ts` + `drizzle/` migration — reward tables incl. `platform_perks`, scoped ledger (§8.2).
+- `workers/` — bridge client (signed), check-in validate + dual-scope credit, org+platform redemption
+  issue/verify, return-sync push.
 - Fold `discover`/`plans` content; keep redirecting routes for one release.
