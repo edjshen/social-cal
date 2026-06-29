@@ -70,7 +70,12 @@ export default async function PublicProfile({ params }: { params: Promise<{ hand
               Nothing public right now.
             </div>
           )}
-          <PublicCta label={`Follow ${u.displayName.split(' ')[0]} on Barycal`} />
+          {!viewerId && (
+            <PublicCta
+              href={`/register?next=${encodeURIComponent(`/u/${u.handle}`)}`}
+              label={`Sign up to follow ${u.displayName.split(' ')[0]}`}
+            />
+          )}
         </div>
       </div>
     </div>

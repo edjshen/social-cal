@@ -24,7 +24,14 @@ export default function RsvpButtons({
           onClick={() =>
             startTransition(async () => {
               setOptimistic(v);
-              await setRsvp(eventId, v);
+              try {
+                await setRsvp(eventId, v);
+              } catch (err) {
+                // The optimistic value reverts to `myRsvp` once the transition
+                // settles; swallow so a transient/expired-session failure doesn't
+                // tear down the page via the error boundary.
+                console.error('RSVP failed', err);
+              }
             })
           }
         >

@@ -8,6 +8,7 @@ import { getSession } from '../auth/session';
 import { avatarFor } from '../domain/helpers';
 import { consumeRateLimit, clientIp } from '../ratelimit';
 import { LIMITS } from '../validate';
+import { safeNext } from '../url';
 
 function toHandle(s: string) {
   return String(s || '')
@@ -67,7 +68,9 @@ export async function login(_prev: AuthState, form: FormData): Promise<AuthState
   s.userId = u.id;
   s.handle = u.handle;
   await s.save();
-  redirect('/discover');
+  // Return the user to the page that sent them to log in (e.g. a private event
+  // link), falling back to the app home. `next` is validated to a same-origin path.
+  redirect(safeNext(form.get('next')) ?? '/discover');
 }
 
 export async function register(_prev: AuthState, form: FormData): Promise<AuthState> {
@@ -105,7 +108,9 @@ export async function register(_prev: AuthState, form: FormData): Promise<AuthSt
   s.userId = id;
   s.handle = handle;
   await s.save();
-  redirect('/discover');
+  // Same as login: honor a validated return URL so a new signup that started
+  // from a shared event/profile link lands back there to RSVP or follow.
+  redirect(safeNext(form.get('next')) ?? '/discover');
 }
 
 export async function logout() {

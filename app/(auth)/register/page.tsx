@@ -1,5 +1,11 @@
 import AuthForm from '@/components/AuthForm';
 import { register } from '@/lib/actions/auth';
-export default function RegisterPage() {
-  return <AuthForm mode="register" action={register} />;
+import { safeNext } from '@/lib/url';
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+  return <AuthForm mode="register" action={register} next={safeNext(next) ?? undefined} />;
 }
