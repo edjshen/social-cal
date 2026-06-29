@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const { state } = vi.hoisted(() => ({
-  state: { session: {} as Record<string, unknown>, saved: false, secret: '', limitOk: true },
+  state: { session: {} as Record<string, unknown>, saved: false, secret: '', limitOk: true, recoveryOk: false },
 }));
 
 vi.mock('../ratelimit', () => ({
@@ -19,16 +19,17 @@ vi.mock('../auth/session', () => ({
 vi.mock('../auth/crypto', () => ({ decryptSecret: async (s: string) => s }));
 vi.mock('../db/mfa-queries', () => ({
   getMfaCredential: async () => ({ secretEnc: state.secret, confirmedAt: 'x' }),
-  consumeRecoveryCode: vi.fn(async () => false),
+  consumeRecoveryCode: async () => state.recoveryOk,
 }));
 
-import { verifyMfaStepUp } from './auth';
+import { verifyMfaStepUp, useRecoveryCode } from './auth';
 import * as OTPAuth from 'otpauth';
 
 beforeEach(() => {
   state.session = { userId: 'ed', aal: 'aal1' };
   state.saved = false;
   state.limitOk = true;
+  state.recoveryOk = false;
   state.secret = new OTPAuth.Secret({ size: 20 }).base32;
 });
 
@@ -46,5 +47,21 @@ describe('verifyMfaStepUp', () => {
     state.limitOk = false;
     const live = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(state.secret) }).generate();
     expect((await verifyMfaStepUp(live)).ok).toBe(false);
+  });
+});
+
+describe('useRecoveryCode', () => {
+  it('elevates aal1 → aal2 on a valid recovery code', async () => {
+    state.recoveryOk = true;
+    expect((await useRecoveryCode('abcd-efgh')).ok).toBe(true);
+  });
+  it('rejects an invalid recovery code', async () => {
+    state.recoveryOk = false;
+    expect((await useRecoveryCode('nope')).ok).toBe(false);
+  });
+  it('rejects when rate-limited, even with a valid code', async () => {
+    state.recoveryOk = true;
+    state.limitOk = false;
+    expect((await useRecoveryCode('abcd-efgh')).ok).toBe(false);
   });
 });

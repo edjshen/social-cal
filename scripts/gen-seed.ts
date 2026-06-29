@@ -216,6 +216,9 @@ async function main() {
   attend(showPast, 'ed', 'going');
   attend(showPast, 'theo', 'down');
 
+  lines.push(
+    `INSERT INTO platform_admins (user_id, granted_at) SELECT id, '2026-06-29T00:00:00.000Z' FROM users WHERE handle = 'ed' ON CONFLICT (user_id) DO NOTHING;`
+  );
   writeFileSync('drizzle/seed.sql', lines.join('\n') + '\n');
   console.log(`Wrote drizzle/seed.sql (${lines.length} statements). Demo login → ed / orbit`);
 }

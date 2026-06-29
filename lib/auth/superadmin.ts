@@ -3,6 +3,9 @@ import { getDb } from '../db';
 import { platformAdmins } from '../db/schema';
 import { getSession } from './session';
 
+// Bootstrap reference only (used by the seed/elevation SQL to find the account).
+// The LIVE gate is the platform_admins DB row — NOT an email match. Do not add
+// an email check to requireSuperadmin/isPlatformAdmin.
 export const SUPERADMIN_EMAIL = 'junting.mp3@gmail.com';
 
 export type Aal = 'aal1' | 'aal2';
