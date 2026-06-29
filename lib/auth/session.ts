@@ -5,6 +5,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 export interface SessionData {
   userId?: string;
   handle?: string;
+  aal?: 'aal1' | 'aal2';
 }
 
 // The session secret lives on the Cloudflare env: from `.dev.vars` in dev and
