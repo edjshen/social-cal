@@ -118,9 +118,11 @@ export default async function PublicEvent({ params }: { params: Promise<{ id: st
             {(e.attendees || []).slice(0, 6).map((a: any) => (
               <Avatar key={a.id} user={a} />
             ))}
-            <span className="muted" style={{ fontSize: 13 }}>
-              {e.attendeeCount} going
-            </span>
+            {(e.attendeeCount ?? 0) > 0 && (
+              <span className="muted" style={{ fontSize: 13 }}>
+                {e.attendeeCount} going
+              </span>
+            )}
             {/* Logged-in viewers get the real RSVP control; logged-out visitors
                 get a static preview (the sign-up CTA below) and cannot act. */}
             {viewerId && <RsvpButtons eventId={e.id} myRsvp={e.myRsvp} />}

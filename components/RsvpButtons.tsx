@@ -20,7 +20,7 @@ export default function RsvpButtons({
       {OPTS.map(({ v, label }) => (
         <button
           key={v}
-          className={`btn sm ${optimistic === v ? (v === 'cant' ? '' : 'in') : ''}`}
+          className={`btn sm ${optimistic === v ? 'in' : ''}`}
           onClick={() =>
             startTransition(async () => {
               setOptimistic(v);

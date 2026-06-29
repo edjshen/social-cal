@@ -33,9 +33,14 @@ export default function CreateSheet({
   const [type, setType] = useState(prefill?.type || 'event');
   const [vis, setVis] = useState('inner');
   const [pending, setPending] = useState(false);
+  const [err, setErr] = useState('');
   async function submit(form: FormData) {
     const title = String(form.get('title') || '');
-    if (!title) return;
+    if (!title) {
+      setErr('Add a title');
+      return;
+    }
+    setErr('');
     const start = String(form.get('start'));
     const expiresAt =
       type === 'intention'
@@ -68,13 +73,14 @@ export default function CreateSheet({
           <label>Type</label>
           <div className="chips">
             {TYPES.map(([v, l]) => (
-              <span
+              <button
                 key={v}
+                type="button"
                 className={`chip pick ${type === v ? 'on' : ''}`}
                 onClick={() => setType(v)}
               >
                 {l}
-              </span>
+              </button>
             ))}
           </div>
         </div>
@@ -114,16 +120,18 @@ export default function CreateSheet({
           <label>Who can see it</label>
           <div className="chips">
             {VIS.map(([v, l]) => (
-              <span
+              <button
                 key={v}
+                type="button"
                 className={`chip pick ${vis === v ? 'on' : ''}`}
                 onClick={() => setVis(v)}
               >
                 {l}
-              </span>
+              </button>
             ))}
           </div>
         </div>
+        {err && <div className="error">{err}</div>}
         <button className="btn solid block" disabled={pending}>
           Add to my calendar
         </button>

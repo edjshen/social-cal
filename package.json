@@ -48,6 +48,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260628.1",
     "@opennextjs/cloudflare": "^1.20.1",
+    "@playwright/test": "^1.61.1",
     "@serwist/next": "^9.5.11",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
@@ -57,8 +58,8 @@
     "eslint-config-next": "^16.2.9",
     "eslint-config-prettier": "^10.0.0",
     "globals": "^16.0.0",
-    "prettier": "^3.4.0",
     "patch-package": "^8.0.1",
+    "prettier": "^3.4.0",
     "serwist": "^9.5.11",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",

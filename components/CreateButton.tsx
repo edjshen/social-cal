@@ -6,7 +6,7 @@ export default function CreateButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button onClick={() => setOpen(true)}>
+      <button aria-label="Create event" onClick={() => setOpen(true)}>
         <span className="create">
           <Icon name="create" />
         </span>

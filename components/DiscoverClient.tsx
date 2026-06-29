@@ -4,6 +4,7 @@ import Segmented from './primitives/Segmented';
 import EventCard from './EventCard';
 import WeekGrid from './WeekGrid';
 import MonthGrid from './MonthGrid';
+import CreateButton from './CreateButton';
 import { dayLabel } from '@/lib/format';
 
 export default function DiscoverClient({
@@ -53,6 +54,7 @@ export default function DiscoverClient({
           <div className="kicker">Discover</div>
           <div className="h-title">This week</div>
         </div>
+        <CreateButton />
       </div>
       {seg}
       {events.length === 0 && (
