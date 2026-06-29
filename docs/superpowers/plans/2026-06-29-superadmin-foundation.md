@@ -45,9 +45,7 @@ export const adminAuditLog = sqliteTable(
   'admin_audit_log',
   {
     id: text('id').primaryKey(),
-    actorId: text('actor_id')
-      .notNull()
-      .references(() => users.id),
+    actorId: text('actor_id').notNull(), // append-only; no FK so the trail outlives a deleted user
     action: text('action').notNull(),
     targetType: text('target_type').notNull(),
     targetId: text('target_id').notNull(),

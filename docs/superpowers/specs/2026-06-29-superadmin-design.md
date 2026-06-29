@@ -60,7 +60,7 @@ export const platformAdmins = sqliteTable('platform_admins', {
 // admin-action audit (closes poisys's gap) — append-only
 export const adminAuditLog = sqliteTable('admin_audit_log', {
   id: text('id').primaryKey(),
-  actorId: text('actor_id').notNull().references(() => users.id),
+  actorId: text('actor_id').notNull(),              // append-only; no FK so the trail outlives a deleted user
   action: text('action').notNull(),                 // e.g. 'user.delete', 'event.delete', 'user.ghost'
   targetType: text('target_type').notNull(),        // 'user' | 'event' | 'connection'
   targetId: text('target_id').notNull(),
