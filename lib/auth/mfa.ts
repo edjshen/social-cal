@@ -17,8 +17,12 @@ export function totpAuthUri(secretBase32: string, label: string): string {
 
 // ±1 time-step window absorbs clock drift; null from validate() = no match.
 export function verifyTotp(secretBase32: string, token: string): boolean {
-  const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secretBase32) });
-  return totp.validate({ token, window: 1 }) !== null;
+  try {
+    const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secretBase32) });
+    return totp.validate({ token, window: 1 }) !== null;
+  } catch {
+    return false; // malformed secret → reject auth, never 500
+  }
 }
 
 // 10 codes, formatted xxxx-xxxx. Crockford base32 (32 chars, no i/l/o/u) so

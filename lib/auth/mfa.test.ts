@@ -15,6 +15,10 @@ describe('TOTP', () => {
     expect(uri.startsWith('otpauth://totp/')).toBe(true);
     expect(uri).toContain('secret=SECRET32');
   });
+  it('returns false (does not throw) on a malformed secret', () => {
+    expect(() => verifyTotp('!!! not base32 !!!', '123456')).not.toThrow();
+    expect(verifyTotp('!!! not base32 !!!', '123456')).toBe(false);
+  });
 });
 
 describe('recovery codes', () => {
