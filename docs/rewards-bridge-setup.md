@@ -35,6 +35,18 @@ stale within `stepSeconds` (default 30).
 
 ## Migrations
 
-`drizzle/0005_sudden_calypso.sql` adds the rewards tables. Apply with
+`drizzle/0005_sudden_calypso.sql` adds the rewards tables; `drizzle/0006_spooky_grim_reaper.sql`
+adds `reward_rsvps` (reward-event RSVP, which drives the early-RSVP bonus). Apply with
 `npm run db:migrate:local` (local D1) or `npm run db:migrate:remote` (remote D1).
-Seed a `global_reward_rules` row via the platform admin console (`/admin/rules`).
+
+## Economy defaults (v1 baseline)
+
+Points flow out of the box even before a platform admin configures anything: when no
+`global_reward_rules` row is active, check-ins fall back to `DEFAULT_GLOBAL_RULES`
+(`lib/domain/rewards.ts`) — **100** base per check-in, **+50** cross-org streak (a prior check-in
+within 14 days), **+150** scene-explorer (3+ distinct orgs). Override these in `/admin/rules`.
+
+Per-org programs are opt-in and organizer-set in poisys; the suggested starting numbers
+(`REWARD_DEFAULTS` in poisys `packages/shared/src/rewards.ts`) are base **100** + bonuses
+firstTime **200** / streak **50** / earlyRsvp **75** (≥24h) / bringFriend **100**, with suggested
+tiers Regular 0 / Gold 1,000 / VIP 5,000.

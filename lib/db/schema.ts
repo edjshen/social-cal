@@ -362,7 +362,27 @@ export const redemptions = sqliteTable(
   })
 );
 
+// RSVP to a projected reward event. Optional, but RSVP'ing 'going' ≥ X hours
+// before doors unlocks the org's early-RSVP bonus (the timestamp is the commit
+// time) and feeds organizer turnout forecasting.
+export const rewardRsvps = sqliteTable(
+  'reward_rsvps',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    eventId: text('event_id')
+      .notNull()
+      .references(() => rewardEvents.id),
+    status: text('status', { enum: ['going', 'cant'] }).notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ uniq: unique('reward_rsvps_user_event').on(t.userId, t.eventId) })
+);
+
 export type User = typeof users.$inferSelect;
+export type RewardRsvp = typeof rewardRsvps.$inferSelect;
 export type Organization = typeof organizations.$inferSelect;
 export type OrgFollow = typeof orgFollows.$inferSelect;
 export type RewardEvent = typeof rewardEvents.$inferSelect;

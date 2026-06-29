@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  DEFAULT_GLOBAL_RULES,
   PLATFORM_SCOPE,
   balanceFor,
   balancesByScope,
@@ -141,6 +142,42 @@ describe('computeGrant', () => {
     // cross-org streak fired (prior check-in within 14d) but scene explorer did not (only 1 org)
     expect(g.breakdown.global.crossOrgStreak).toBe(25);
     expect(g.breakdown.global.sceneExplorer).toBeUndefined();
+  });
+});
+
+describe('early-RSVP bonus + default global rules', () => {
+  const evEarly = event({
+    orgBasePoints: 50,
+    orgBonuses: { earlyRsvp: { on: true, points: 75, param: 24 } },
+    startsAt: '2026-06-01T22:00:00.000Z',
+  });
+
+  it('grants earlyRsvp when RSVP committed ≥ param hours before doors', () => {
+    const g = computeGrant(evEarly, DEFAULT_GLOBAL_RULES, {
+      priorCheckIns: [],
+      rsvpAt: '2026-05-30T22:00:00.000Z', // 48h before doors
+      nowMs: Date.parse('2026-06-01T23:00:00.000Z'),
+    });
+    expect(g.breakdown.org.earlyRsvp).toBe(75);
+    expect(g.global).toBe(100); // DEFAULT_GLOBAL_RULES base applies out-of-the-box
+  });
+
+  it('withholds earlyRsvp for a last-minute RSVP', () => {
+    const g = computeGrant(evEarly, DEFAULT_GLOBAL_RULES, {
+      priorCheckIns: [],
+      rsvpAt: '2026-06-01T21:00:00.000Z', // 1h before
+      nowMs: Date.parse('2026-06-01T23:00:00.000Z'),
+    });
+    expect(g.breakdown.org.earlyRsvp).toBeUndefined();
+  });
+
+  it('withholds earlyRsvp when there is no going RSVP', () => {
+    const g = computeGrant(evEarly, DEFAULT_GLOBAL_RULES, {
+      priorCheckIns: [],
+      rsvpAt: null,
+      nowMs: Date.parse('2026-06-01T23:00:00.000Z'),
+    });
+    expect(g.breakdown.org.earlyRsvp).toBeUndefined();
   });
 });
 

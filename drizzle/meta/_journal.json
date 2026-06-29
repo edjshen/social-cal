@@ -43,6 +43,13 @@
       "when": 1782724925822,
       "tag": "0005_sudden_calypso",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1782727004094,
+      "tag": "0006_spooky_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

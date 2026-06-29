@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { relTime } from '@/lib/format';
 import type { OrgDetail } from '@/lib/rewards/queries';
-import { toggleFollowOrg } from '@/lib/actions/rewards';
+import { setRewardRsvp, toggleFollowOrg } from '@/lib/actions/rewards';
 import ScanCheckin from './ScanCheckin';
 import RedeemButton from './RedeemButton';
 import { TierBadge, TierProgress } from './rewards-bits';
@@ -54,8 +54,10 @@ export default function OrgDetailView({ detail }: { detail: OrgDetail }) {
               {e.venueArea ? e.venueArea + ' · ' : ''}
               {relTime(e.startsAt)}
               {e.orgBasePoints > 0 ? ` · +${e.orgBasePoints} here` : ''}
+              {detail.goingCounts[e.id] ? ` · ${detail.goingCounts[e.id]} going` : ''}
             </div>
           </div>
+          <RsvpButton eventId={e.id} initial={detail.myRsvps[e.id] ?? null} />
         </div>
       ))}
 
@@ -105,6 +107,28 @@ export default function OrgDetailView({ detail }: { detail: OrgDetail }) {
         </div>
       )}
     </>
+  );
+}
+
+// RSVP toggle for an upcoming reward event. RSVP'ing 'going' early unlocks the
+// org's early-RSVP bonus at check-in.
+function RsvpButton({ eventId, initial }: { eventId: string; initial: 'going' | 'cant' | null }) {
+  const [status, setStatus] = useState<'going' | 'cant' | null>(initial);
+  const [busy, setBusy] = useState(false);
+  async function set(next: 'going' | 'cant') {
+    setBusy(true);
+    const r = await setRewardRsvp(eventId, next);
+    setStatus(r.status);
+    setBusy(false);
+  }
+  return (
+    <button
+      className={`btn sm${status === 'going' ? ' solid' : ''}`}
+      onClick={() => set(status === 'going' ? 'cant' : 'going')}
+      disabled={busy}
+    >
+      {status === 'going' ? 'Going' : 'RSVP'}
+    </button>
   );
 }
 

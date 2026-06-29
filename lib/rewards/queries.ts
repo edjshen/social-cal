@@ -14,6 +14,7 @@ import {
   pointsLedger as PL,
   redemptions as RD,
   rewardEvents as RE,
+  rewardRsvps as RR,
 } from '../db/schema';
 import type { Organization, OrgPerk, OrgTier, PlatformPerk, RewardEvent } from '../db/schema';
 import {
@@ -81,6 +82,10 @@ export interface OrgDetail {
   balance: ScopeBalance;
   tier: ResolvedTier;
   history: Array<{ kind: 'checkin' | 'redeem'; at: string; label: string; points: number }>;
+  /** My RSVP status per upcoming event id. */
+  myRsvps: Record<string, 'going' | 'cant'>;
+  /** Count of 'going' RSVPs per upcoming event id (turnout signal). */
+  goingCounts: Record<string, number>;
 }
 
 export async function getOrgDetail(slug: string, meId: string, nowISO: string): Promise<OrgDetail | null> {
@@ -100,6 +105,17 @@ export async function getOrgDetail(slug: string, meId: string, nowISO: string): 
     db.select().from(RD).where(and(eq(RD.userId, meId), eq(RD.scope, orgScope(org.id)))),
   ]);
   upcoming.sort((a, b) => (a.startsAt < b.startsAt ? -1 : 1));
+
+  // RSVPs for the upcoming events (mine + 'going' counts for a turnout signal).
+  const upIds = upcoming.map((e) => e.id);
+  const rsvpRows = upIds.length ? await db.select().from(RR).where(inArray(RR.eventId, upIds)) : [];
+  const myRsvps: Record<string, 'going' | 'cant'> = {};
+  const goingCounts: Record<string, number> = {};
+  for (const r of rsvpRows) {
+    if (r.userId === meId) myRsvps[r.eventId] = r.status;
+    if (r.status === 'going') goingCounts[r.eventId] = (goingCounts[r.eventId] ?? 0) + 1;
+  }
+
   const balance = balanceFor(ledger, orgScope(org.id));
   const history = [
     ...myCheckins.map((c) => ({
@@ -125,6 +141,8 @@ export async function getOrgDetail(slug: string, meId: string, nowISO: string): 
     balance,
     tier: resolveTier(tiers, balance.earned),
     history,
+    myRsvps,
+    goingCounts,
   };
 }
 

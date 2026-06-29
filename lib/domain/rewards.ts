@@ -97,6 +97,24 @@ function bonusOn(cfg: Record<string, unknown> | null): boolean {
   return !!cfg && cfg.on !== false;
 }
 
+/** The platform global engine, as consumed by computeGrant (DB row or a default). */
+export type GlobalRules = Pick<GlobalRewardRules, 'basePoints' | 'bonuses' | 'active'>;
+
+/**
+ * Out-of-the-box global economy, used when no `global_reward_rules` row is active yet so points flow
+ * on day one (a platform admin can override via /admin/rules). Numbers are the v1 economy baseline:
+ * 100 per check-in, +50 for a cross-org streak (a prior check-in within 14 days), +150 once you've
+ * been to 3+ different orgs.
+ */
+export const DEFAULT_GLOBAL_RULES: GlobalRules = {
+  basePoints: 100,
+  active: true,
+  bonuses: {
+    crossOrgStreak: { on: true, points: 50, windowDays: 14 },
+    sceneExplorer: { on: true, points: 150, n: 3 },
+  },
+};
+
 export interface GrantContext {
   /** This user's prior check-ins (any org), most-recent-first not required. */
   priorCheckIns: CheckIn[];
@@ -115,7 +133,7 @@ export interface GrantContext {
  */
 export function computeGrant(
   event: RewardEvent,
-  global: GlobalRewardRules | null,
+  global: GlobalRules | null,
   ctx: GrantContext
 ): GrantResult {
   const gBreak: Record<string, number> = {};
@@ -162,7 +180,8 @@ export function computeGrant(
     const early = bonusCfg(ob, 'earlyRsvp');
     if (bonusOn(early) && ctx.rsvpAt && event.startsAt) {
       const hours = (Date.parse(event.startsAt) - Date.parse(ctx.rsvpAt)) / 3_600_000;
-      if (hours >= num(early!.hours, 24)) oBreak.earlyRsvp = num(early!.points);
+      // poisys stores the required lead-hours in the bonus `param` (default 24h).
+      if (hours >= num(early!.param, 24)) oBreak.earlyRsvp = num(early!.points);
     }
 
     const friend = bonusCfg(ob, 'bringFriend');

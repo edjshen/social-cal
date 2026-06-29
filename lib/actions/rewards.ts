@@ -13,10 +13,12 @@ import {
   redemptions as RD,
   rewardEventSecrets as RES,
   rewardEvents as RE,
+  rewardRsvps as RR,
   users as U,
 } from '../db/schema';
 import { requireUserId } from '../auth/session';
 import {
+  DEFAULT_GLOBAL_RULES,
   PLATFORM_SCOPE,
   balanceFor,
   checkinWindowOpen,
@@ -57,16 +59,20 @@ export async function checkInByQr(rawQr: string): Promise<CheckinResult> {
   )[0];
   if (dupe) return { ok: false, reason: 'Already checked in' };
 
-  const [priorCheckIns, globalRows, me, org] = await Promise.all([
+  const [priorCheckIns, globalRows, me, org, rsvp] = await Promise.all([
     db.select().from(CI).where(eq(CI.userId, uid)),
     db.select().from(GRR).where(eq(GRR.active, true)).limit(1),
     db.select().from(U).where(eq(U.id, uid)).limit(1),
     db.select().from(ORG).where(eq(ORG.id, event.orgId)).limit(1),
+    db.select().from(RR).where(and(eq(RR.userId, uid), eq(RR.eventId, event.id))).limit(1),
   ]);
 
-  const grant = computeGrant(event, globalRows[0] ?? null, {
+  // A 'going' RSVP's commit time drives the early-RSVP bonus (no active global
+  // rules row yet ⇒ fall back to the v1 default economy so points still flow).
+  const goingRsvpAt = rsvp[0]?.status === 'going' ? rsvp[0].createdAt : null;
+  const grant = computeGrant(event, globalRows[0] ?? DEFAULT_GLOBAL_RULES, {
     priorCheckIns,
-    rsvpAt: null, // reward-event RSVP is a follow-up; early-RSVP bonus stays inert until then
+    rsvpAt: goingRsvpAt,
     referredFriendCheckedIn: false,
     nowMs: now,
   });
@@ -207,6 +213,39 @@ export async function redeemPerk(input: {
   revalidatePath('/you');
   revalidatePath('/organizations');
   return { ok: true, code, expiresAt, autoFulfilled };
+}
+
+/**
+ * RSVP to a reward event. 'going' (set early) unlocks the org's early-RSVP bonus at check-in and
+ * feeds turnout forecasting; 'cant' clears it. The original commit time is preserved across toggles
+ * so re-confirming 'going' doesn't reset the early-RSVP clock.
+ */
+export async function setRewardRsvp(
+  eventId: string,
+  status: 'going' | 'cant'
+): Promise<{ status: 'going' | 'cant' }> {
+  const uid = await requireUserId();
+  if (status !== 'going' && status !== 'cant') throw new Error('Bad request');
+  const db = getDb();
+  const event = (await db.select().from(RE).where(eq(RE.id, eventId)).limit(1))[0];
+  if (!event) throw new Error('Event not found');
+
+  const existing = (
+    await db.select().from(RR).where(and(eq(RR.userId, uid), eq(RR.eventId, eventId))).limit(1)
+  )[0];
+  if (existing) {
+    await db.update(RR).set({ status }).where(eq(RR.id, existing.id));
+  } else {
+    await db.insert(RR).values({
+      id: crypto.randomUUID(),
+      userId: uid,
+      eventId,
+      status,
+      createdAt: new Date().toISOString(),
+    });
+  }
+  revalidatePath('/organizations');
+  return { status };
 }
 
 /** Follow/unfollow an org (curates the feed; does NOT gate earning). */

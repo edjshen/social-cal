@@ -23,7 +23,8 @@ export default function RulesEditor({ rules }: { rules?: GlobalRewardRules }) {
   const se = initial.sceneExplorer ?? {};
   const xs = initial.crossOrgStreak ?? {};
   const [seOn, setSeOn] = useState(se.on !== false);
-  const [sePoints, setSePoints] = useState(String(se.points ?? 50));
+  // Defaults mirror DEFAULT_GLOBAL_RULES (lib/domain/rewards.ts) — the v1 economy baseline.
+  const [sePoints, setSePoints] = useState(String(se.points ?? 150));
   const [seN, setSeN] = useState(String(se.n ?? 3));
   const [xsOn, setXsOn] = useState(xs.on !== false);
   const [xsPoints, setXsPoints] = useState(String(xs.points ?? 50));
