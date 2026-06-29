@@ -1,3 +1,8 @@
+import { eq } from 'drizzle-orm';
+import { getDb } from '../db';
+import { platformAdmins } from '../db/schema';
+import { getSession } from './session';
+
 export const SUPERADMIN_EMAIL = 'junting.mp3@gmail.com';
 
 export type Aal = 'aal1' | 'aal2';
@@ -13,4 +18,23 @@ export function assertSuperadmin(input: {
   if (!input.userId || input.aal !== 'aal2' || !input.isAdmin) {
     throw new Error('FORBIDDEN');
   }
+}
+
+export async function isPlatformAdmin(userId: string): Promise<boolean> {
+  const rows = await getDb()
+    .select({ userId: platformAdmins.userId })
+    .from(platformAdmins)
+    .where(eq(platformAdmins.userId, userId))
+    .limit(1);
+  return rows.length > 0;
+}
+
+// The boundary control. Call this at the top of EVERY admin action and in the
+// admin route-group layout. Never trust the layout alone (defense in depth).
+export async function requireSuperadmin(): Promise<{ userId: string }> {
+  const s = await getSession();
+  const isAdmin = s.userId ? await isPlatformAdmin(s.userId) : false;
+  assertSuperadmin({ userId: s.userId, aal: s.aal, isAdmin });
+  // assertSuperadmin narrowed input.userId to string; s.userId is that same value.
+  return { userId: s.userId! };
 }
