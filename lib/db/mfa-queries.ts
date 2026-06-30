@@ -60,11 +60,17 @@ export async function consumeRecoveryCode(
     .where(and(eq(mfaRecoveryCodes.userId, userId), isNull(mfaRecoveryCodes.usedAt)));
   for (const r of rows) {
     if (await verify(code, r.codeHash)) {
-      await db
+      // Atomic single-use: claim the code only if it's STILL unused. The
+      // `usedAt IS NULL` predicate (not just id) + RETURNING is the real guard —
+      // D1/SQLite serializes writes, so two concurrent requests submitting the
+      // same code can't both claim it (only one UPDATE matches → one row returned).
+      const claimed = await db
         .update(mfaRecoveryCodes)
         .set({ usedAt: new Date().toISOString() })
-        .where(eq(mfaRecoveryCodes.id, r.id));
-      return true;
+        .where(and(eq(mfaRecoveryCodes.id, r.id), isNull(mfaRecoveryCodes.usedAt)))
+        .returning({ id: mfaRecoveryCodes.id });
+      if (claimed.length === 1) return true; // won the race
+      // lost the race: code was already consumed by a concurrent request — fall through
     }
   }
   return false;

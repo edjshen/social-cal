@@ -135,7 +135,13 @@ export async function verifyMfaStepUp(token: string): Promise<{ ok: boolean }> {
   if (!(await underLimit('auth.mfa.ip', ip, 15, TEN_MIN))) return { ok: false };
   const cred = await getMfaCredential(s.userId);
   if (!cred?.confirmedAt) return { ok: false }; // INVARIANT: TOTP only against a CONFIRMED secret
-  if (!verifyTotp(await decryptSecret(cred.secretEnc), token)) return { ok: false };
+  let secret: string;
+  try {
+    secret = await decryptSecret(cred.secretEnc);
+  } catch {
+    return { ok: false }; // corrupt/undecryptable secret at rest → reject, never 500
+  }
+  if (!verifyTotp(secret, token)) return { ok: false };
   s.aal = 'aal2';
   await s.save();
   return { ok: true };
