@@ -271,13 +271,23 @@ export class RoomDO extends DurableObject {
         return;
       }
       // M-7: a socket may only publish under the pubkey it bound at hello time.
+      // If it skipped hello, pin identity on this FIRST publish too, so a socket
+      // can't dodge the bind by never saying hello and still rotate pubkeys.
       let bound = null;
       try {
         bound = ws.deserializeAttachment();
       } catch {
         bound = null;
       }
-      if (bound && bound.pub && frame.profilePub !== bound.pub) return; // identity mismatch — drop
+      if (bound && bound.pub) {
+        if (frame.profilePub !== bound.pub) return; // identity mismatch — drop
+      } else if (frame.profilePub) {
+        try {
+          ws.serializeAttachment({ pub: frame.profilePub });
+        } catch {
+          /* attachment unavailable; skip binding */
+        }
+      }
       // Durable per-room publish rate — survives hibernation/reconnects, unlike
       // the per-socket flood counter above, so a paced attacker can't fill the
       // log or sustain fan-out by reconnecting.

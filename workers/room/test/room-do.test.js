@@ -86,6 +86,19 @@ describe('relay HTTP surface', () => {
     });
     expect(res.status).toBe(426);
   });
+
+  it('admits a tokenless upgrade when ROOM_RELAY_SECRET is unset (gate inactive)', async () => {
+    // This default config injects no secret, so the H-2 admission gate is OFF
+    // and a valid-origin upgrade with NO `?t=` must still succeed (101) — the
+    // explicit fail-open-until-configured assertion (admission.test.js covers
+    // the enforcing path under the secret-set config).
+    const res = await SELF.fetch(`https://relay.test/room/${uniqueRoom()}`, {
+      headers: { Upgrade: 'websocket', Origin: ORIGIN },
+    });
+    expect(res.status).toBe(101);
+    res.webSocket?.accept();
+    res.webSocket?.close();
+  });
 });
 
 describe('relay protocol', () => {

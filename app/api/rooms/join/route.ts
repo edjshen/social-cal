@@ -78,6 +78,9 @@ export async function POST(request: Request): Promise<Response> {
     console.error('[rooms.join] log failed:', (e as Error)?.message);
   }
 
-  const relayToken = await mintRelayToken(b?.roomId as string);
+  // Best-effort like the logging above: a mint hiccup must never 500 a join
+  // whose log already landed — degrade to a null token (tokenless connect,
+  // which the relay allows while ROOM_RELAY_SECRET is unset).
+  const relayToken = await mintRelayToken(b?.roomId as string).catch(() => null);
   return Response.json({ ok: true, relayToken });
 }
