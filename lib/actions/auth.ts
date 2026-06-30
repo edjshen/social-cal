@@ -149,7 +149,7 @@ export async function verifyMfaStepUp(token: string): Promise<{ ok: boolean }> {
   return { ok: true };
 }
 
-export async function useRecoveryCode(code: string): Promise<{ ok: boolean }> {
+export async function redeemRecoveryCode(code: string): Promise<{ ok: boolean }> {
   const s = await getSession();
   if (!s.userId) return { ok: false };
   const ip = await clientIp();
