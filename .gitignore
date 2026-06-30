@@ -18,3 +18,6 @@ public/sw.js
 public/swe-worker-*.js
 workers/room/node_modules/
 .claire/
+
+# e2e-fidelity mutation temp files (never commit)
+**/__mutated__*
