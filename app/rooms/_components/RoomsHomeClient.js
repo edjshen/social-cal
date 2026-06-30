@@ -438,8 +438,8 @@ export default function RoomsHomeClient() {
         style={{ fontSize: '0.72rem', marginTop: 'auto', paddingTop: '1rem' }}
       >
         rooms vanish 24h after they’re made. no accounts. sealed rooms are end-to-end encrypted —
-        the key lives only in the link. open &amp; event rooms are public: anyone with the three words
-        or event link can read along.
+        the key lives only in the link. open &amp; event rooms are public: anyone with the three
+        words or event link can read along.
       </p>
       <p className={styles.muted} style={{ fontSize: '0.62rem', lineHeight: 1.4, opacity: 0.7 }}>
         {PHONE_MARKETING_CONSENT}

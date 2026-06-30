@@ -170,8 +170,8 @@ export default function RoomView({ room, profile, nodeId, onLeave, onExpired }) 
             borderBottom: '1px solid var(--mf-border)',
           }}
         >
-          public room — anyone with the {room.event ? 'event link' : 'three words'} can read
-          along. not private.
+          public room — anyone with the {room.event ? 'event link' : 'three words'} can read along.
+          not private.
         </div>
       ) : null}
 
