@@ -35,16 +35,25 @@ stale within `stepSeconds` (default 30).
 
 ## Migrations
 
-`drizzle/0005_sudden_calypso.sql` adds the rewards tables; `drizzle/0006_spooky_grim_reaper.sql`
-adds `reward_rsvps` (reward-event RSVP, which drives the early-RSVP bonus). Apply with
-`npm run db:migrate:local` (local D1) or `npm run db:migrate:remote` (remote D1).
+`drizzle/0007_futuristic_mojo.sql` adds the rewards tables — including `reward_rsvps`
+(reward-event RSVP, which drives the early-RSVP bonus). (It was regenerated on top of main's
+`0005`/`0006` when this branch merged main in.) Apply with `npm run db:migrate:local` (local D1) or
+`npm run db:migrate:remote` (remote D1).
+
+## Admin access
+
+The rewards admin lives under the hardened **`/superadmin/rewards`** console (perks, global rules,
+analytics, moderation, fulfillment). Access requires a `platform_admins` grant **and** an MFA
+step-up (`requireSuperadmin`) — same gate as the rest of `/superadmin`. There is no separate
+`/admin` surface or `platform_role` flag.
 
 ## Economy defaults (v1 baseline)
 
 Points flow out of the box even before a platform admin configures anything: when no
 `global_reward_rules` row is active, check-ins fall back to `DEFAULT_GLOBAL_RULES`
 (`lib/domain/rewards.ts`) — **100** base per check-in, **+50** cross-org streak (a prior check-in
-within 14 days), **+150** scene-explorer (3+ distinct orgs). Override these in `/admin/rules`.
+within 14 days), **+150** scene-explorer (3+ distinct orgs). Override these in
+`/superadmin/rewards/rules`.
 
 Per-org programs are opt-in and organizer-set in poisys; the suggested starting numbers
 (`REWARD_DEFAULTS` in poisys `packages/shared/src/rewards.ts`) are base **100** + bonuses
