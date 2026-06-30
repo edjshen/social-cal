@@ -28,7 +28,13 @@ function randomPassword(): string {
 export async function adminToggleGhost(userId: string, ghost: boolean) {
   const { userId: actorId } = await requireSuperadmin();
   await getDb().update(users).set({ ghost }).where(eq(users.id, userId));
-  await writeAudit({ actorId, action: 'user.ghost', targetType: 'user', targetId: userId, summary: `${ghost ? 'ghosted' : 'unghosted'} ${userId}` });
+  await writeAudit({
+    actorId,
+    action: 'user.ghost',
+    targetType: 'user',
+    targetId: userId,
+    summary: `${ghost ? 'ghosted' : 'unghosted'} ${userId}`,
+  });
 }
 
 export async function adminForceResetPassword(userId: string): Promise<{ tempPassword: string }> {
@@ -37,8 +43,17 @@ export async function adminForceResetPassword(userId: string): Promise<{ tempPas
   // ponytail: changes passwordHash only; does NOT invalidate the target's existing
   // iron-session cookies (they're not password-bound, no session store to purge).
   // The target stays logged in on current devices. Spec asked for a reset, not a logout.
-  await getDb().update(users).set({ passwordHash: await hashPassword(tempPassword) }).where(eq(users.id, userId));
-  await writeAudit({ actorId, action: 'user.password_reset', targetType: 'user', targetId: userId, summary: `reset password for ${userId}` });
+  await getDb()
+    .update(users)
+    .set({ passwordHash: await hashPassword(tempPassword) })
+    .where(eq(users.id, userId));
+  await writeAudit({
+    actorId,
+    action: 'user.password_reset',
+    targetType: 'user',
+    targetId: userId,
+    summary: `reset password for ${userId}`,
+  });
   return { tempPassword };
 }
 
@@ -47,17 +62,35 @@ export async function adminDeleteUser(userId: string) {
   if (userId === actorId) throw new Error('CANNOT_DELETE_SELF');
   if (await isPlatformAdmin(userId)) throw new Error('CANNOT_DELETE_ADMIN');
   await deleteUserCascade(userId);
-  await writeAudit({ actorId, action: 'user.delete', targetType: 'user', targetId: userId, summary: `deleted user ${userId}` });
+  await writeAudit({
+    actorId,
+    action: 'user.delete',
+    targetType: 'user',
+    targetId: userId,
+    summary: `deleted user ${userId}`,
+  });
 }
 
 export async function adminDeleteEvent(eventId: string) {
   const { userId: actorId } = await requireSuperadmin();
   await deleteEventCascade(eventId);
-  await writeAudit({ actorId, action: 'event.delete', targetType: 'event', targetId: eventId, summary: `deleted event ${eventId}` });
+  await writeAudit({
+    actorId,
+    action: 'event.delete',
+    targetType: 'event',
+    targetId: eventId,
+    summary: `deleted event ${eventId}`,
+  });
 }
 
 export async function adminRemoveConnection(connId: string) {
   const { userId: actorId } = await requireSuperadmin();
   await getDb().delete(connections).where(eq(connections.id, connId));
-  await writeAudit({ actorId, action: 'connection.remove', targetType: 'connection', targetId: connId, summary: `removed connection ${connId}` });
+  await writeAudit({
+    actorId,
+    action: 'connection.remove',
+    targetType: 'connection',
+    targetId: connId,
+    summary: `removed connection ${connId}`,
+  });
 }

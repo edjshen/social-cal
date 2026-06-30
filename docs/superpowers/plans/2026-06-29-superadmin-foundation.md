@@ -19,6 +19,7 @@
 ## Task 1: Schema — email column + 4 tables + migration
 
 **Files:**
+
 - Modify: `lib/db/schema.ts` (add `email` to `users`; append 4 tables + types)
 - Create: `drizzle/0005_superadmin.sql` (generated) + `drizzle/meta/*` (regenerated)
 - Modify: `scripts/gen-seed.ts` (set the dev `ed` fixture's email, if such a fixture exists)
@@ -122,6 +123,7 @@ git commit -m "feat(db): add email + platform_admins, admin_audit_log, mfa_* tab
 ## Task 2: Pure guard `assertSuperadmin` + session `aal`
 
 **Files:**
+
 - Create: `lib/auth/superadmin.ts`
 - Modify: `lib/auth/session.ts` (add `aal` to `SessionData`)
 - Test: `lib/auth/superadmin.test.ts`
@@ -209,6 +211,7 @@ git commit -m "feat(auth): assertSuperadmin pure guard + session aal level"
 ## Task 3: `isPlatformAdmin` + `requireSuperadmin` (IO wrappers)
 
 **Files:**
+
 - Modify: `lib/auth/superadmin.ts` (append the IO wrappers)
 - Test: `lib/auth/superadmin.io.test.ts` (mocks the session + db boundary)
 
@@ -232,7 +235,9 @@ vi.mock('../db', () => ({
       from: () => ({
         where: () => ({
           limit: async () =>
-            state.adminIds.has(state.session.userId as string) ? [{ userId: state.session.userId }] : [],
+            state.adminIds.has(state.session.userId as string)
+              ? [{ userId: state.session.userId }]
+              : [],
         }),
       }),
     }),
@@ -315,6 +320,7 @@ git commit -m "feat(auth): isPlatformAdmin + requireSuperadmin boundary guard"
 ## Task 4: AES-GCM crypto helpers (encrypt the TOTP secret at rest)
 
 **Files:**
+
 - Create: `lib/auth/crypto.ts`
 - Test: `lib/auth/crypto.test.ts`
 
@@ -370,7 +376,9 @@ async function importKey(keyBytes: Uint8Array) {
 export async function aesEncrypt(keyBytes: Uint8Array, plain: string): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await importKey(keyBytes);
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plain)));
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plain))
+  );
   return `${b64(iv)}:${b64(ct)}`;
 }
 
@@ -411,6 +419,7 @@ git commit -m "feat(auth): AES-GCM helpers to encrypt the TOTP secret at rest"
 ## Task 5: TOTP (`otpauth`) + recovery codes
 
 **Files:**
+
 - Modify: `package.json` (add `otpauth`)
 - Create: `lib/auth/mfa.ts`
 - Test: `lib/auth/mfa.test.ts`
@@ -526,6 +535,7 @@ git commit -m "feat(auth): TOTP verify + recovery codes (otpauth)"
 ## Task 6: Login step-up decision + audit row builder (pure helpers)
 
 **Files:**
+
 - Modify: `lib/auth/superadmin.ts` (add `nextAalAfterPassword`) — or co-locate in `session.ts`; keep in `superadmin.ts` for cohesion
 - Create: `lib/db/audit.ts` (`buildAuditRow` pure + `writeAudit` IO)
 - Test: `lib/auth/aal.test.ts`, `lib/db/audit.test.ts`
@@ -563,7 +573,12 @@ describe('buildAuditRow', () => {
     });
     expect(row.id).toBeTruthy();
     expect(row.createdAt).toMatch(/^\d{4}-\d\d-\d\dT/);
-    expect(row).toMatchObject({ actorId: 'ed', action: 'user.delete', targetType: 'user', targetId: 'u9' });
+    expect(row).toMatchObject({
+      actorId: 'ed',
+      action: 'user.delete',
+      targetType: 'user',
+      targetId: 'u9',
+    });
   });
 });
 ```
@@ -638,6 +653,7 @@ git commit -m "feat(auth): aal step-up decision + admin audit row builder/writer
 ## Task 7: MFA server actions (enroll, confirm, step-up, recovery)
 
 **Files:**
+
 - Create: `lib/actions/mfa.ts`
 - Create: `lib/db/mfa-queries.ts` (thin reads/writes used by the actions)
 - Test: `lib/actions/mfa.test.ts` (mock the boundary)
@@ -723,7 +739,11 @@ import { getDb } from './index';
 import { mfaCredentials, mfaRecoveryCodes } from './schema';
 
 export async function getMfaCredential(userId: string) {
-  const r = await getDb().select().from(mfaCredentials).where(eq(mfaCredentials.userId, userId)).limit(1);
+  const r = await getDb()
+    .select()
+    .from(mfaCredentials)
+    .where(eq(mfaCredentials.userId, userId))
+    .limit(1);
   return r[0] ?? null;
 }
 export async function upsertMfaCredential(userId: string, secretEnc: string) {
@@ -742,7 +762,9 @@ export async function replaceRecoveryCodes(userId: string, hashes: string[]) {
   const db = getDb();
   await db.delete(mfaRecoveryCodes).where(eq(mfaRecoveryCodes.userId, userId));
   if (hashes.length)
-    await db.insert(mfaRecoveryCodes).values(hashes.map((codeHash) => ({ id: nanoid(), userId, codeHash, usedAt: null })));
+    await db
+      .insert(mfaRecoveryCodes)
+      .values(hashes.map((codeHash) => ({ id: nanoid(), userId, codeHash, usedAt: null })));
 }
 ```
 
@@ -807,6 +829,7 @@ git commit -m "feat(mfa): enrollment + confirmation server actions"
 ## Task 8: Login step-up — wire `aal` into auth + step-up action
 
 **Files:**
+
 - Modify: `lib/actions/auth.ts` (set `aal` after password; add `verifyMfaStepUp` + `useRecoveryCode`)
 - Test: extend `lib/actions/mfa.test.ts` or add `lib/actions/stepup.test.ts` (mock boundary)
 
@@ -918,7 +941,10 @@ export async function consumeRecoveryCode(
     .where(and(eq(mfaRecoveryCodes.userId, userId), isNull(mfaRecoveryCodes.usedAt)));
   for (const r of rows) {
     if (await verify(code, r.codeHash)) {
-      await db.update(mfaRecoveryCodes).set({ usedAt: new Date().toISOString() }).where(eq(mfaRecoveryCodes.id, r.id));
+      await db
+        .update(mfaRecoveryCodes)
+        .set({ usedAt: new Date().toISOString() })
+        .where(eq(mfaRecoveryCodes.id, r.id));
       return true;
     }
   }
@@ -943,6 +969,7 @@ git commit -m "feat(auth): MFA step-up + recovery-code consumption, aal on login
 ## Task 9: Enrollment + step-up pages (UI — typecheck/lint/E2E, no node test)
 
 **Files:**
+
 - Create: `app/(app)/security/page.tsx` + `components/MfaEnroll.tsx` (client)
 - Create: `app/(auth)/login/mfa/page.tsx` + `components/MfaPrompt.tsx` (client)
 
@@ -985,7 +1012,13 @@ export default function MfaEnroll() {
     return (
       <div>
         <h2>Save your recovery codes</h2>
-        <ul>{codes.map((c) => <li key={c}><code>{c}</code></li>)}</ul>
+        <ul>
+          {codes.map((c) => (
+            <li key={c}>
+              <code>{c}</code>
+            </li>
+          ))}
+        </ul>
         <p>Each works once. Store them somewhere safe.</p>
       </div>
     );
@@ -993,7 +1026,13 @@ export default function MfaEnroll() {
   return (
     <div>
       {!qr ? (
-        <button onClick={async () => { const r = await startMfaEnrollment(); setQr(r.qrDataUrl); setSecret(r.secret); }}>
+        <button
+          onClick={async () => {
+            const r = await startMfaEnrollment();
+            setQr(r.qrDataUrl);
+            setSecret(r.secret);
+          }}
+        >
           Enable two-factor
         </button>
       ) : (
@@ -1001,13 +1040,23 @@ export default function MfaEnroll() {
           onSubmit={async (e) => {
             e.preventDefault();
             setErr('');
-            try { setCodes((await confirmMfaEnrollment(token)).recoveryCodes); }
-            catch { setErr('That code didn’t match. Try again.'); }
+            try {
+              setCodes((await confirmMfaEnrollment(token)).recoveryCodes);
+            } catch {
+              setErr('That code didn’t match. Try again.');
+            }
           }}
         >
           <img src={qr} alt="Scan with your authenticator app" width={200} height={200} />
-          <p>Or enter this key manually: <code>{secret}</code></p>
-          <input value={token} onChange={(e) => setToken(e.target.value)} inputMode="numeric" placeholder="123456" />
+          <p>
+            Or enter this key manually: <code>{secret}</code>
+          </p>
+          <input
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            inputMode="numeric"
+            placeholder="123456"
+          />
           <button type="submit">Confirm</button>
           {err && <p role="alert">{err}</p>}
         </form>
@@ -1054,7 +1103,11 @@ export default function MfaPrompt() {
         else setErr('That code didn’t match.');
       }}
     >
-      <input value={token} onChange={(e) => setToken(e.target.value)} placeholder={recovery ? 'recovery code' : '123456'} />
+      <input
+        value={token}
+        onChange={(e) => setToken(e.target.value)}
+        placeholder={recovery ? 'recovery code' : '123456'}
+      />
       <button type="submit">Verify</button>
       <button type="button" onClick={() => setRecovery((v) => !v)}>
         {recovery ? 'Use authenticator code' : 'Use a recovery code'}

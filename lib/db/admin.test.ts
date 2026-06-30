@@ -7,7 +7,10 @@ const { rec } = vi.hoisted(() => ({ rec: { tables: [] as unknown[] } }));
 vi.mock('./index', () => ({
   getDb: () => ({
     select: () => ({ from: () => ({ where: () => ({ getSQL: () => ({}) }) }) }),
-    delete: (t: unknown) => { rec.tables.push(t); return { where: () => ({}) }; },
+    delete: (t: unknown) => {
+      rec.tables.push(t);
+      return { where: () => ({}) };
+    },
     batch: async () => {},
   }),
 }));
@@ -15,7 +18,9 @@ vi.mock('./index', () => ({
 import { deleteUserCascade, deleteEventCascade } from './admin';
 import { users, events, attendance, connections, platformAdmins } from './schema';
 
-beforeEach(() => { rec.tables = []; });
+beforeEach(() => {
+  rec.tables = [];
+});
 
 describe('deleteUserCascade — FK-safe order', () => {
   it('9 statements, children before parents, users LAST', async () => {

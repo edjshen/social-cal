@@ -5,7 +5,11 @@ import { mfaCredentials, mfaRecoveryCodes } from './schema';
 import type { MfaCredential } from './schema';
 
 export async function getMfaCredential(userId: string): Promise<MfaCredential | null> {
-  const r = await getDb().select().from(mfaCredentials).where(eq(mfaCredentials.userId, userId)).limit(1);
+  const r = await getDb()
+    .select()
+    .from(mfaCredentials)
+    .where(eq(mfaCredentials.userId, userId))
+    .limit(1);
   return r[0] ?? null;
 }
 
@@ -38,9 +42,9 @@ export async function replaceRecoveryCodes(userId: string, hashes: string[]) {
   // user with their old codes wiped but new ones not yet written.
   await db.batch([
     db.delete(mfaRecoveryCodes).where(eq(mfaRecoveryCodes.userId, userId)),
-    db.insert(mfaRecoveryCodes).values(
-      hashes.map((codeHash) => ({ id: nanoid(), userId, codeHash, usedAt: null }))
-    ),
+    db
+      .insert(mfaRecoveryCodes)
+      .values(hashes.map((codeHash) => ({ id: nanoid(), userId, codeHash, usedAt: null }))),
   ]);
 }
 

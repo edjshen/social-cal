@@ -2,8 +2,19 @@
 import QRCode from 'qrcode';
 import { requireUserId } from '../auth/session';
 import { encryptSecret, decryptSecret } from '../auth/crypto';
-import { newTotpSecret, totpAuthUri, verifyTotp, newRecoveryCodes, hashRecoveryCode } from '../auth/mfa';
-import { getMfaCredential, upsertMfaCredential, confirmMfaCredential, replaceRecoveryCodes } from '../db/mfa-queries';
+import {
+  newTotpSecret,
+  totpAuthUri,
+  verifyTotp,
+  newRecoveryCodes,
+  hashRecoveryCode,
+} from '../auth/mfa';
+import {
+  getMfaCredential,
+  upsertMfaCredential,
+  confirmMfaCredential,
+  replaceRecoveryCodes,
+} from '../db/mfa-queries';
 
 export async function startMfaEnrollment(): Promise<{ qrDataUrl: string; secret: string }> {
   const userId = await requireUserId();

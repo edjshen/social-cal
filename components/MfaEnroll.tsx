@@ -16,9 +16,17 @@ export default function MfaEnroll() {
     return (
       <div>
         <h2>Save your recovery codes</h2>
-        <ul>{codes.map((c) => <li key={c}><code>{c}</code></li>)}</ul>
+        <ul>
+          {codes.map((c) => (
+            <li key={c}>
+              <code>{c}</code>
+            </li>
+          ))}
+        </ul>
         <p>Each works once. Store them somewhere safe.</p>
-        <button className="btn solid" onClick={() => router.refresh()}>Done</button>
+        <button className="btn solid" onClick={() => router.refresh()}>
+          Done
+        </button>
       </div>
     );
 
@@ -50,7 +58,7 @@ export default function MfaEnroll() {
             try {
               setCodes((await confirmMfaEnrollment(token)).recoveryCodes);
             } catch {
-              setErr("That code didn’t match. Try again.");
+              setErr('That code didn’t match. Try again.');
             } finally {
               setBusy(false);
             }
@@ -58,7 +66,9 @@ export default function MfaEnroll() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- inline data:image/svg+xml QR; next/image can't optimize data URLs */}
           <img src={qr} alt="Scan with your authenticator app" width={200} height={200} />
-          <p>Or enter this key manually: <code>{secret}</code></p>
+          <p>
+            Or enter this key manually: <code>{secret}</code>
+          </p>
           <div className="field">
             <label htmlFor="enroll-code">Verification code</label>
             <input
@@ -70,8 +80,14 @@ export default function MfaEnroll() {
               placeholder="123456"
             />
           </div>
-          <button type="submit" className="btn solid" disabled={busy}>Confirm</button>
-          {err && <p role="alert" className="error">{err}</p>}
+          <button type="submit" className="btn solid" disabled={busy}>
+            Confirm
+          </button>
+          {err && (
+            <p role="alert" className="error">
+              {err}
+            </p>
+          )}
         </form>
       )}
     </div>

@@ -12,6 +12,11 @@ describe('buildAuditRow', () => {
     });
     expect(row.id).toBeTruthy();
     expect(row.createdAt).toMatch(/^\d{4}-\d\d-\d\dT/);
-    expect(row).toMatchObject({ actorId: 'ed', action: 'user.delete', targetType: 'user', targetId: 'u9' });
+    expect(row).toMatchObject({
+      actorId: 'ed',
+      action: 'user.delete',
+      targetType: 'user',
+      targetId: 'u9',
+    });
   });
 });

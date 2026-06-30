@@ -19,6 +19,8 @@ describe('assertSuperadmin — the pure privilege guard', () => {
     );
   });
   it('throws FORBIDDEN when aal is undefined (pre-MFA session)', () => {
-    expect(() => assertSuperadmin({ userId: 'u1', aal: undefined, isAdmin: true })).toThrow('FORBIDDEN');
+    expect(() => assertSuperadmin({ userId: 'u1', aal: undefined, isAdmin: true })).toThrow(
+      'FORBIDDEN'
+    );
   });
 });

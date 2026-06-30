@@ -35,7 +35,9 @@ export default function MfaPrompt() {
           placeholder={recovery ? 'recovery code' : '123456'}
         />
       </div>
-      <button type="submit" className="btn solid block" disabled={busy}>Verify</button>
+      <button type="submit" className="btn solid block" disabled={busy}>
+        Verify
+      </button>
       <button
         type="button"
         className="btn block"
@@ -44,7 +46,11 @@ export default function MfaPrompt() {
       >
         {recovery ? 'Use authenticator code' : 'Use a recovery code'}
       </button>
-      {err && <p role="alert" className="error">{err}</p>}
+      {err && (
+        <p role="alert" className="error">
+          {err}
+        </p>
+      )}
     </form>
   );
 }

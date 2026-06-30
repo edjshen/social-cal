@@ -11,14 +11,16 @@
 **Stack (do not deviate):** Next.js 16 (App Router) + OpenNext + Cloudflare Workers + **D1 (SQLite)** via **drizzle-orm**. Auth = **iron-session** + **`@noble/hashes` scrypt** (credentials-only, no OAuth). No Vercel, no Supabase, no Postgres/RLS. Build: `npm run build:cf`. Tests: `npm test` (Vitest, 35 existing). Deploy: `wrangler deploy` + `wrangler d1 migrations apply barycal-db --remote`.
 
 **This mirrors the `poisys` framework** (`/Users/edshen/Documents/GitHub/poisys`), translated from Postgres/RLS to D1/Next. The principles we copy verbatim:
-1. A **dedicated registry table** for the top privilege (`platform_admins`) — *not* a boolean on `users`, *not* folded into any other role.
+
+1. A **dedicated registry table** for the top privilege (`platform_admins`) — _not_ a boolean on `users`, _not_ folded into any other role.
 2. **One helper is the source of truth** (`is_platform_admin()` → our `requireSuperadmin()`).
 3. **Identity = email**; the admin is flagged by a hardcoded email constant.
-4. **Defense in depth:** route guard → **every admin action re-checks the privilege in its own body** → privileged queries bypass normal visibility *only after* that check.
+4. **Defense in depth:** route guard → **every admin action re-checks the privilege in its own body** → privileged queries bypass normal visibility _only after_ that check.
 5. **No ambient authority.** The flag gates the console and nothing else.
 6. Poisys's one gap — **no admin-action audit log** — is closed here (you asked for it).
 
 **Definition of done:**
+
 - `npm test` green (existing 35 + new), `npm run typecheck` clean, `npm run lint` clean.
 - A non-superadmin (or logged-out) request to `/admin` or any admin server action returns 404 / `FORBIDDEN`. Verified by automated test, not just the layout.
 - The superadmin, after TOTP step-up, can: list/search users, suspend (ghost) / force-reset / delete a user (cascade), view & delete any event regardless of visibility, remove a connection, view stats, and read an append-only audit log of every mutation.
@@ -97,6 +99,7 @@ export const mfaRecoveryCodes = sqliteTable('mfa_recovery_codes', {
 Single source of truth: `export const SUPERADMIN_EMAIL = 'junting.mp3@gmail.com'` in `lib/auth/superadmin.ts` (poisys hardcodes the admin email too).
 
 **Idempotent bootstrap** (poisys-style email match). Prod sequence (gated — see §9):
+
 ```sql
 UPDATE users SET email = 'junting.mp3@gmail.com'
   WHERE handle = 'ed' AND email IS NULL;
@@ -104,6 +107,7 @@ INSERT INTO platform_admins (user_id, granted_at)
   SELECT id, '<ISO ts>' FROM users WHERE lower(email) = 'junting.mp3@gmail.com'
   ON CONFLICT (user_id) DO NOTHING;
 ```
+
 Elevates the **existing** `ed` account — no new account, no password handling. Dev seed mirrors this. No chicken-and-egg: before MFA is enrolled, login yields `aal2` directly, so `ed` can reach `/admin` to enroll; the enroll page lives under `(app)`, not `(admin)`.
 
 ---
@@ -111,27 +115,31 @@ Elevates the **existing** `ed` account — no new account, no password handling.
 ## 5. Auth, gating & MFA
 
 **Session assurance level** (`lib/auth/session.ts`): extend `SessionData` with `aal?: 'aal1' | 'aal2'`.
+
 - Password success → `aal1`.
-- If a *confirmed* `mfa_credentials` row exists → must clear TOTP to reach `aal2`.
+- If a _confirmed_ `mfa_credentials` row exists → must clear TOTP to reach `aal2`.
 - No MFA on the account → set `aal2` immediately (normal users unaffected).
 
 **`lib/auth/superadmin.ts`:**
+
 ```ts
 export const SUPERADMIN_EMAIL = 'junting.mp3@gmail.com';
-export async function isPlatformAdmin(userId: string): Promise<boolean>;  // SELECT 1 FROM platform_admins
+export async function isPlatformAdmin(userId: string): Promise<boolean>; // SELECT 1 FROM platform_admins
 export async function requireSuperadmin(): Promise<{ userId: string }>;
 //   getSession → require userId → require aal === 'aal2' → require isPlatformAdmin → else throw 'FORBIDDEN'
 ```
 
 **Defense-in-depth gating (the poisys rule):**
+
 1. Route group `app/(admin)/` with `app/(admin)/layout.tsx` calling `requireSuperadmin()`; on failure `notFound()` (404 — don't reveal the route exists).
 2. **Every admin server action calls `requireSuperadmin()` as its first statement.** Never trust the layout/client.
 3. Admin queries skip `canSeeContent` — only reachable past the guard.
 4. Rate-limit MFA + admin login via `lib/ratelimit.ts`, new scopes `auth.mfa.verify`, `auth.mfa.ip`.
 
 **MFA / TOTP** (`lib/auth/mfa.ts` + actions; deps `otpauth`, `qrcode` — approved):
+
 - **Enroll** (`/security` page under `(app)`, reachable at `aal1`): action `startMfaEnrollment()` → generate secret (`otpauth`), store encrypted with `confirmedAt = null`, return the `otpauth://` URI + a QR. (Generate the QR as an **SVG string** via `qrcode.toString(uri, { type: 'svg' })` — pure-JS, Workers-safe; avoid `qrcode`'s PNG/canvas path. `otpauth` uses WebCrypto, also Workers-safe.) User scans, submits a code → `confirmMfaEnrollment(code)` verifies (±1 step window), sets `confirmedAt`, generates **10 recovery codes** (scrypt-hashed, returned once for display).
-- **Login step-up** (`lib/actions/auth.ts` + `app/(auth)/login/mfa/page.tsx`): after password, if confirmed MFA → stay `aal1`, redirect to TOTP prompt → `verifyTotp(code)` *or* `consumeRecoveryCode(code)` → set `aal2`.
+- **Login step-up** (`lib/actions/auth.ts` + `app/(auth)/login/mfa/page.tsx`): after password, if confirmed MFA → stay `aal1`, redirect to TOTP prompt → `verifyTotp(code)` _or_ `consumeRecoveryCode(code)` → set `aal2`.
 - **Recovery / break-glass:** single-use recovery code restores `aal2`, then re-enroll. Last resort: gated `wrangler d1 execute` clears `mfa_credentials` for `ed`.
 
 Net effect: even with `ed`'s password, no `/admin` and no admin action without a live TOTP (poisys-style AAL2, enforced server-side everywhere).
@@ -152,6 +160,7 @@ Console under `app/(admin)/` (Server Components read via new admin queries; muta
    7. `users` where `id = U`
 
    `admin_audit_log` rows are **retained** (the trail outlives the user): `targetId` is plain text, and `actorId` only ever points at the superadmin — normal users are never actors, so no FK conflict. Guardrails: refuse if `U` is a `platform_admins` member or is self.
+
 2. **Content moderation** `/admin/moderation` — view/search **any** event regardless of `visibility` (no `canSeeContent`); **delete any event** (cascade its `attendance` + recurrence exception rows where `parentId = id`); list & **force-remove connections**. All audited.
 3. **App stats** `/admin` (overview landing) — read-only `COUNT` aggregates: total users + signups in last 7/30d, events by `type`, total RSVPs, total connections, ghosted count. No chart lib.
 4. **Audit log** `/admin/audit` — reverse-chron, filter by `action`/`actor`, paginated. `writeAudit(actorId, action, targetType, targetId, summary, meta?)`. Append-only; no edit/delete in UI.
@@ -162,14 +171,14 @@ Console under `app/(admin)/` (Server Components read via new admin queries; muta
 
 Sequence: **A → B → (C ∥ D) → E → F**. C and D are independent once B lands.
 
-| Unit | Scope | Files (new/changed) | Depends | Acceptance (machine-checkable) |
-|---|---|---|---|---|
-| **A. Schema & migration** | `email` col + 4 tables; `0005_superadmin.sql`; seed update | `lib/db/schema.ts`, `drizzle/0005_*.sql`, `drizzle/meta/*`, `drizzle/seed.sql` | — | Migration applies on fresh D1; `npm run typecheck` clean; existing 35 tests green |
-| **B. Superadmin helpers + gating core** | `SUPERADMIN_EMAIL`, `isPlatformAdmin`, `requireSuperadmin`, `aal` in session | `lib/auth/superadmin.ts`, `lib/auth/session.ts` | A | Unit tests: admin→ok, non-admin→FORBIDDEN, admin+aal1→FORBIDDEN |
-| **C. MFA subsystem** | TOTP enroll/verify, AES-GCM crypto, recovery codes, login step-up, `/security`, `/login/mfa` | `lib/auth/mfa.ts`, `lib/auth/crypto.ts`, `lib/actions/auth.ts`, `lib/actions/mfa.ts`, `app/(app)/security/page.tsx`, `app/(auth)/login/mfa/page.tsx` | A, B | TOTP valid/expired/replay; encrypt round-trip; recovery single-use; step-up password→aal2 |
-| **D. Admin queries + actions** | unscoped reads/aggregates, mutations, `writeAudit` | `lib/db/admin.ts`, `lib/actions/admin.ts` | A, B | Each action rejects non-admin & aal1; cascade FK order; audit row written |
-| **E. Console UI** | route group guard + nav + 4 module pages/components | `app/(admin)/layout.tsx`, `app/(admin)/admin/page.tsx`, `…/users/`, `…/moderation/`, `…/audit/`, `components/admin/*` | B, D | `/admin` → 404 for non-admin/logged-out; renders for admin; module smoke tests |
-| **F. Bootstrap & deploy** | constant, gated SQL, secret, migrate, deploy, E2E | bootstrap doc/script, `wrangler` steps | A–E | Prod E2E sign-off (Ed) |
+| Unit                                    | Scope                                                                                        | Files (new/changed)                                                                                                                                  | Depends | Acceptance (machine-checkable)                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------- |
+| **A. Schema & migration**               | `email` col + 4 tables; `0005_superadmin.sql`; seed update                                   | `lib/db/schema.ts`, `drizzle/0005_*.sql`, `drizzle/meta/*`, `drizzle/seed.sql`                                                                       | —       | Migration applies on fresh D1; `npm run typecheck` clean; existing 35 tests green         |
+| **B. Superadmin helpers + gating core** | `SUPERADMIN_EMAIL`, `isPlatformAdmin`, `requireSuperadmin`, `aal` in session                 | `lib/auth/superadmin.ts`, `lib/auth/session.ts`                                                                                                      | A       | Unit tests: admin→ok, non-admin→FORBIDDEN, admin+aal1→FORBIDDEN                           |
+| **C. MFA subsystem**                    | TOTP enroll/verify, AES-GCM crypto, recovery codes, login step-up, `/security`, `/login/mfa` | `lib/auth/mfa.ts`, `lib/auth/crypto.ts`, `lib/actions/auth.ts`, `lib/actions/mfa.ts`, `app/(app)/security/page.tsx`, `app/(auth)/login/mfa/page.tsx` | A, B    | TOTP valid/expired/replay; encrypt round-trip; recovery single-use; step-up password→aal2 |
+| **D. Admin queries + actions**          | unscoped reads/aggregates, mutations, `writeAudit`                                           | `lib/db/admin.ts`, `lib/actions/admin.ts`                                                                                                            | A, B    | Each action rejects non-admin & aal1; cascade FK order; audit row written                 |
+| **E. Console UI**                       | route group guard + nav + 4 module pages/components                                          | `app/(admin)/layout.tsx`, `app/(admin)/admin/page.tsx`, `…/users/`, `…/moderation/`, `…/audit/`, `components/admin/*`                                | B, D    | `/admin` → 404 for non-admin/logged-out; renders for admin; module smoke tests            |
+| **F. Bootstrap & deploy**               | constant, gated SQL, secret, migrate, deploy, E2E                                            | bootstrap doc/script, `wrangler` steps                                                                                                               | A–E     | Prod E2E sign-off (Ed)                                                                    |
 
 ---
 

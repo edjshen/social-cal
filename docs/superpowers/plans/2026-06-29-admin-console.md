@@ -18,16 +18,16 @@
 
 ## File structure
 
-| File | Responsibility |
-|---|---|
-| `lib/db/admin.ts` | Unscoped admin reads (list users + counts, user detail, all events, all connections, stats, audit page) + cascade delete helpers (`deleteUserCascade`, `deleteEventCascade`). |
-| `lib/actions/admin.ts` | Mutations: ghost toggle, force password reset, delete user, delete event, remove connection. Each `requireSuperadmin()` → work → `writeAudit`. |
-| `app/(admin)/layout.tsx` | Guard: `requireSuperadmin()` → `notFound()` on FORBIDDEN. Renders `AdminNav` + children. |
-| `app/(admin)/admin/page.tsx` | Overview (stats). |
-| `app/(admin)/admin/users/page.tsx` (+ `[id]`) | User management. |
-| `app/(admin)/admin/moderation/page.tsx` | Events + connections moderation. |
-| `app/(admin)/admin/audit/page.tsx` | Audit log viewer. |
-| `components/admin/*` | `AdminNav`, `UsersView`, `ModerationView`, `AuditView`, `StatCards` (client where interactive). |
+| File                                          | Responsibility                                                                                                                                                                |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/db/admin.ts`                             | Unscoped admin reads (list users + counts, user detail, all events, all connections, stats, audit page) + cascade delete helpers (`deleteUserCascade`, `deleteEventCascade`). |
+| `lib/actions/admin.ts`                        | Mutations: ghost toggle, force password reset, delete user, delete event, remove connection. Each `requireSuperadmin()` → work → `writeAudit`.                                |
+| `app/(admin)/layout.tsx`                      | Guard: `requireSuperadmin()` → `notFound()` on FORBIDDEN. Renders `AdminNav` + children.                                                                                      |
+| `app/(admin)/admin/page.tsx`                  | Overview (stats).                                                                                                                                                             |
+| `app/(admin)/admin/users/page.tsx` (+ `[id]`) | User management.                                                                                                                                                              |
+| `app/(admin)/admin/moderation/page.tsx`       | Events + connections moderation.                                                                                                                                              |
+| `app/(admin)/admin/audit/page.tsx`            | Audit log viewer.                                                                                                                                                             |
+| `components/admin/*`                          | `AdminNav`, `UsersView`, `ModerationView`, `AuditView`, `StatCards` (client where interactive).                                                                               |
 
 Sequence: **T1 → T2 → T3 → (T4 ∥ T5 ∥ T6) → T7**. T4–T6 are independent UI modules once T2/T3 land.
 
@@ -45,16 +45,27 @@ Thin unscoped D1 reads + cascade builders. Like `lib/db/queries.ts`, the IO read
 import { and, desc, eq, gte, inArray, or, sql } from 'drizzle-orm';
 import { getDb } from './index';
 import {
-  users, connections, placements, events, attendance,
-  adminAuditLog, mfaCredentials, mfaRecoveryCodes, platformAdmins,
+  users,
+  connections,
+  placements,
+  events,
+  attendance,
+  adminAuditLog,
+  mfaCredentials,
+  mfaRecoveryCodes,
+  platformAdmins,
 } from './schema';
 
 // --- reads (unscoped; admin sees everything) ---
 export async function adminListUsers() {
   return getDb()
     .select({
-      id: users.id, handle: users.handle, displayName: users.displayName,
-      email: users.email, ghost: users.ghost, createdAt: users.createdAt,
+      id: users.id,
+      handle: users.handle,
+      displayName: users.displayName,
+      email: users.email,
+      ghost: users.ghost,
+      createdAt: users.createdAt,
       events: sql<number>`(select count(*) from ${events} where ${events.creatorId} = ${users.id})`,
       connections: sql<number>`(select count(*) from ${connections} where (${connections.aId} = ${users.id} or ${connections.bId} = ${users.id}) and ${connections.status} = 'accepted')`,
     })
@@ -68,8 +79,14 @@ export async function adminGetUserDetail(userId: string) {
   if (!u) return null;
   const [evs, conns, places, rsvps] = await db.batch([
     db.select().from(events).where(eq(events.creatorId, userId)),
-    db.select().from(connections).where(or(eq(connections.aId, userId), eq(connections.bId, userId))),
-    db.select().from(placements).where(or(eq(placements.ownerId, userId), eq(placements.otherId, userId))),
+    db
+      .select()
+      .from(connections)
+      .where(or(eq(connections.aId, userId), eq(connections.bId, userId))),
+    db
+      .select()
+      .from(placements)
+      .where(or(eq(placements.ownerId, userId), eq(placements.otherId, userId))),
     db.select().from(attendance).where(eq(attendance.userId, userId)),
   ]);
   return { user: u, events: evs, connections: conns, placements: places, rsvps };
@@ -79,8 +96,13 @@ export async function adminListEvents() {
   // No canSeeContent — admin sees every event regardless of visibility.
   return getDb()
     .select({
-      id: events.id, title: events.title, type: events.type, visibility: events.visibility,
-      startTime: events.startTime, creatorId: events.creatorId, creatorHandle: users.handle,
+      id: events.id,
+      title: events.title,
+      type: events.type,
+      visibility: events.visibility,
+      startTime: events.startTime,
+      creatorId: events.creatorId,
+      creatorHandle: users.handle,
     })
     .from(events)
     .leftJoin(users, eq(events.creatorId, users.id))
@@ -97,31 +119,54 @@ export async function adminStats() {
   const since = (days: number) => new Date(Date.now() - days * 864e5).toISOString();
   const [[u], [g], byType, [rsvp], [conn], [d7], [d30]] = await db.batch([
     db.select({ n: sql<number>`count(*)` }).from(users),
-    db.select({ n: sql<number>`count(*)` }).from(users).where(eq(users.ghost, true)),
-    db.select({ type: events.type, n: sql<number>`count(*)` }).from(events).groupBy(events.type),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.ghost, true)),
+    db
+      .select({ type: events.type, n: sql<number>`count(*)` })
+      .from(events)
+      .groupBy(events.type),
     db.select({ n: sql<number>`count(*)` }).from(attendance),
-    db.select({ n: sql<number>`count(*)` }).from(connections).where(eq(connections.status, 'accepted')),
-    db.select({ n: sql<number>`count(*)` }).from(users).where(gte(users.createdAt, since(7))),
-    db.select({ n: sql<number>`count(*)` }).from(users).where(gte(users.createdAt, since(30))),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(connections)
+      .where(eq(connections.status, 'accepted')),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, since(7))),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, since(30))),
   ]);
   return {
-    users: u.n, ghosted: g.n, rsvps: rsvp.n, connections: conn.n,
-    signups7d: d7.n, signups30d: d30.n,
+    users: u.n,
+    ghosted: g.n,
+    rsvps: rsvp.n,
+    connections: conn.n,
+    signups7d: d7.n,
+    signups30d: d30.n,
     eventsByType: byType as { type: string; n: number }[],
   };
 }
 
-export async function adminListAudit(opts: { limit?: number; offset?: number; action?: string; actor?: string } = {}) {
+export async function adminListAudit(
+  opts: { limit?: number; offset?: number; action?: string; actor?: string } = {}
+) {
   const { limit = 50, offset = 0, action, actor } = opts;
   const where = and(
     action ? eq(adminAuditLog.action, action) : undefined,
     actor ? eq(adminAuditLog.actorId, actor) : undefined
   );
   return getDb()
-    .select().from(adminAuditLog)
+    .select()
+    .from(adminAuditLog)
     .where(where)
     .orderBy(desc(adminAuditLog.createdAt))
-    .limit(limit).offset(offset);
+    .limit(limit)
+    .offset(offset);
 }
 
 // --- destructive cascade builders (FK-safe order: children before parents) ---
@@ -135,7 +180,15 @@ export async function deleteUserCascade(userId: string) {
     db.delete(attendance).where(inArray(attendance.eventId, evIds)),
     db.delete(events).where(eq(events.creatorId, userId)),
     db.delete(placements).where(or(eq(placements.ownerId, userId), eq(placements.otherId, userId))),
-    db.delete(connections).where(or(eq(connections.aId, userId), eq(connections.bId, userId), eq(connections.requestedBy, userId))),
+    db
+      .delete(connections)
+      .where(
+        or(
+          eq(connections.aId, userId),
+          eq(connections.bId, userId),
+          eq(connections.requestedBy, userId)
+        )
+      ),
     db.delete(mfaRecoveryCodes).where(eq(mfaRecoveryCodes.userId, userId)),
     db.delete(mfaCredentials).where(eq(mfaCredentials.userId, userId)),
     db.delete(platformAdmins).where(eq(platformAdmins.userId, userId)),
@@ -190,21 +243,43 @@ vi.mock('../auth/superadmin', () => ({
   },
   isPlatformAdmin: async () => state.isTargetAdmin,
 }));
-vi.mock('../db/audit', () => ({ writeAudit: async (i: { action: string }) => { state.calls.push('audit:' + i.action); } }));
+vi.mock('../db/audit', () => ({
+  writeAudit: async (i: { action: string }) => {
+    state.calls.push('audit:' + i.action);
+  },
+}));
 vi.mock('../db/admin', () => ({
-  deleteUserCascade: async () => { state.calls.push('deleteUserCascade'); },
-  deleteEventCascade: async () => { state.calls.push('deleteEventCascade'); },
+  deleteUserCascade: async () => {
+    state.calls.push('deleteUserCascade');
+  },
+  deleteEventCascade: async () => {
+    state.calls.push('deleteEventCascade');
+  },
 }));
 vi.mock('../db', () => ({
   getDb: () => ({
-    update: () => ({ set: () => ({ where: async () => { state.calls.push('update'); } }) }),
-    delete: () => ({ where: async () => { state.calls.push('delete'); } }),
+    update: () => ({
+      set: () => ({
+        where: async () => {
+          state.calls.push('update');
+        },
+      }),
+    }),
+    delete: () => ({
+      where: async () => {
+        state.calls.push('delete');
+      },
+    }),
   }),
 }));
 
 import { adminDeleteUser, adminDeleteEvent, adminToggleGhost } from './admin';
 
-beforeEach(() => { state.admin = true; state.isTargetAdmin = false; state.calls = []; });
+beforeEach(() => {
+  state.admin = true;
+  state.isTargetAdmin = false;
+  state.calls = [];
+});
 
 describe('admin actions — guard + audit', () => {
   it('rejects a non-admin and does NO work', async () => {
@@ -262,14 +337,29 @@ function randomPassword(): string {
 export async function adminToggleGhost(userId: string, ghost: boolean) {
   const { userId: actorId } = await requireSuperadmin();
   await getDb().update(users).set({ ghost }).where(eq(users.id, userId));
-  await writeAudit({ actorId, action: 'user.ghost', targetType: 'user', targetId: userId, summary: `${ghost ? 'ghosted' : 'unghosted'} ${userId}` });
+  await writeAudit({
+    actorId,
+    action: 'user.ghost',
+    targetType: 'user',
+    targetId: userId,
+    summary: `${ghost ? 'ghosted' : 'unghosted'} ${userId}`,
+  });
 }
 
 export async function adminForceResetPassword(userId: string): Promise<{ tempPassword: string }> {
   const { userId: actorId } = await requireSuperadmin();
   const tempPassword = randomPassword();
-  await getDb().update(users).set({ passwordHash: await hashPassword(tempPassword) }).where(eq(users.id, userId));
-  await writeAudit({ actorId, action: 'user.password_reset', targetType: 'user', targetId: userId, summary: `reset password for ${userId}` });
+  await getDb()
+    .update(users)
+    .set({ passwordHash: await hashPassword(tempPassword) })
+    .where(eq(users.id, userId));
+  await writeAudit({
+    actorId,
+    action: 'user.password_reset',
+    targetType: 'user',
+    targetId: userId,
+    summary: `reset password for ${userId}`,
+  });
   return { tempPassword };
 }
 
@@ -278,19 +368,37 @@ export async function adminDeleteUser(userId: string) {
   if (userId === actorId) throw new Error('CANNOT_DELETE_SELF');
   if (await isPlatformAdmin(userId)) throw new Error('CANNOT_DELETE_ADMIN');
   await deleteUserCascade(userId);
-  await writeAudit({ actorId, action: 'user.delete', targetType: 'user', targetId: userId, summary: `deleted user ${userId}` });
+  await writeAudit({
+    actorId,
+    action: 'user.delete',
+    targetType: 'user',
+    targetId: userId,
+    summary: `deleted user ${userId}`,
+  });
 }
 
 export async function adminDeleteEvent(eventId: string) {
   const { userId: actorId } = await requireSuperadmin();
   await deleteEventCascade(eventId);
-  await writeAudit({ actorId, action: 'event.delete', targetType: 'event', targetId: eventId, summary: `deleted event ${eventId}` });
+  await writeAudit({
+    actorId,
+    action: 'event.delete',
+    targetType: 'event',
+    targetId: eventId,
+    summary: `deleted event ${eventId}`,
+  });
 }
 
 export async function adminRemoveConnection(connId: string) {
   const { userId: actorId } = await requireSuperadmin();
   await getDb().delete(connections).where(eq(connections.id, connId));
-  await writeAudit({ actorId, action: 'connection.remove', targetType: 'connection', targetId: connId, summary: `removed connection ${connId}` });
+  await writeAudit({
+    actorId,
+    action: 'connection.remove',
+    targetType: 'connection',
+    targetId: connId,
+    summary: `removed connection ${connId}`,
+  });
 }
 ```
 
@@ -308,11 +416,15 @@ Append to `lib/actions/admin.test.ts` a second file-level describe that imports 
 import { describe as d2, it as it2, expect as e2, vi as vi2 } from 'vitest';
 vi2.mock('../db', () => ({
   getDb: () => {
-    const mk = (table: { _: { name?: string } } | string) => ({ where: () => ({ __t: String((table as any)?._?.name ?? table) }) });
+    const mk = (table: { _: { name?: string } } | string) => ({
+      where: () => ({ __t: String((table as any)?._?.name ?? table) }),
+    });
     return {
       select: () => ({ from: () => ({ where: () => ({ __sub: true }) }) }),
       delete: (t: unknown) => mk(t as any),
-      batch: async (arr: { __t: string }[]) => { (globalThis as any).__order = arr.map((x) => x.__t); },
+      batch: async (arr: { __t: string }[]) => {
+        (globalThis as any).__order = arr.map((x) => x.__t);
+      },
     };
   },
 }));
@@ -325,10 +437,18 @@ If recording table identity proves brittle, fall back to this robust form — wr
 ```ts
 // In lib/db/admin.ts, export the order as data for testing:
 export const USER_CASCADE_ORDER = [
-  'attendance.byUser', 'attendance.byUserEvents', 'events', 'placements',
-  'connections', 'mfa_recovery_codes', 'mfa_credentials', 'platform_admins', 'users',
+  'attendance.byUser',
+  'attendance.byUserEvents',
+  'events',
+  'placements',
+  'connections',
+  'mfa_recovery_codes',
+  'mfa_credentials',
+  'platform_admins',
+  'users',
 ] as const;
 ```
+
 and assert `USER_CASCADE_ORDER` ends with `'users'` and has 9 entries, while `deleteUserCascade` is implemented to follow it. Prefer this if the recorder is fragile — a named-order constant the implementation and test share is clearer than reflecting on drizzle builders.
 
 - [ ] **Step 6: Run + commit**
@@ -397,23 +517,52 @@ import { adminStats } from '@/lib/db/admin';
 import StatCards from '@/components/admin/StatCards';
 export default async function AdminOverview() {
   const stats = await adminStats();
-  return (<main><h1>Overview</h1><StatCards stats={stats} /></main>);
+  return (
+    <main>
+      <h1>Overview</h1>
+      <StatCards stats={stats} />
+    </main>
+  );
 }
 ```
 
 ```tsx
 // components/admin/StatCards.tsx
-type Stats = { users: number; ghosted: number; rsvps: number; connections: number; signups7d: number; signups30d: number; eventsByType: { type: string; n: number }[] };
+type Stats = {
+  users: number;
+  ghosted: number;
+  rsvps: number;
+  connections: number;
+  signups7d: number;
+  signups30d: number;
+  eventsByType: { type: string; n: number }[];
+};
 export default function StatCards({ stats }: { stats: Stats }) {
   const cards = [
-    ['Users', stats.users], ['Ghosted', stats.ghosted], ['Connections', stats.connections],
-    ['RSVPs', stats.rsvps], ['Signups · 7d', stats.signups7d], ['Signups · 30d', stats.signups30d],
+    ['Users', stats.users],
+    ['Ghosted', stats.ghosted],
+    ['Connections', stats.connections],
+    ['RSVPs', stats.rsvps],
+    ['Signups · 7d', stats.signups7d],
+    ['Signups · 30d', stats.signups30d],
   ] as const;
   return (
     <div className="stat-cards">
-      {cards.map(([label, n]) => (<div key={label} className="stat-card"><div className="stat-n">{n}</div><div className="stat-label">{label}</div></div>))}
-      <div className="stat-card"><div className="stat-label">Events by type</div>
-        <ul>{stats.eventsByType.map((e) => (<li key={e.type}>{e.type}: {e.n}</li>))}</ul>
+      {cards.map(([label, n]) => (
+        <div key={label} className="stat-card">
+          <div className="stat-n">{n}</div>
+          <div className="stat-label">{label}</div>
+        </div>
+      ))}
+      <div className="stat-card">
+        <div className="stat-label">Events by type</div>
+        <ul>
+          {stats.eventsByType.map((e) => (
+            <li key={e.type}>
+              {e.type}: {e.n}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
@@ -443,7 +592,12 @@ import { adminListUsers } from '@/lib/db/admin';
 import UsersView from '@/components/admin/UsersView';
 export default async function AdminUsers() {
   const users = await adminListUsers();
-  return (<main><h1>Users</h1><UsersView users={users} /></main>);
+  return (
+    <main>
+      <h1>Users</h1>
+      <UsersView users={users} />
+    </main>
+  );
 }
 ```
 
@@ -456,42 +610,99 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminToggleGhost, adminForceResetPassword, adminDeleteUser } from '@/lib/actions/admin';
 
-type Row = { id: string; handle: string; email: string | null; ghost: boolean; events: number; connections: number };
+type Row = {
+  id: string;
+  handle: string;
+  email: string | null;
+  ghost: boolean;
+  events: number;
+  connections: number;
+};
 
 export default function UsersView({ users }: { users: Row[] }) {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [temp, setTemp] = useState<{ id: string; pw: string } | null>(null);
-  const shown = users.filter((u) => (u.handle + (u.email ?? '')).toLowerCase().includes(q.toLowerCase()));
+  const shown = users.filter((u) =>
+    (u.handle + (u.email ?? '')).toLowerCase().includes(q.toLowerCase())
+  );
 
   async function run(id: string, fn: () => Promise<void>) {
     setBusy(id);
-    try { await fn(); router.refresh(); } finally { setBusy(null); }
+    try {
+      await fn();
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
     <div>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="search handle / email" aria-label="Search users" />
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="search handle / email"
+        aria-label="Search users"
+      />
       <table>
-        <thead><tr><th>Handle</th><th>Email</th><th>Events</th><th>Conns</th><th>Actions</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Handle</th>
+            <th>Email</th>
+            <th>Events</th>
+            <th>Conns</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
         <tbody>
           {shown.map((u) => (
             <tr key={u.id}>
-              <td>{u.handle}{u.ghost ? ' 👻' : ''}</td>
+              <td>
+                {u.handle}
+                {u.ghost ? ' 👻' : ''}
+              </td>
               <td>{u.email ?? '—'}</td>
               <td>{u.events}</td>
               <td>{u.connections}</td>
               <td>
-                <button disabled={busy === u.id} onClick={() => run(u.id, () => adminToggleGhost(u.id, !u.ghost))}>{u.ghost ? 'Unghost' : 'Ghost'}</button>
-                <button disabled={busy === u.id} onClick={() => run(u.id, async () => { const r = await adminForceResetPassword(u.id); setTemp({ id: u.id, pw: r.tempPassword }); })}>Reset PW</button>
-                <button disabled={busy === u.id} onClick={() => { if (confirm(`Delete @${u.handle} and ALL their data? This cannot be undone.`)) run(u.id, () => adminDeleteUser(u.id)); }}>Delete</button>
+                <button
+                  disabled={busy === u.id}
+                  onClick={() => run(u.id, () => adminToggleGhost(u.id, !u.ghost))}
+                >
+                  {u.ghost ? 'Unghost' : 'Ghost'}
+                </button>
+                <button
+                  disabled={busy === u.id}
+                  onClick={() =>
+                    run(u.id, async () => {
+                      const r = await adminForceResetPassword(u.id);
+                      setTemp({ id: u.id, pw: r.tempPassword });
+                    })
+                  }
+                >
+                  Reset PW
+                </button>
+                <button
+                  disabled={busy === u.id}
+                  onClick={() => {
+                    if (confirm(`Delete @${u.handle} and ALL their data? This cannot be undone.`))
+                      run(u.id, () => adminDeleteUser(u.id));
+                  }}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {temp && <p role="alert">Temp password for that user (shown once): <code>{temp.pw}</code></p>}
+      {temp && (
+        <p role="alert">
+          Temp password for that user (shown once): <code>{temp.pw}</code>
+        </p>
+      )}
     </div>
   );
 }
@@ -500,6 +711,7 @@ export default function UsersView({ users }: { users: Row[] }) {
 - [ ] **Step 3: Typecheck + commit**
 
 Run: `npm run typecheck` (expect 0).
+
 ```bash
 git add "app/(admin)/admin/users" components/admin/UsersView.tsx
 git commit -m "feat(admin): user management module (search, ghost, reset, delete)"
@@ -519,10 +731,24 @@ import { adminListEvents, adminListConnections } from '@/lib/db/admin';
 import { getAllUsers } from '@/lib/db/queries';
 import ModerationView from '@/components/admin/ModerationView';
 export default async function AdminModeration() {
-  const [events, connections, users] = await Promise.all([adminListEvents(), adminListConnections(), getAllUsers()]);
+  const [events, connections, users] = await Promise.all([
+    adminListEvents(),
+    adminListConnections(),
+    getAllUsers(),
+  ]);
   const handle = Object.fromEntries(users.map((u) => [u.id, u.handle]));
-  const conns = connections.map((c) => ({ id: c.id, a: handle[c.aId] ?? c.aId, b: handle[c.bId] ?? c.bId, status: c.status }));
-  return (<main><h1>Moderation</h1><ModerationView events={events} connections={conns} /></main>);
+  const conns = connections.map((c) => ({
+    id: c.id,
+    a: handle[c.aId] ?? c.aId,
+    b: handle[c.bId] ?? c.bId,
+    status: c.status,
+  }));
+  return (
+    <main>
+      <h1>Moderation</h1>
+      <ModerationView events={events} connections={conns} />
+    </main>
+  );
 }
 ```
 
@@ -535,32 +761,95 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminDeleteEvent, adminRemoveConnection } from '@/lib/actions/admin';
 
-type Ev = { id: string; title: string; type: string; visibility: string; creatorHandle: string | null };
+type Ev = {
+  id: string;
+  title: string;
+  type: string;
+  visibility: string;
+  creatorHandle: string | null;
+};
 type Conn = { id: string; a: string; b: string; status: string };
 
-export default function ModerationView({ events, connections }: { events: Ev[]; connections: Conn[] }) {
+export default function ModerationView({
+  events,
+  connections,
+}: {
+  events: Ev[];
+  connections: Conn[];
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   async function run(id: string, fn: () => Promise<void>, confirmMsg: string) {
     if (!confirm(confirmMsg)) return;
     setBusy(id);
-    try { await fn(); router.refresh(); } finally { setBusy(null); }
+    try {
+      await fn();
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
   }
   return (
     <div>
       <h2>Events ({events.length})</h2>
-      <table><thead><tr><th>Title</th><th>Type</th><th>Vis</th><th>Creator</th><th></th></tr></thead>
-        <tbody>{events.map((e) => (
-          <tr key={e.id}><td>{e.title}</td><td>{e.type}</td><td>{e.visibility}</td><td>{e.creatorHandle ?? '—'}</td>
-            <td><button disabled={busy === e.id} onClick={() => run(e.id, () => adminDeleteEvent(e.id), `Delete "${e.title}"?`)}>Delete</button></td></tr>
-        ))}</tbody>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Vis</th>
+            <th>Creator</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {events.map((e) => (
+            <tr key={e.id}>
+              <td>{e.title}</td>
+              <td>{e.type}</td>
+              <td>{e.visibility}</td>
+              <td>{e.creatorHandle ?? '—'}</td>
+              <td>
+                <button
+                  disabled={busy === e.id}
+                  onClick={() => run(e.id, () => adminDeleteEvent(e.id), `Delete "${e.title}"?`)}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
       <h2>Connections ({connections.length})</h2>
-      <table><thead><tr><th>A</th><th>B</th><th>Status</th><th></th></tr></thead>
-        <tbody>{connections.map((c) => (
-          <tr key={c.id}><td>{c.a}</td><td>{c.b}</td><td>{c.status}</td>
-            <td><button disabled={busy === c.id} onClick={() => run(c.id, () => adminRemoveConnection(c.id), `Remove ${c.a}↔${c.b}?`)}>Remove</button></td></tr>
-        ))}</tbody>
+      <table>
+        <thead>
+          <tr>
+            <th>A</th>
+            <th>B</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {connections.map((c) => (
+            <tr key={c.id}>
+              <td>{c.a}</td>
+              <td>{c.b}</td>
+              <td>{c.status}</td>
+              <td>
+                <button
+                  disabled={busy === c.id}
+                  onClick={() =>
+                    run(c.id, () => adminRemoveConnection(c.id), `Remove ${c.a}↔${c.b}?`)
+                  }
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
     </div>
   );
@@ -570,6 +859,7 @@ export default function ModerationView({ events, connections }: { events: Ev[]; 
 - [ ] **Step 3: Typecheck + commit**
 
 Run: `npm run typecheck` (expect 0).
+
 ```bash
 git add "app/(admin)/admin/moderation" components/admin/ModerationView.tsx
 git commit -m "feat(admin): content moderation module (events + connections)"
@@ -587,11 +877,20 @@ git commit -m "feat(admin): content moderation module (events + connections)"
 // app/(admin)/admin/audit/page.tsx
 import { adminListAudit } from '@/lib/db/admin';
 import AuditView from '@/components/admin/AuditView';
-export default async function AdminAudit({ searchParams }: { searchParams: Promise<{ page?: string; action?: string }> }) {
+export default async function AdminAudit({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; action?: string }>;
+}) {
   const sp = await searchParams;
   const page = Math.max(0, Number(sp.page ?? 0) | 0);
   const rows = await adminListAudit({ limit: 50, offset: page * 50, action: sp.action });
-  return (<main><h1>Audit log</h1><AuditView rows={rows} page={page} action={sp.action ?? ''} /></main>);
+  return (
+    <main>
+      <h1>Audit log</h1>
+      <AuditView rows={rows} page={page} action={sp.action ?? ''} />
+    </main>
+  );
 }
 ```
 
@@ -602,15 +901,48 @@ export default async function AdminAudit({ searchParams }: { searchParams: Promi
 ```tsx
 // components/admin/AuditView.tsx
 import Link from 'next/link';
-type Row = { id: string; actorId: string; action: string; targetType: string; targetId: string; summary: string; createdAt: string };
-export default function AuditView({ rows, page, action }: { rows: Row[]; page: number; action: string }) {
+type Row = {
+  id: string;
+  actorId: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  summary: string;
+  createdAt: string;
+};
+export default function AuditView({
+  rows,
+  page,
+  action,
+}: {
+  rows: Row[];
+  page: number;
+  action: string;
+}) {
   const q = (p: number) => `/admin/audit?page=${p}${action ? `&action=${action}` : ''}`;
   return (
     <div>
-      <table><thead><tr><th>When</th><th>Action</th><th>Target</th><th>Summary</th></tr></thead>
-        <tbody>{rows.map((r) => (
-          <tr key={r.id}><td>{r.createdAt}</td><td>{r.action}</td><td>{r.targetType}:{r.targetId}</td><td>{r.summary}</td></tr>
-        ))}</tbody>
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Action</th>
+            <th>Target</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id}>
+              <td>{r.createdAt}</td>
+              <td>{r.action}</td>
+              <td>
+                {r.targetType}:{r.targetId}
+              </td>
+              <td>{r.summary}</td>
+            </tr>
+          ))}
+        </tbody>
       </table>
       <div className="pager">
         {page > 0 && <Link href={q(page - 1)}>← Newer</Link>}
@@ -624,6 +956,7 @@ export default function AuditView({ rows, page, action }: { rows: Row[]; page: n
 - [ ] **Step 3: Full gate + commit**
 
 Run: `npm test && npm run typecheck` (expect all green; tsc 0).
+
 ```bash
 git add "app/(admin)/admin/audit" components/admin/AuditView.tsx
 git commit -m "feat(admin): audit log module (paginated, filterable)"

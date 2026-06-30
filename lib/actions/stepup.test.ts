@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const { state } = vi.hoisted(() => ({
-  state: { session: {} as Record<string, unknown>, saved: false, secret: '', limitOk: true, recoveryOk: false },
+  state: {
+    session: {} as Record<string, unknown>,
+    saved: false,
+    secret: '',
+    limitOk: true,
+    recoveryOk: false,
+  },
 }));
 
 vi.mock('../ratelimit', () => ({

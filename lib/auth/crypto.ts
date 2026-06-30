@@ -7,13 +7,22 @@ const enc = new TextEncoder();
 const dec = new TextDecoder();
 
 async function importKey(keyBytes: Uint8Array) {
-  return crypto.subtle.importKey('raw', keyBytes as Uint8Array<ArrayBuffer>, 'AES-GCM', false, ['encrypt', 'decrypt']);
+  return crypto.subtle.importKey('raw', keyBytes as Uint8Array<ArrayBuffer>, 'AES-GCM', false, [
+    'encrypt',
+    'decrypt',
+  ]);
 }
 
 export async function aesEncrypt(keyBytes: Uint8Array, plain: string): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await importKey(keyBytes);
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv as Uint8Array<ArrayBuffer> }, key, enc.encode(plain) as Uint8Array<ArrayBuffer>));
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: iv as Uint8Array<ArrayBuffer> },
+      key,
+      enc.encode(plain) as Uint8Array<ArrayBuffer>
+    )
+  );
   return `${b64(iv)}:${b64(ct)}`;
 }
 
@@ -35,7 +44,8 @@ function mfaKey(): Uint8Array {
   const k = e.MFA_ENCRYPTION_KEY ?? process.env.MFA_ENCRYPTION_KEY;
   if (!k) throw new Error('MFA_ENCRYPTION_KEY is not set');
   const bytes = unb64(k);
-  if (bytes.length !== 32) throw new Error(`MFA_ENCRYPTION_KEY must be 32 bytes, got ${bytes.length}`);
+  if (bytes.length !== 32)
+    throw new Error(`MFA_ENCRYPTION_KEY must be 32 bytes, got ${bytes.length}`);
   return bytes;
 }
 

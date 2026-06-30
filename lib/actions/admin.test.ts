@@ -11,23 +11,49 @@ vi.mock('../auth/superadmin', () => ({
   },
   isPlatformAdmin: async () => state.isTargetAdmin,
 }));
-vi.mock('../db/audit', () => ({ writeAudit: async (i: { action: string }) => { state.calls.push('audit:' + i.action); } }));
+vi.mock('../db/audit', () => ({
+  writeAudit: async (i: { action: string }) => {
+    state.calls.push('audit:' + i.action);
+  },
+}));
 vi.mock('../db/admin', () => ({
-  deleteUserCascade: async () => { state.calls.push('deleteUserCascade'); },
-  deleteEventCascade: async () => { state.calls.push('deleteEventCascade'); },
+  deleteUserCascade: async () => {
+    state.calls.push('deleteUserCascade');
+  },
+  deleteEventCascade: async () => {
+    state.calls.push('deleteEventCascade');
+  },
 }));
 vi.mock('../db', () => ({
   getDb: () => ({
-    update: () => ({ set: () => ({ where: async () => { state.calls.push('update'); } }) }),
-    delete: () => ({ where: async () => { state.calls.push('delete'); } }),
+    update: () => ({
+      set: () => ({
+        where: async () => {
+          state.calls.push('update');
+        },
+      }),
+    }),
+    delete: () => ({
+      where: async () => {
+        state.calls.push('delete');
+      },
+    }),
   }),
 }));
 
 import {
-  adminDeleteUser, adminDeleteEvent, adminToggleGhost, adminForceResetPassword, adminRemoveConnection,
+  adminDeleteUser,
+  adminDeleteEvent,
+  adminToggleGhost,
+  adminForceResetPassword,
+  adminRemoveConnection,
 } from './admin';
 
-beforeEach(() => { state.admin = true; state.isTargetAdmin = false; state.calls = []; });
+beforeEach(() => {
+  state.admin = true;
+  state.isTargetAdmin = false;
+  state.calls = [];
+});
 
 describe('admin actions — guard + audit', () => {
   it('rejects a non-admin and does NO work', async () => {

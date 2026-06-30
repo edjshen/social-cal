@@ -15,7 +15,9 @@ vi.mock('../db', () => ({
       from: () => ({
         where: () => ({
           limit: async () =>
-            state.adminIds.has(state.session.userId as string) ? [{ userId: state.session.userId }] : [],
+            state.adminIds.has(state.session.userId as string)
+              ? [{ userId: state.session.userId }]
+              : [],
         }),
       }),
     }),
