@@ -17,6 +17,21 @@ is the ordered runbook + acceptance criteria. Do the steps in order.
 
 ## Step 1 — FIRST: sweep for new features and convert them
 
+> **Status (swept 2026-06-30):** Full codebase sweep done against `main`
+> (commits since the conversion: #36 eslint, #37 superadmin/admin console + TOTP
+> MFA, #39 MFA hardening). Result:
+> - **MFA** renders its TOTP QR **server-side as an SVG** (`lib/actions/mfa.ts`,
+>   `QRCode.toString`) for the user to scan with their authenticator app — a
+>   displayed image, not camera use; works in the WebView untouched. No bridge.
+> - **`/superadmin/*`** is same-origin (covered by `server.allowNavigation`) and
+>   intentionally **not** a universal-link target — left out of AASA on purpose.
+> - **One gap fixed:** the profile **Share** button (`components/ProfileView.tsx`)
+>   bypassed the bridge with a raw `navigator.clipboard.writeText`. Now cascades
+>   `nativeShare → nativeCopy → Web Share → clipboard`, mirroring `link.js`. Uses
+>   the already-wired `@capacitor/share`/`@capacitor/clipboard` — **no new plugin**.
+> - Cast (share/clipboard/NFC/QR/audio) and push were already wired. Web build +
+>   87 unit tests still green. **Re-sweep only if features land after 2026-06-30.**
+
 The web app is being developed concurrently, so features may have landed after
 this conversion. Before building, find anything native-relevant and wire it
 through the **same bridge pattern** used here, so it works in the shell.
