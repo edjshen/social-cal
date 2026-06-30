@@ -43,6 +43,12 @@ zod = "./node_modules/zod"
 [vars]
 ALLOWED_ORIGINS = "https://barycal.junting-mp3.workers.dev,http://localhost:3000"
 
+# ROOM_RELAY_SECRET is a SECRET, not a var — never put its value here. Set it via:
+#   wrangler secret put ROOM_RELAY_SECRET -c ./wrangler.toml
+# It must be the SAME value as on the app worker (the one that mints tokens). When
+# unset, the admission gate is inactive and the relay behaves exactly as before
+# (rollout-safe: deploy code first, then flip the secret on both workers).
+
 [[durable_objects.bindings]]
 name = "ROOM"
 class_name = "RoomDO"

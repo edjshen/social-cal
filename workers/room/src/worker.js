@@ -12,6 +12,9 @@
  */
 
 export { RoomDO } from './room-do.js';
+import { verifyRoomToken } from '../../../lib/mayfly/shared/room-token.js';
+
+let warnedNoSecret = false;
 
 function allowedOrigins(env) {
   return String(env.ALLOWED_ORIGINS || 'https://orbit.junting-mp3.workers.dev')
@@ -55,6 +58,20 @@ export default {
       // (A null/absent Origin is a non-browser client — also rejected.)
       if (!origin || !allow.includes(origin)) {
         return new Response('forbidden origin', { status: 403 });
+      }
+      // HMAC admission token (H-2): when ROOM_RELAY_SECRET is set, the WS upgrade
+      // must carry a valid `?t=` minted by the room API gate for THIS roomId.
+      // Unset => gate inactive (rollout-safe; behaves exactly as before).
+      const roomId = match[1];
+      const secret = env.ROOM_RELAY_SECRET;
+      if (secret) {
+        const token = url.searchParams.get('t');
+        if (!(await verifyRoomToken(secret, roomId, token))) {
+          return new Response('forbidden', { status: 403 });
+        }
+      } else if (!warnedNoSecret) {
+        console.warn('[room-relay] ROOM_RELAY_SECRET unset — admission gate inactive');
+        warnedNoSecret = true;
       }
       const id = env.ROOM.idFromName(match[1]);
       const stub = env.ROOM.get(id);

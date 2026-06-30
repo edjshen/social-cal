@@ -48,7 +48,7 @@ export function createRoomSync({ room, profile, nodeId, hooks }) {
     isSelf: true,
   });
 
-  const conn = createConnection(roomId, { onState, onFrame });
+  const conn = createConnection(roomId, { onState, onFrame, token: room.relayToken ?? null });
 
   function emitChange() {
     hooks.onChange?.();

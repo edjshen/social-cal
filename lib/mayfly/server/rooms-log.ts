@@ -7,9 +7,28 @@
  * the chat itself runs entirely through the relay and IndexedDB. These helpers
  * throw on DB errors; route handlers catch and degrade.
  */
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getMayflyDb, mayflySchema } from '../db/index';
+import { hashPhoneForLog } from '../shared/phone-hash.js';
 
 const { mayflyRooms, mayflyParticipants } = mayflySchema;
+
+/**
+ * Pepper for the participation-log phone hash. Prefer a dedicated
+ * MAYFLY_PHONE_PEPPER; fall back to SESSION_SECRET. The hash itself
+ * domain-separates via HKDF, so SESSION_SECRET is never used as the HMAC key.
+ */
+function phonePepper(): string | undefined {
+  try {
+    const env = getCloudflareContext().env as unknown as {
+      MAYFLY_PHONE_PEPPER?: string;
+      SESSION_SECRET?: string;
+    };
+    return env.MAYFLY_PHONE_PEPPER ?? env.SESSION_SECRET ?? process.env.MAYFLY_PHONE_PEPPER;
+  } catch {
+    return process.env.MAYFLY_PHONE_PEPPER ?? process.env.SESSION_SECRET;
+  }
+}
 
 /** Record a user-created room (creator phone verified upstream). */
 export async function logRoomCreated({
@@ -27,6 +46,8 @@ export async function logRoomCreated({
 }) {
   const db = getMayflyDb();
   const now = new Date().toISOString();
+  // Store a hash, not the raw number — this row must not be a dialable PII map.
+  const creatorPhoneHash = await hashPhoneForLog(creatorPhone ?? null, phonePepper());
   // roomId is a random 16-byte value, so a real collision is astronomically
   // unlikely. First-writer-wins (do nothing on conflict) means even a re-issued
   // create can't rewrite an existing room's creator/mode/expiry.
@@ -38,7 +59,7 @@ export async function logRoomCreated({
       mode: mode ?? 'sealed',
       source: 'user',
       eventSlug: null,
-      creatorPhone: creatorPhone ?? null,
+      creatorPhone: creatorPhoneHash,
       createdAt: now,
       expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
     })
@@ -93,6 +114,8 @@ export async function logParticipantJoined({
 }) {
   const db = getMayflyDb();
   const now = new Date().toISOString();
+  // Store a hash, not the raw number — this row must not be a dialable PII map.
+  const phoneHash = await hashPhoneForLog(phone ?? null, phonePepper());
   await db
     .insert(mayflyParticipants)
     .values({
@@ -100,14 +123,14 @@ export async function logParticipantJoined({
       roomId,
       profilePub,
       handle: handle ?? null,
-      phone: phone ?? null,
+      phone: phoneHash,
       joinedAt: now,
     })
     .onConflictDoUpdate({
       target: [mayflyParticipants.roomId, mayflyParticipants.profilePub],
       set: {
         handle: handle ?? null,
-        phone: phone ?? null,
+        phone: phoneHash,
         joinedAt: now,
       },
     });

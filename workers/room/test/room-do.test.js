@@ -275,3 +275,80 @@ describe('relay protocol', () => {
     a.ws.close();
   });
 });
+
+describe('relay identity + size guards', () => {
+  it('drops a publish under a pubkey the socket did not bind at hello (sybil)', async () => {
+    const room = uniqueRoom();
+    const a = await openSocket(room);
+    const b = await openSocket(room);
+    a.send({ type: 'hello', resumeFromSeq: null, profilePub: 'pubA' });
+    b.send({ type: 'hello', resumeFromSeq: null, profilePub: 'pubB' });
+    await a.waitFor('backlog_done');
+    await b.waitFor('backlog_done');
+
+    a.clear();
+    b.clear();
+    // a bound 'pubA' at hello; publishing as 'pubB' must be dropped (no ack, no fan-out).
+    a.send({
+      type: 'publish',
+      id: 'sybil1',
+      hlc: hlc(0),
+      kind: 'text',
+      ciphertext: 'CT',
+      sig: 'S',
+      profilePub: 'pubB',
+    });
+    await new Promise((r) => setTimeout(r, 200));
+    expect(a.frames.find((f) => f.type === 'ack' && f.id === 'sybil1')).toBeUndefined();
+    expect(b.frames.find((f) => f.type === 'event' && f.id === 'sybil1')).toBeUndefined();
+    a.ws.close();
+    b.ws.close();
+  });
+
+  it('allows a publish under the same pubkey the socket bound at hello', async () => {
+    const room = uniqueRoom();
+    const a = await openSocket(room);
+    a.send({ type: 'hello', resumeFromSeq: null, profilePub: 'pubA' });
+    await a.waitFor('backlog_done');
+
+    a.clear();
+    a.send({
+      type: 'publish',
+      id: 'own1',
+      hlc: hlc(0),
+      kind: 'text',
+      ciphertext: 'CT',
+      sig: 'S',
+      profilePub: 'pubA',
+    });
+    const ack = await a.waitFor('ack');
+    expect(ack).toMatchObject({ id: 'own1' });
+    a.ws.close();
+  });
+
+  it('drops an oversized frame before parse without wedging the socket', async () => {
+    const a = await openSocket(uniqueRoom());
+    a.send({ type: 'hello', resumeFromSeq: null, profilePub: 'pubA' });
+    await a.waitFor('backlog_done');
+
+    // A publish-shaped frame far past the 20 KiB pre-parse cap — must be dropped.
+    const bigString = JSON.stringify({
+      type: 'publish',
+      id: 'big1',
+      hlc: hlc(0),
+      kind: 'text',
+      ciphertext: 'x'.repeat(25000),
+      sig: 'S',
+      profilePub: 'pubA',
+    });
+    expect(bigString.length).toBeGreaterThan(20 * 1024);
+    a.ws.send(bigString);
+
+    // Socket isn't wedged: a subsequent ping still answers pong.
+    a.clear();
+    a.send({ type: 'ping' });
+    const pong = await a.waitFor('pong');
+    expect(typeof pong.serverNow).toBe('number');
+    a.ws.close();
+  });
+});

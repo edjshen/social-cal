@@ -31,6 +31,7 @@ const MAX_TTL_MS = 7 * DAY_MS; // 7 days
 // (holds while the DO is resident during an active flood) plus a durable cap on
 // total stored rows (survives hibernation). Both are well above real chat use.
 const MAX_LOG_ROWS = 20000; // durable per-room storage backstop
+const MAX_FRAME_BYTES = 20 * 1024; // 16 KiB ciphertext cap + envelope headroom
 const FLOOD_WINDOW_MS = 10 * 1000; // per-socket publish window
 const FLOOD_MAX = 40; // max publishes per socket per window
 // Concurrent sockets per room. The per-socket flood budget is multiplied by the
@@ -175,6 +176,10 @@ export class RoomDO extends DurableObject {
 
   async webSocketMessage(ws, raw) {
     if (typeof raw !== 'string') return;
+    // M-1: bound pre-parse work. A valid publish is ciphertext(<=16KiB) + a small
+    // envelope; anything materially larger is hostile. Drop before JSON.parse so a
+    // giant frame can't tie up the single-threaded DO.
+    if (raw.length > MAX_FRAME_BYTES) return;
     const frame = parseClientFrame(raw);
     if (!frame) return; // drop malformed frames silently
 
@@ -198,6 +203,18 @@ export class RoomDO extends DurableObject {
         this.hellos.set(ws, hb);
       }
       if (++hb.count > HELLO_MAX) return; // ignore excess hello spam
+
+      // M-7: bind this socket to the pubkey it announces, so it can't later
+      // publish/presence under a different identity (roster sybil). Survives
+      // hibernation via the attachment. First hello wins.
+      if (frame.profilePub) {
+        try {
+          const bound = ws.deserializeAttachment();
+          if (!bound || !bound.pub) ws.serializeAttachment({ pub: frame.profilePub });
+        } catch {
+          /* attachment unavailable; skip binding */
+        }
+      }
 
       // First opener may set a custom lifetime (e.g. event room ends with the
       // event). Only honored once, before any messages exist.
@@ -253,6 +270,14 @@ export class RoomDO extends DurableObject {
         ws.send(JSON.stringify({ type: 'ack', id: frame.id, seq: existing[0].seq }));
         return;
       }
+      // M-7: a socket may only publish under the pubkey it bound at hello time.
+      let bound = null;
+      try {
+        bound = ws.deserializeAttachment();
+      } catch {
+        bound = null;
+      }
+      if (bound && bound.pub && frame.profilePub !== bound.pub) return; // identity mismatch — drop
       // Durable per-room publish rate — survives hibernation/reconnects, unlike
       // the per-socket flood counter above, so a paced attacker can't fill the
       // log or sustain fan-out by reconnecting.

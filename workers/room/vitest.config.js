@@ -5,6 +5,10 @@ import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
 // the RoomDO migration, and ALLOWED_ORIGINS match production).
 export default defineWorkersConfig({
   test: {
+    // Only the no-secret relay suite. admission.test.js runs under
+    // vitest.admission.config.js (secret injected); its 403 cases would fail
+    // here, where the gate is inactive.
+    include: ['test/room-do.test.js'],
     poolOptions: {
       workers: {
         wrangler: { configPath: './wrangler.toml' },

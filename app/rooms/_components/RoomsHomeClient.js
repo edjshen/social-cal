@@ -102,7 +102,7 @@ export default function RoomsHomeClient() {
       const pub = profile ? profilePub(profile) : null;
 
       if (room.event) {
-        postJson('/api/rooms/join', {
+        const { data } = await postJson('/api/rooms/join', {
           roomId: room.id,
           isEvent: true,
           eventSlug: room.eventSlug,
@@ -110,8 +110,8 @@ export default function RoomsHomeClient() {
           expiresAt: room.desiredExpiresAt,
           handle: profile?.handle,
           profilePub: pub,
-        }).catch(() => {});
-        await markGateCleared(room.id);
+        }).catch(() => ({ ok: false, data: {} }));
+        await markGateCleared(room.id, data?.relayToken ?? null);
         await enterRoom(room, selectedProfileId);
         return;
       }
@@ -133,7 +133,7 @@ export default function RoomsHomeClient() {
             profilePub: pub,
           });
           if (!ok) return { ok: false, error: data.error || 'could not join' };
-          await markGateCleared(room.id);
+          await markGateCleared(room.id, data?.relayToken ?? null);
           await refreshRooms();
           setGate(null);
           await enterRoom(room, selectedProfileId);
@@ -246,7 +246,7 @@ export default function RoomsHomeClient() {
           expiresAt: room.desiredExpiresAt,
         });
         if (!ok) return { ok: false, error: data.error || 'could not create' };
-        await markGateCleared(room.id);
+        await markGateCleared(room.id, data?.relayToken ?? null);
         await refreshRooms();
         setGate(null);
         await enterRoom(room, selectedProfileId);
@@ -437,8 +437,9 @@ export default function RoomsHomeClient() {
         className={styles.muted}
         style={{ fontSize: '0.72rem', marginTop: 'auto', paddingTop: '1rem' }}
       >
-        rooms vanish 24h after they’re made. no accounts, end-to-end encrypted, the key never leaves
-        your link.
+        rooms vanish 24h after they’re made. no accounts. sealed rooms are end-to-end encrypted —
+        the key lives only in the link. open &amp; event rooms are public: anyone with the three words
+        or event link can read along.
       </p>
       <p className={styles.muted} style={{ fontSize: '0.62rem', lineHeight: 1.4, opacity: 0.7 }}>
         {PHONE_MARKETING_CONSENT}

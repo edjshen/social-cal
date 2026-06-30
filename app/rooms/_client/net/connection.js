@@ -50,7 +50,11 @@ export function createConnection(roomId, hooks) {
       return;
     }
     hooks.onState(attempt === 0 ? 'connecting' : 'reconnecting');
-    const wsUrl = `${base.replace(/^http/, 'ws')}/room/${roomId}`;
+    // Relay admission token (H-2): appended only when the gate minted one
+    // (null during rollout, before ROOM_RELAY_SECRET is set on both sides).
+    const t = hooks.token;
+    const q = t ? `?t=${encodeURIComponent(t)}` : '';
+    const wsUrl = `${base.replace(/^http/, 'ws')}/room/${roomId}${q}`;
     try {
       ws = new WebSocket(wsUrl);
     } catch {

@@ -29,6 +29,10 @@ export default function RoomView({ room, profile, nodeId, onLeave, onExpired }) 
 
   const selfPub = useMemo(() => profilePub(profile), [profile]);
 
+  // Open + per-event rooms derive their key from public data (the three words /
+  // the event link), so anyone who has those can read along. Be honest about it.
+  const isPublic = room.mode === 'open' || room.event;
+
   useEffect(() => {
     let alive = true;
 
@@ -153,6 +157,23 @@ export default function RoomView({ room, profile, nodeId, onLeave, onExpired }) 
           cast
         </button>
       </header>
+
+      {/* Public-room honesty banner */}
+      {isPublic ? (
+        <div
+          role="note"
+          className={styles.muted}
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '0.75rem',
+            background: 'var(--mf-surface-2)',
+            borderBottom: '1px solid var(--mf-border)',
+          }}
+        >
+          public room — anyone with the {room.event ? 'event link' : 'three words'} can read
+          along. not private.
+        </div>
+      ) : null}
 
       {/* Roster */}
       <div

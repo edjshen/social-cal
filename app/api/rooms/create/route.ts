@@ -12,6 +12,7 @@ import { normalizePhoneUS } from '@/lib/phone';
 import { consumeRateLimit, verifyOtpOrReject, isValidRoomId } from '@/lib/mayfly/server/phone-gate';
 import { logRoomCreated } from '@/lib/mayfly/server/rooms-log';
 import { hasConsent, logConsent } from '@/lib/mayfly/server/consent';
+import { mintRelayToken } from '@/lib/mayfly/server/relay-admission';
 
 const SCOPE = 'rooms.create';
 
@@ -59,5 +60,6 @@ export async function POST(request: Request): Promise<Response> {
     console.error('[rooms.create] log failed:', (e as Error)?.message);
   }
 
-  return Response.json({ ok: true });
+  const relayToken = await mintRelayToken(b?.roomId as string);
+  return Response.json({ ok: true, relayToken });
 }

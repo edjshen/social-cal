@@ -142,9 +142,12 @@ export async function createEventRoom({ eventSlug, expiresAt, profileId }) {
   });
 }
 
-/** Mark that the server-side join/create gate (phone/log) has been satisfied. */
-export async function markGateCleared(id) {
-  return updateRoom(id, { gateCleared: true });
+/** Mark that the server-side join/create gate (phone/log) has been satisfied,
+ *  and store the relay admission token minted by that gate (null when the
+ *  relay gate is inactive). The token is the room's whole-life capability;
+ *  its TTL matches the room's max lifetime, so no refresh is needed. */
+export async function markGateCleared(id, relayToken = null) {
+  return updateRoom(id, { gateCleared: true, relayToken: relayToken ?? null });
 }
 
 /** Recreate the open-mode credential from typed three words (no key in words). */
@@ -223,6 +226,7 @@ async function persistNewRoom(input) {
     desiredExpiresAt: input.desiredExpiresAt ?? null,
     // Whether the server create/join gate (phone + log) has been satisfied.
     gateCleared: false,
+    relayToken: input.relayToken ?? null,
     // Host shows a provisional countdown immediately; server welcome overrides.
     createdAt: provisional ? now : null,
     expiresAt: provisional ? now + ROOM_TTL_MS : null,

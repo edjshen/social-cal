@@ -21,6 +21,7 @@ import {
 } from '@/lib/mayfly/server/phone-gate';
 import { logParticipantJoined, upsertEventRoom } from '@/lib/mayfly/server/rooms-log';
 import { hasConsent, logConsent } from '@/lib/mayfly/server/consent';
+import { mintRelayToken } from '@/lib/mayfly/server/relay-admission';
 
 const SCOPE = 'rooms.join';
 
@@ -77,5 +78,6 @@ export async function POST(request: Request): Promise<Response> {
     console.error('[rooms.join] log failed:', (e as Error)?.message);
   }
 
-  return Response.json({ ok: true });
+  const relayToken = await mintRelayToken(b?.roomId as string);
+  return Response.json({ ok: true, relayToken });
 }
