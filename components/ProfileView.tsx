@@ -8,6 +8,7 @@ import Icon from './primitives/Icon';
 import { timeLabel } from '@/lib/format';
 import { updateProfile } from '@/lib/actions/profile';
 import { logout } from '@/lib/actions/auth';
+import { isNative, nativeShare, nativeCopy } from '@/lib/native/bridge.js';
 import type { ProfileData } from '@/lib/db/profile';
 
 const VIS: Record<string, [string, string]> = {
@@ -57,8 +58,26 @@ export default function ProfileView({ data }: { data: ProfileData }) {
     ? (origin + '/u/' + user.handle).replace(/^https?:\/\//, '')
     : user.handle;
 
-  function copyLink() {
-    navigator.clipboard?.writeText(location.origin + '/u/' + user.handle);
+  // Share the profile link. Native shell → OS share sheet (then clipboard) via
+  // the injected Capacitor plugins; else Web Share; else clipboard. Mirrors the
+  // room-cast cascade in app/rooms/_client/cast/link.js (kept inline rather than
+  // abstracted — only two call sites). ponytail: duplicates ~6 lines on purpose.
+  async function copyLink() {
+    const url = location.origin + '/u/' + user.handle;
+    if (isNative()) {
+      const res = await nativeShare({ title: '@' + user.handle, url });
+      if (res === 'shared' || res === 'cancelled') return;
+      if (await nativeCopy(url)) return;
+    }
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: '@' + user.handle, url });
+        return;
+      } catch (err) {
+        if (err && (err as Error).name === 'AbortError') return;
+      }
+    }
+    navigator.clipboard?.writeText(url);
   }
 
   const s: { regulars?: number; plans?: number; scenes?: number } = stats || {};
