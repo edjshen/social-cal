@@ -28,7 +28,7 @@ vi.mock('../db/mfa-queries', () => ({
   consumeRecoveryCode: async () => state.recoveryOk,
 }));
 
-import { verifyMfaStepUp, useRecoveryCode } from './auth';
+import { verifyMfaStepUp, redeemRecoveryCode } from './auth';
 import * as OTPAuth from 'otpauth';
 
 beforeEach(() => {
@@ -56,18 +56,18 @@ describe('verifyMfaStepUp', () => {
   });
 });
 
-describe('useRecoveryCode', () => {
+describe('redeemRecoveryCode', () => {
   it('elevates aal1 → aal2 on a valid recovery code', async () => {
     state.recoveryOk = true;
-    expect((await useRecoveryCode('abcd-efgh')).ok).toBe(true);
+    expect((await redeemRecoveryCode('abcd-efgh')).ok).toBe(true);
   });
   it('rejects an invalid recovery code', async () => {
     state.recoveryOk = false;
-    expect((await useRecoveryCode('nope')).ok).toBe(false);
+    expect((await redeemRecoveryCode('nope')).ok).toBe(false);
   });
   it('rejects when rate-limited, even with a valid code', async () => {
     state.recoveryOk = true;
     state.limitOk = false;
-    expect((await useRecoveryCode('abcd-efgh')).ok).toBe(false);
+    expect((await redeemRecoveryCode('abcd-efgh')).ok).toBe(false);
   });
 });

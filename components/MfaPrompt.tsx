@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { verifyMfaStepUp, useRecoveryCode } from '@/lib/actions/auth';
+import { verifyMfaStepUp, redeemRecoveryCode } from '@/lib/actions/auth';
 
 export default function MfaPrompt() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function MfaPrompt() {
         setErr('');
         setBusy(true);
         try {
-          const r = recovery ? await useRecoveryCode(token) : await verifyMfaStepUp(token);
+          const r = recovery ? await redeemRecoveryCode(token) : await verifyMfaStepUp(token);
           if (r.ok) router.push('/discover');
           else setErr('Couldn’t verify that code. Check it, or wait a moment and try again.');
         } finally {
