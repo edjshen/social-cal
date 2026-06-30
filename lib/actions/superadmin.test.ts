@@ -47,7 +47,7 @@ import {
   adminToggleGhost,
   adminForceResetPassword,
   adminRemoveConnection,
-} from './admin';
+} from './superadmin';
 
 beforeEach(() => {
   state.admin = true;

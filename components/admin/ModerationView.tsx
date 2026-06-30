@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminDeleteEvent, adminRemoveConnection } from '@/lib/actions/admin';
+import { adminDeleteEvent, adminRemoveConnection } from '@/lib/actions/superadmin';
 
 type Ev = {
   id: string;
