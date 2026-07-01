@@ -1,19 +1,23 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sheet from './primitives/Sheet';
 import { createEvent } from '@/lib/actions/events';
+import { myOrbits } from '@/lib/actions/orbits';
+import { orbitHex } from './OrbitManageView';
 
 const TYPES = [
   ['intention', 'Free / intention'],
   ['plan', 'Plan'],
   ['event', 'Event'],
 ] as const;
-const VIS = [
-  ['inner', 'Inner'],
-  ['orbit', 'Outer'],
+// Personal-calendar audience (who among your own graph sees it).
+const AUDIENCE = [
+  ['private', 'Just me'],
+  ['orbit', 'My Orbit'],
   ['public', 'Public'],
 ] as const;
+type OrbitOpt = { id: string; name: string; color: string | null };
 const defaultStart = () => {
   const d = new Date();
   d.setHours(d.getHours() + 1, 0, 0, 0);
@@ -31,9 +35,28 @@ export default function CreateSheet({
 }) {
   const router = useRouter();
   const [type, setType] = useState(prefill?.type || 'event');
-  const [vis, setVis] = useState('inner');
+  const [vis, setVis] = useState('orbit');
+  const [orbits, setOrbits] = useState<OrbitOpt[]>([]);
+  const [picked, setPicked] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [err, setErr] = useState('');
+
+  // Load the user's orbit calendars when the sheet opens so they can toggle the
+  // event onto any of them.
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    myOrbits()
+      .then((os) => alive && setOrbits(os.map((o) => ({ id: o.id, name: o.name, color: o.color }))))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [open]);
+
+  const toggleOrbit = (id: string) =>
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+
   async function submit(form: FormData) {
     const title = String(form.get('title') || '');
     if (!title) {
@@ -59,6 +82,7 @@ export default function CreateSheet({
       endTime: String(form.get('end') || '') || null,
       recurring: form.get('rec') ? 'weekly' : null,
       visibility: vis,
+      orbitIds: picked,
       expiresAt,
     });
     setPending(false);
@@ -117,9 +141,9 @@ export default function CreateSheet({
           <span className="muted">Repeats weekly (standing)</span>
         </label>
         <div className="field">
-          <label>Who can see it</label>
+          <label>Add to calendars</label>
           <div className="chips">
-            {VIS.map(([v, l]) => (
+            {AUDIENCE.map(([v, l]) => (
               <button
                 key={v}
                 type="button"
@@ -130,6 +154,21 @@ export default function CreateSheet({
               </button>
             ))}
           </div>
+          {orbits.length > 0 && (
+            <div className="chips" style={{ marginTop: 8 }}>
+              {orbits.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  className={`chip pick orbit-chip ${picked.includes(o.id) ? 'on' : ''}`}
+                  onClick={() => toggleOrbit(o.id)}
+                >
+                  <span className="orbit-dot" style={{ background: orbitHex(o.color) }} />
+                  {o.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         {err && <div className="error">{err}</div>}
         <button className="btn solid block" disabled={pending}>

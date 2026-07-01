@@ -18,17 +18,17 @@ Demo login → **username `ed` · password `barycal`**
 
 The five hero screens and the core loop, wired end to end:
 
-| Screen / feature                                                           | Status                                 |
-| -------------------------------------------------------------------------- | -------------------------------------- |
-| **Discover** — this week, social proof, everyday + events                  | ✅                                     |
-| **Week / Month** — Chronos views, type-coded, open-time celebrated         | ✅                                     |
-| **Profile** — future-tense identity, visibility tiers, share link          | ✅                                     |
-| **Regulars** — private co-presence engine, "make it a standing plan"       | ✅                                     |
-| **Circles + tiers** — Inner (content) / Outer (free-busy), ghost mode      | ✅                                     |
-| **Create** — intentions, plans, standing (recurring), events               | ✅                                     |
-| **Soft-RSVP** (Down / Maybe / Can't) + account-free `/u/:handle`, `/e/:id` | ✅                                     |
-| **PWA** — installable, offline shell, service worker                       | ✅                                     |
-| Google Calendar connect / web push                                         | stubbed — need cloud creds (see below) |
+| Screen / feature                                                                   | Status                                 |
+| ---------------------------------------------------------------------------------- | -------------------------------------- |
+| **Discover** — this week, social proof, everyday + events                          | ✅                                     |
+| **Week / Month** — Chronos views, type-coded, open-time celebrated                 | ✅                                     |
+| **Profile** — future-tense identity, visibility tiers, share link                  | ✅                                     |
+| **Regulars** — private co-presence engine, "make it a standing plan"               | ✅                                     |
+| **My Orbit + orbits** — one people list, plus custom shared group calendars        | ✅                                     |
+| **Create** — intentions, plans, standing (recurring), events, per-calendar toggles | ✅                                     |
+| **Soft-RSVP** (Down / Maybe / Can't) + account-free `/u/:handle`, `/e/:id`         | ✅                                     |
+| **PWA** — installable, offline shell, service worker                               | ✅                                     |
+| Google Calendar connect / web push                                                 | stubbed — need cloud creds (see below) |
 
 Maps to features **F1–F13** in the PRD.
 

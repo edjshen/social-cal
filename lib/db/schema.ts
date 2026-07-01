@@ -89,13 +89,79 @@ export const events = sqliteTable(
     // For a series base: recurrence stops at/after this instant (exclusive). Used
     // by "this and following" splits. Null = recurs indefinitely.
     recurUntil: text('recur_until'),
-    visibility: text('visibility', { enum: ['inner', 'orbit', 'public'] }).notNull(),
+    // 'inner' is retained as a legacy value (treated as 'orbit'); 'private' is the
+    // "just me / only shared orbits" audience. No CHECK constraint exists, so this
+    // enum is type-only — widening it needs no data migration.
+    visibility: text('visibility', {
+      enum: ['private', 'inner', 'orbit', 'public'],
+    }).notNull(),
     expiresAt: text('expires_at'),
     createdAt: text('created_at').notNull(),
   },
   (t) => ({
     byStart: index('events_start').on(t.startTime),
     byCreator: index('events_creator').on(t.creatorId),
+  })
+);
+
+// A custom "orbit" — a named group of people who share one calendar. Distinct
+// from the free/busy "orbit" tier of the old two-tier circle model (now collapsed
+// into a single "My Orbit"). Any member's event can be placed on the orbit's
+// shared calendar (see eventOrbits), where every member sees it regardless of
+// whether they're directly connected.
+export const orbits = sqliteTable(
+  'orbits',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id),
+    name: text('name').notNull(),
+    // Optional CAL_COLORS key used to tint the orbit's events on the calendar.
+    color: text('color'),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ byOwner: index('orbits_owner').on(t.ownerId) })
+);
+
+export const orbitMembers = sqliteTable(
+  'orbit_members',
+  {
+    id: text('id').primaryKey(),
+    orbitId: text('orbit_id')
+      .notNull()
+      .references(() => orbits.id),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    role: text('role', { enum: ['owner', 'member'] })
+      .notNull()
+      .default('member'),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({
+    uniq: unique('orbit_member_uniq').on(t.orbitId, t.userId),
+    byUser: index('orbit_members_user').on(t.userId),
+  })
+);
+
+// Which orbit calendars an event is "toggled on" for. One event can live on the
+// creator's personal calendar (visibility) AND any number of orbit calendars.
+export const eventOrbits = sqliteTable(
+  'event_orbits',
+  {
+    id: text('id').primaryKey(),
+    eventId: text('event_id')
+      .notNull()
+      .references(() => events.id),
+    orbitId: text('orbit_id')
+      .notNull()
+      .references(() => orbits.id),
+  },
+  (t) => ({
+    uniq: unique('event_orbit_uniq').on(t.eventId, t.orbitId),
+    byOrbit: index('event_orbits_orbit').on(t.orbitId),
+    byEvent: index('event_orbits_event').on(t.eventId),
   })
 );
 
@@ -201,6 +267,9 @@ export const pushTokens = sqliteTable(
 export type User = typeof users.$inferSelect;
 export type Connection = typeof connections.$inferSelect;
 export type Placement = typeof placements.$inferSelect;
+export type Orbit = typeof orbits.$inferSelect;
+export type OrbitMember = typeof orbitMembers.$inferSelect;
+export type EventOrbit = typeof eventOrbits.$inferSelect;
 // Named BarycalEvent (not Event) to avoid shadowing the global DOM/Workers `Event`.
 export type BarycalEvent = typeof events.$inferSelect;
 export type Attendance = typeof attendance.$inferSelect;

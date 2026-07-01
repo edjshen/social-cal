@@ -1,5 +1,5 @@
 import { getGraphContext, getEventsBetween, getCalendarEventsBetween } from './db/queries';
-import { canSeeBusy, myConnectionIds } from './domain/visibility';
+import { canSeeBusy, myConnectionIds, sharedToViewer } from './domain/visibility';
 import { enrich } from './domain/enrich';
 
 // `includePastRecurring` widens the fetch to long-running recurring series whose
@@ -20,13 +20,15 @@ export async function calendarWindow(
     ? getCalendarEventsBetween(startISO, endISO)
     : getEventsBetween(startISO, endISO));
   return all
-    .filter(
-      (ev) =>
-        !ghostIds.has(ev.creatorId) &&
-        (ev.creatorId === meId ||
-          ev.visibility === 'public' ||
-          (conns.has(ev.creatorId) && canSeeBusy(meId, ev, ctx.conns, ctx.places)))
-    )
+    .filter((ev) => {
+      if (ghostIds.has(ev.creatorId)) return false;
+      if (ev.creatorId === meId || ev.visibility === 'public') return true;
+      // Events shared onto an orbit I'm in show up even without a direct
+      // connection to the creator — that's the shared-calendar behavior.
+      const viaOrbit = sharedToViewer(meId, ev.id, ev.parentId, ctx.eventOrbits, ctx.members);
+      if (viaOrbit) return true;
+      return conns.has(ev.creatorId) && canSeeBusy(meId, ev, ctx.conns, viaOrbit);
+    })
     .map((ev) => enrich(ev, meId, ctx))
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 }

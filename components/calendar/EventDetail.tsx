@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AnchoredSheet, { type Anchor } from '../primitives/AnchoredSheet';
 import { deleteEvent, setRsvp } from '@/lib/actions/events';
+import { orbitHex } from '../OrbitManageView';
 import { CalEvent, eventColorHex, fmtTime, MONTHS, WEEKDAYS } from './util';
 import RecurScopePrompt, { type Scope } from './RecurScopePrompt';
 
@@ -94,6 +95,16 @@ export default function EventDetail({
         </div>
       )}
       {ev.description && <p className="ed-desc">{ev.description}</p>}
+      {!ev.busy && (ev.orbits?.length ?? 0) > 0 && (
+        <div className="chips" style={{ marginTop: 12 }}>
+          {ev.orbits!.map((o) => (
+            <span key={o.id} className="chip orbit-chip">
+              <span className="orbit-dot" style={{ background: orbitHex(o.color) }} />
+              {o.name}
+            </span>
+          ))}
+        </div>
+      )}
 
       {!ev.busy && !mine && (
         <div className="ed-rsvp">

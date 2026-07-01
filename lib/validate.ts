@@ -17,6 +17,7 @@ export const LIMITS = {
   password: 200,
   sceneItems: 12,
   sceneLen: 40,
+  orbitName: 60,
 } as const;
 
 /** Coerce to string and hard-cap length. Non-strings become ''. */

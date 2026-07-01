@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth/session';
 
 export const metadata: Metadata = { title: 'Discover · Barycal' };
 import { getGraphContext, getEventsBetween } from '@/lib/db/queries';
-import { canSeeContent, myConnectionIds } from '@/lib/domain/visibility';
+import { canSeeContent, myConnectionIds, sharedToViewer } from '@/lib/domain/visibility';
 import { enrich } from '@/lib/domain/enrich';
 import { startOfToday, notExpired } from '@/lib/domain/dates';
 import { calendarWindow } from '@/lib/calendar';
@@ -20,13 +20,18 @@ export default async function DiscoverPage() {
   const ghostIds = new Set(ctx.users.filter((u) => u.ghost && u.id !== meId).map((u) => u.id));
   const all = await getEventsBetween(from.toISOString(), to.toISOString());
   const events = all
-    .filter(
-      (ev) =>
-        notExpired(ev) &&
-        !ghostIds.has(ev.creatorId) &&
-        (ev.creatorId === meId || conns.has(ev.creatorId) || ev.visibility === 'public') &&
-        canSeeContent(meId, ev, ctx.conns, ctx.places)
-    )
+    .filter((ev) => {
+      if (!notExpired(ev) || ghostIds.has(ev.creatorId)) return false;
+      const viaOrbit = sharedToViewer(meId, ev.id, ev.parentId, ctx.eventOrbits, ctx.members);
+      if (!(
+        ev.creatorId === meId ||
+        conns.has(ev.creatorId) ||
+        ev.visibility === 'public' ||
+        viaOrbit
+      ))
+        return false;
+      return canSeeContent(meId, ev, ctx.conns, viaOrbit);
+    })
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
     .map((ev) => enrich(ev, meId, ctx));
 

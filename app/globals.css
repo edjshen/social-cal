@@ -2478,3 +2478,34 @@ select {
     animation: none;
   }
 }
+
+/* ---- custom orbits (shared group calendars) ---- */
+.orbit-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+.orbit-dot.lg {
+  width: 14px;
+  height: 14px;
+  margin-right: 0;
+}
+.chip.orbit-chip {
+  display: inline-flex;
+  align-items: center;
+}
+/* the color dot stays readable when the chip is selected (grad background) */
+.chip.orbit-chip.on .orbit-dot {
+  box-shadow: 0 0 0 1.5px #160d11;
+}
+a.orbit-row {
+  text-decoration: none;
+  color: inherit;
+}
+a.orbit-row .nm {
+  color: #f3f0f6;
+}

@@ -1,8 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AnchoredSheet, { type Anchor } from '../primitives/AnchoredSheet';
 import { createEvent, updateEvent } from '@/lib/actions/events';
+import { myOrbits } from '@/lib/actions/orbits';
+import { orbitHex } from '../OrbitManageView';
 import { CalEvent, CAL_COLORS, toDateInput, toLocalInput } from './util';
 import RecurScopePrompt, { type Scope } from './RecurScopePrompt';
 
@@ -12,11 +14,13 @@ const TYPES: [string, string][] = [
   ['event', 'Event'],
   ['scene', 'Scene'],
 ];
-const VIS: [string, string][] = [
-  ['inner', 'Inner circle'],
-  ['orbit', 'Outer circle'],
+// Personal-calendar audience for the event.
+const AUDIENCE: [string, string][] = [
+  ['private', 'Just me'],
+  ['orbit', 'My Orbit'],
   ['public', 'Public'],
 ];
+type OrbitOpt = { id: string; name: string; color: string | null };
 const RECUR: [string, string][] = [
   ['', 'Does not repeat'],
   ['daily', 'Daily'],
@@ -61,7 +65,10 @@ export default function EventEditor({
   const [start, setStart] = useState(s0);
   const [end, setEnd] = useState(e0);
   const [type, setType] = useState(ex?.type && ex.type !== 'busy' ? ex.type : 'event');
-  const [vis, setVis] = useState(ex?.visibility || 'inner');
+  // Legacy 'inner' events read as 'My Orbit' in the collapsed model.
+  const [vis, setVis] = useState(ex?.visibility === 'inner' ? 'orbit' : ex?.visibility || 'orbit');
+  const [orbits, setOrbits] = useState<OrbitOpt[]>([]);
+  const [picked, setPicked] = useState<string[]>((ex?.orbits || []).map((o) => o.id));
   const [recur, setRecur] = useState(ex?.recurring || '');
   const [color, setColor] = useState<string>(ex?.color || '');
   const [location, setLocation] = useState(ex?.location || '');
@@ -71,6 +78,19 @@ export default function EventEditor({
   const [scopeAsk, setScopeAsk] = useState(false);
   // Editing a generated occurrence of a series → ask which instances to change.
   const isOccurrence = !!ex?.occurrence;
+
+  // Load the user's orbit calendars so the event can be toggled onto any of them.
+  useEffect(() => {
+    let alive = true;
+    myOrbits()
+      .then((os) => alive && setOrbits(os.map((o) => ({ id: o.id, name: o.name, color: o.color }))))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const toggleOrbit = (id: string) =>
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   function save() {
     if (!title.trim()) {
@@ -101,6 +121,7 @@ export default function EventEditor({
         allDay,
         color: color || null,
         visibility: vis,
+        orbitIds: picked,
       };
       if (isEdit) await updateEvent(ex!.id, payload, scope ? { scope } : undefined);
       else await createEvent(payload);
@@ -233,9 +254,9 @@ export default function EventEditor({
       </div>
 
       <div className="field">
-        <label>Who can see it</label>
+        <label>Add to calendars</label>
         <div className="chips">
-          {VIS.map(([v, l]) => (
+          {AUDIENCE.map(([v, l]) => (
             <button
               key={v}
               type="button"
@@ -246,6 +267,21 @@ export default function EventEditor({
             </button>
           ))}
         </div>
+        {orbits.length > 0 && (
+          <div className="chips" style={{ marginTop: 8 }}>
+            {orbits.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                className={`chip pick orbit-chip ${picked.includes(o.id) ? 'on' : ''}`}
+                onClick={() => toggleOrbit(o.id)}
+              >
+                <span className="orbit-dot" style={{ background: orbitHex(o.color) }} />
+                {o.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="field">

@@ -30,8 +30,11 @@ const q = (v: string | null) => (v === null ? 'NULL' : `'${v.replace(/'/g, "''")
 async function main() {
   const pw = await hashPassword('barycal');
   const lines: string[] = [
+    'DELETE FROM event_orbits;',
     'DELETE FROM attendance;',
     'DELETE FROM events;',
+    'DELETE FROM orbit_members;',
+    'DELETE FROM orbits;',
     'DELETE FROM placements;',
     'DELETE FROM connections;',
     'DELETE FROM users;',
@@ -102,6 +105,24 @@ async function main() {
   const attend = (eid: string, h: string, rsvp: string) =>
     lines.push(
       `INSERT INTO attendance (id,event_id,user_id,rsvp,created_at) VALUES (${q(id())},${q(eid)},${q(U[h])},${q(rsvp)},${q(now.toISOString())});`
+    );
+
+  // A custom orbit (shared group calendar). `members` are handles; the owner is
+  // added automatically with the owner role.
+  const orbit = (owner: string, name: string, color: string, members: string[]) => {
+    const oid = id();
+    lines.push(
+      `INSERT INTO orbits (id,owner_id,name,color,created_at) VALUES (${q(oid)},${q(U[owner])},${q(name)},${q(color)},${q(now.toISOString())});`
+    );
+    for (const h of [owner, ...members.filter((m) => m !== owner)])
+      lines.push(
+        `INSERT INTO orbit_members (id,orbit_id,user_id,role,created_at) VALUES (${q(id())},${q(oid)},${q(U[h])},${q(h === owner ? 'owner' : 'member')},${q(now.toISOString())});`
+      );
+    return oid;
+  };
+  const shareEvent = (eid: string, oid: string) =>
+    lines.push(
+      `INSERT INTO event_orbits (id,event_id,orbit_id) VALUES (${q(id())},${q(eid)},${q(oid)});`
     );
 
   const lunch = ev(
@@ -215,6 +236,14 @@ async function main() {
   );
   attend(showPast, 'ed', 'going');
   attend(showPast, 'theo', 'down');
+
+  // Two demo orbits (shared group calendars) with a few events toggled onto them.
+  const climbingCrew = orbit('ed', 'Climbing Crew', 'sage', ['maya', 'nina', 'theo']);
+  const wineClub = orbit('dev', 'Wine Club', 'grape', ['ed', 'sam']);
+  shareEvent(climb, climbingCrew);
+  shareEvent(standing, climbingCrew);
+  shareEvent(wine, wineClub);
+  shareEvent(winePast, wineClub);
 
   lines.push(
     `INSERT INTO platform_admins (user_id, granted_at) SELECT id, '2026-06-29T00:00:00.000Z' FROM users WHERE handle = 'ed' ON CONFLICT (user_id) DO NOTHING;`
