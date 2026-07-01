@@ -1,7 +1,7 @@
 import { getDb } from './index';
 import { events as eventsTable } from './schema';
 import { getUserByHandle, getGraphContext, getEventsByCreator } from './queries';
-import { canSeeContent, connectionStatus } from '../domain/visibility';
+import { canSeeContent, connectionStatus, sharedToViewer } from '../domain/visibility';
 import { enrich } from '../domain/enrich';
 import { publicUser } from '../domain/helpers';
 import { startOfToday, notExpired } from '../domain/dates';
@@ -20,7 +20,12 @@ export async function getProfileData(handleOrShareId: string, viewerId: string |
       (ev) =>
         new Date(ev.startTime) >= from &&
         notExpired(ev) &&
-        canSeeContent(viewerId, ev, ctx.conns, ctx.places)
+        canSeeContent(
+          viewerId,
+          ev,
+          ctx.conns,
+          sharedToViewer(viewerId, ev.id, ev.parentId, ctx.eventOrbits, ctx.members)
+        )
     )
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
     .slice(0, 12)

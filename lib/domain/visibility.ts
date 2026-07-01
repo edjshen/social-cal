@@ -1,5 +1,5 @@
-import type { Connection, Placement } from '../db/schema';
-import type { Tier, Visibility } from './types';
+import type { Connection, OrbitMember, EventOrbit } from '../db/schema';
+import type { Visibility } from './types';
 
 type Ev = { creatorId: string; visibility: Visibility };
 
@@ -23,36 +23,77 @@ export function connectionStatus(conns: Connection[], me: string, other: string)
   if (c.status === 'accepted') return 'connected' as const;
   return c.requestedBy === me ? ('pending_out' as const) : ('pending_in' as const);
 }
-export function tierOf(places: Placement[], owner: string, other: string): Tier | null {
-  const p = places.find((p) => p.ownerId === owner && p.otherId === other);
-  return p ? p.tier : null;
+
+// --- custom orbits (shared group calendars) --------------------------------
+
+// The set of orbit ids `me` belongs to.
+export function myOrbitIds(members: OrbitMember[], me: string | null): Set<string> {
+  const ids = new Set<string>();
+  if (!me) return ids;
+  for (const m of members) if (m.userId === me) ids.add(m.orbitId);
+  return ids;
 }
-// Access is CREATOR-controlled: the tier the creator placed the viewer into decides
-// visibility of the creator's inner content. A viewer cannot self-grant access by
-// placing the creator into their own inner circle. (Matches the original app and the
-// seed's reciprocal placements.)
+// The set of orbit ids an event is shared onto. A per-instance exception row
+// (parentId set) inherits its parent series' shares, so an edited/moved
+// occurrence stays on the same orbit calendars as the series.
+export function eventOrbitIds(
+  eventOrbits: EventOrbit[],
+  eventId: string,
+  parentId?: string | null
+): Set<string> {
+  const ids = new Set<string>();
+  for (const eo of eventOrbits)
+    if (eo.eventId === eventId || (parentId && eo.eventId === parentId)) ids.add(eo.orbitId);
+  return ids;
+}
+// True when `viewer` is a member of at least one orbit the event is shared to —
+// the mechanism that lets orbit members see each other's shared events even
+// without a direct connection.
+export function sharedToViewer(
+  viewer: string | null,
+  eventId: string,
+  parentId: string | null | undefined,
+  eventOrbits: EventOrbit[],
+  members: OrbitMember[]
+): boolean {
+  const mine = myOrbitIds(members, viewer);
+  if (!mine.size) return false;
+  for (const eo of eventOrbits)
+    if ((eo.eventId === eventId || (parentId && eo.eventId === parentId)) && mine.has(eo.orbitId))
+      return true;
+  return false;
+}
+
+// Access is CREATOR-controlled. `viaOrbit` is true when the viewer shares an orbit
+// calendar with the event (see sharedToViewer) — that alone grants content access,
+// independent of the direct-connection graph. Otherwise a connection sees anything
+// that isn't marked private; "My Orbit" (visibility 'orbit', or legacy 'inner') is
+// the single tier of people you're connected to.
 export function canSeeContent(
   viewer: string | null,
   ev: Ev,
   conns: Connection[],
-  places: Placement[]
-) {
+  viaOrbit = false
+): boolean {
   if (ev.visibility === 'public') return true;
   if (!viewer) return false;
   if (ev.creatorId === viewer) return true;
+  if (viaOrbit) return true;
   if (!areConnected(conns, ev.creatorId, viewer)) return false;
-  const tier = tierOf(places, ev.creatorId, viewer) || 'orbit';
-  if (ev.visibility === 'orbit') return true;
-  if (ev.visibility === 'inner') return tier === 'inner';
-  return false;
+  // Private events never reach the creator's connections at large — only the
+  // creator and members of orbits it's shared to (handled by viaOrbit above).
+  return ev.visibility !== 'private';
 }
 export function canSeeBusy(
   viewer: string | null,
   ev: Ev,
   conns: Connection[],
-  places: Placement[]
-) {
-  if (canSeeContent(viewer, ev, conns, places)) return true;
+  viaOrbit = false
+): boolean {
+  if (canSeeContent(viewer, ev, conns, viaOrbit)) return true;
   if (!viewer) return false;
+  // A private event stays fully hidden from non-members; other events still
+  // surface as free/busy to the creator's connections.
+  if (ev.visibility === 'private') return false;
   return areConnected(conns, ev.creatorId, viewer);
 }

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { getSession } from '@/lib/auth/session';
 
-export const metadata: Metadata = { title: 'Circles · Barycal' };
+export const metadata: Metadata = { title: 'My Orbit · Barycal' };
 import { getGraphContext } from '@/lib/db/queries';
-import { myConnectionIds, tierOf, connectionStatus } from '@/lib/domain/visibility';
+import { myConnectionIds, connectionStatus } from '@/lib/domain/visibility';
 import { publicUser } from '@/lib/domain/helpers';
 import CirclesView from '@/components/CirclesView';
 
@@ -11,12 +11,12 @@ export default async function CirclesPage() {
   const meId = (await getSession()).userId!;
   const ctx = await getGraphContext();
   const ids = myConnectionIds(ctx.conns, meId);
-  const list = [...ids]
-    .map((id) => ({
-      user: publicUser(ctx.users.find((u) => u.id === id) || null),
-      tier: (tierOf(ctx.places, meId, id) || 'orbit') as 'inner' | 'orbit',
-    }))
-    .filter((x) => x.user);
+  // A single tier now: everyone you're connected to is in "My Orbit". The old
+  // inner/outer split is gone.
+  const orbit = [...ids]
+    .map((id) => publicUser(ctx.users.find((u) => u.id === id) || null))
+    .filter((u): u is NonNullable<typeof u> => !!u)
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
   const requests = ctx.conns
     .filter((c) => c.status === 'pending' && c.bId === meId)
     .map((c) => ({ id: c.id, user: publicUser(ctx.users.find((u) => u.id === c.aId) || null) }))
@@ -29,12 +29,10 @@ export default async function CirclesPage() {
     .map((u) => ({
       ...publicUser(u)!,
       status: connectionStatus(ctx.conns, meId, u.id),
-      tier: tierOf(ctx.places, meId, u.id),
     }));
   return (
     <CirclesView
-      inner={list.filter((x) => x.tier === 'inner')}
-      orbit={list.filter((x) => x.tier !== 'inner')}
+      orbit={orbit}
       requests={requests}
       addable={others.filter((u) => u.status === 'none')}
       pending={others.filter((u) => u.status === 'pending_out')}

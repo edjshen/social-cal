@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSession } from '@/lib/auth/session';
 import { getEventById, getGraphContext } from '@/lib/db/queries';
-import { canSeeContent } from '@/lib/domain/visibility';
+import { canSeeContent, sharedToViewer } from '@/lib/domain/visibility';
 import { enrich } from '@/lib/domain/enrich';
 import Avatar from '@/components/primitives/Avatar';
 import PublicCta from '@/components/PublicCta';
@@ -37,7 +37,8 @@ async function load(id: string): Promise<Loaded> {
   const ev = await getEventById(id);
   if (!ev) return { status: 'missing' };
   const ctx = await getGraphContext();
-  if (canSeeContent(viewerId, ev, ctx.conns, ctx.places)) {
+  const viaOrbit = sharedToViewer(viewerId, ev.id, ev.parentId, ctx.eventOrbits, ctx.members);
+  if (canSeeContent(viewerId, ev, ctx.conns, viaOrbit)) {
     const event = enrich(ev, viewerId, ctx, { detail: true }) as any;
     // A ghost creator's event comes back as the redacted free/busy stub; treat it
     // as non-existent so a ghost is never revealed via a direct link.

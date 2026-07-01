@@ -2,7 +2,7 @@
 import { useTransition } from 'react';
 import Link from 'next/link';
 import Avatar from './primitives/Avatar';
-import { acceptRequest, setTier, addPerson } from '@/lib/actions/connections';
+import { acceptRequest, addPerson } from '@/lib/actions/connections';
 
 type PublicUser = {
   id: string;
@@ -11,19 +11,16 @@ type PublicUser = {
   avatar: string;
   initials: string;
 };
-type ListItem = { user: PublicUser | null; tier: 'inner' | 'orbit' };
 type RequestItem = { id: string; user: PublicUser | null };
-type OtherUser = PublicUser & { status: string; tier: string | null };
+type OtherUser = PublicUser & { status: string };
 
 export default function CirclesView({
-  inner,
   orbit,
   requests,
   addable,
   pending,
 }: {
-  inner: ListItem[];
-  orbit: ListItem[];
+  orbit: PublicUser[];
   requests: RequestItem[];
   addable: OtherUser[];
   pending: OtherUser[];
@@ -36,40 +33,10 @@ export default function CirclesView({
     });
   }
 
-  function handleSetTier(userId: string, tier: 'inner' | 'orbit') {
-    startTransition(() => {
-      setTier(userId, tier);
-    });
-  }
-
   function handleAddPerson(id: string) {
     startTransition(() => {
       addPerson(id);
     });
-  }
-
-  function TierRow({ item }: { item: ListItem }) {
-    if (!item.user) return null;
-    return (
-      <div className="reg">
-        <Avatar user={item.user} size="lg" />
-        <div className="info">
-          <div className="nm">{item.user.displayName}</div>
-          <div className="sub">@{item.user.handle}</div>
-        </div>
-        <div className="seg" style={{ margin: 0, width: 150 }}>
-          {(['inner', 'orbit'] as const).map((t) => (
-            <button
-              key={t}
-              className={item.tier === t ? 'on' : ''}
-              onClick={() => handleSetTier(item.user!.id, t)}
-            >
-              {t === 'inner' ? 'Inner' : 'Outer'}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -77,14 +44,18 @@ export default function CirclesView({
       <div className="topbar">
         <div>
           <div className="kicker">People</div>
-          <div className="h-title">Your circles</div>
+          <div className="h-title">My Orbit</div>
         </div>
         <Link href="/you" className="btn sm">
           Done
         </Link>
       </div>
       <p className="muted" style={{ fontSize: 13, margin: '12px 2px 0' }}>
-        Inner Circle sees what you&apos;re doing; Outer Circle sees when you&apos;re free.
+        Everyone in your orbit sees what you&apos;re up to. Group a few of them into a shared{' '}
+        <Link href="/you" style={{ color: 'var(--violet)' }}>
+          orbit calendar
+        </Link>{' '}
+        from your You page.
       </p>
 
       {requests.length > 0 && (
@@ -108,22 +79,21 @@ export default function CirclesView({
         </>
       )}
 
-      {inner.length > 0 && (
-        <>
-          <div className="sub-h">Inner circle</div>
-          {inner.map((item) => (
-            <TierRow key={item.user?.id} item={item} />
-          ))}
-        </>
-      )}
-
-      {orbit.length > 0 && (
-        <>
-          <div className="sub-h">Outer circle</div>
-          {orbit.map((item) => (
-            <TierRow key={item.user?.id} item={item} />
-          ))}
-        </>
+      <div className="sub-h">My orbit</div>
+      {orbit.length === 0 ? (
+        <div className="empty" style={{ padding: 20 }}>
+          No one here yet. Add people below to start your orbit.
+        </div>
+      ) : (
+        orbit.map((u) => (
+          <div key={u.id} className="reg">
+            <Avatar user={u} size="lg" />
+            <div className="info">
+              <div className="nm">{u.displayName}</div>
+              <div className="sub">@{u.handle}</div>
+            </div>
+          </div>
+        ))
       )}
 
       {addable.length > 0 && (

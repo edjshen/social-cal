@@ -10,14 +10,24 @@ import { updateProfile } from '@/lib/actions/profile';
 import { logout } from '@/lib/actions/auth';
 import { isNative, nativeShare, nativeCopy } from '@/lib/native/bridge.js';
 import type { ProfileData } from '@/lib/db/profile';
+import OrbitsPanel, { type OrbitRow } from './OrbitsPanel';
 
+// [iconName, label] per stored visibility. 'inner' is the legacy value for the
+// old inner tier — it now reads as "My Orbit" like 'orbit'.
 const VIS: Record<string, [string, string]> = {
-  inner: ['inner', 'Inner'],
-  orbit: ['orbit', 'Outer'],
+  private: ['inner', 'Private'],
+  inner: ['orbit', 'My Orbit'],
+  orbit: ['orbit', 'My Orbit'],
   public: ['public', 'Public'],
 };
 
-export default function ProfileView({ data }: { data: ProfileData }) {
+export default function ProfileView({
+  data,
+  orbits = [],
+}: {
+  data: ProfileData;
+  orbits?: OrbitRow[];
+}) {
   const { user, upcoming, isSelf, stats } = data;
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -115,7 +125,7 @@ export default function ProfileView({ data }: { data: ProfileData }) {
               </button>
             )}
             <Link href="/circles" className="btn sm">
-              Circles
+              My Orbit
             </Link>
             <form action={logout} style={{ marginLeft: 'auto' }}>
               <button type="submit" className="btn sm">
@@ -174,6 +184,11 @@ export default function ProfileView({ data }: { data: ProfileData }) {
                 <b>{s.scenes || 0}</b>
                 <span>scenes</span>
               </div>
+            </div>
+          )}
+          {isSelf && (
+            <div style={{ marginTop: 26 }}>
+              <OrbitsPanel orbits={orbits} />
             </div>
           )}
         </div>

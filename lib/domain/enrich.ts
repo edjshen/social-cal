@@ -1,13 +1,27 @@
-import type { Connection, Placement, Attendance, User, BarycalEvent } from '../db/schema';
+import type {
+  Connection,
+  Placement,
+  Attendance,
+  User,
+  BarycalEvent,
+  Orbit,
+  OrbitMember,
+  EventOrbit,
+} from '../db/schema';
 import { ATTEND, type PublicUser } from './types';
 import { publicUser } from './helpers';
-import { canSeeContent, myConnectionIds } from './visibility';
+import { canSeeContent, myConnectionIds, myOrbitIds, sharedToViewer } from './visibility';
 
 export interface EnrichCtx {
   users: User[];
   conns: Connection[];
   places: Placement[];
   attendance: Attendance[];
+  // Custom-orbit context. Optional so lightweight callers/tests can omit it;
+  // absent means "no orbit sharing" (events fall back to the connection graph).
+  orbits?: Orbit[];
+  members?: OrbitMember[];
+  eventOrbits?: EventOrbit[];
 }
 
 const byId = (users: User[], id: string) => users.find((u) => u.id === id) || null;
@@ -24,7 +38,10 @@ export function enrich(
   // calendar, /e/[id]); profile pages additionally pre-filter ghost users.
   const creator = byId(ctx.users, ev.creatorId);
   const hiddenByGhost = !!creator?.ghost && viewer !== ev.creatorId;
-  if (hiddenByGhost || !canSeeContent(viewer, ev, ctx.conns, ctx.places)) {
+  const members = ctx.members ?? [];
+  const eventOrbits = ctx.eventOrbits ?? [];
+  const viaOrbit = sharedToViewer(viewer, ev.id, ev.parentId, eventOrbits, members);
+  if (hiddenByGhost || !canSeeContent(viewer, ev, ctx.conns, viaOrbit)) {
     // `cancelled` is carried even on the redacted stub so a cancelled occurrence
     // never surfaces as a phantom busy block on anyone's calendar.
     return {
@@ -76,6 +93,10 @@ export function enrich(
     // Ghost-filtered too, so the count can't betray a hidden attendee's presence
     // (consistent with proof.count / the attendees roster).
     attendeeCount: att.filter((a) => ATTEND.includes(a.rsvp) && notGhost(a.userId)).length,
+    // Which shared-orbit calendars this event lives on. The creator sees every
+    // orbit they placed it on; other viewers only see the orbits they share with
+    // it (so an event never reveals a group the viewer isn't part of).
+    orbits: orbitsForViewer(ev, viewer, ctx),
   };
   if (opts.detail) {
     // Never ship the full roster to the client. For non-public events restrict
@@ -95,3 +116,24 @@ export function enrich(
   return out;
 }
 export type EnrichedEvent = ReturnType<typeof enrich>;
+
+// Orbit summaries for an event, scoped to what `viewer` may know about: all of
+// them for the creator, only the viewer's own shared orbits otherwise.
+function orbitsForViewer(
+  ev: BarycalEvent,
+  viewer: string | null,
+  ctx: EnrichCtx
+): { id: string; name: string; color: string | null }[] {
+  const orbits = ctx.orbits ?? [];
+  const eventOrbits = ctx.eventOrbits ?? [];
+  if (!orbits.length || !eventOrbits.length) return [];
+  const onIds = new Set<string>();
+  for (const eo of eventOrbits)
+    if (eo.eventId === ev.id || (ev.parentId && eo.eventId === ev.parentId)) onIds.add(eo.orbitId);
+  if (!onIds.size) return [];
+  const mine = myOrbitIds(ctx.members ?? [], viewer);
+  const isCreator = viewer === ev.creatorId;
+  return orbits
+    .filter((o) => onIds.has(o.id) && (isCreator || mine.has(o.id)))
+    .map((o) => ({ id: o.id, name: o.name, color: o.color ?? null }));
+}

@@ -3,23 +3,22 @@ import {
   areConnected,
   myConnectionIds,
   connectionStatus,
-  tierOf,
   canSeeContent,
   canSeeBusy,
+  myOrbitIds,
+  eventOrbitIds,
+  sharedToViewer,
 } from './visibility';
-import type { Connection, Placement } from '../db/schema';
+import type { Connection, OrbitMember, EventOrbit } from '../db/schema';
 import type { Visibility } from './types';
 
 const conns: Connection[] = [
   { id: 'c1', aId: 'ed', bId: 'maya', status: 'accepted', requestedBy: 'ed', createdAt: '' },
   { id: 'c2', aId: 'jordan', bId: 'ed', status: 'pending', requestedBy: 'jordan', createdAt: '' },
 ];
-// Access is creator-controlled: maya placed ed into HER inner circle, so ed may see
-// maya's inner content. (ed's own placements of maya are irrelevant to maya's events.)
-const places: Placement[] = [{ id: 'p1', ownerId: 'maya', otherId: 'ed', tier: 'inner' }];
 const ev = (over: Partial<{ creatorId: string; visibility: Visibility }> = {}) => ({
   creatorId: 'maya',
-  visibility: 'inner' as Visibility,
+  visibility: 'orbit' as Visibility,
   ...over,
 });
 
@@ -38,40 +37,61 @@ describe('visibility', () => {
     expect(connectionStatus(conns, 'jordan', 'ed')).toBe('pending_out');
     expect(connectionStatus(conns, 'ed', 'nobody')).toBe('none');
   });
-  it('tierOf: owner→other placement or null', () => {
-    expect(tierOf(places, 'maya', 'ed')).toBe('inner');
-    expect(tierOf(places, 'ed', 'maya')).toBe(null);
+
+  it('canSeeContent: public to anyone, self always, one "My Orbit" tier for connections', () => {
+    expect(canSeeContent('anyone', ev({ visibility: 'public' }), conns)).toBe(true);
+    expect(canSeeContent('maya', ev({ creatorId: 'maya' }), conns)).toBe(true);
+    // Every connection is in "My Orbit" now — both 'orbit' and legacy 'inner' show.
+    expect(canSeeContent('ed', ev({ visibility: 'orbit' }), conns)).toBe(true);
+    expect(canSeeContent('ed', ev({ visibility: 'inner' }), conns)).toBe(true);
+    expect(canSeeContent(null, ev({ visibility: 'orbit' }), conns)).toBe(false);
+    expect(canSeeContent('stranger', ev({ visibility: 'orbit' }), conns)).toBe(false);
   });
-  it('canSeeContent: public always; self always; inner needs the creator-placed inner tier; orbit ok for any connection', () => {
-    expect(canSeeContent('anyone', ev({ visibility: 'public' }), conns, places)).toBe(true);
-    expect(canSeeContent('maya', ev({ creatorId: 'maya' }), conns, places)).toBe(true);
-    expect(canSeeContent('ed', ev({ visibility: 'inner' }), conns, places)).toBe(true); // maya placed ed inner
-    expect(canSeeContent('ed', ev({ visibility: 'orbit' }), conns, places)).toBe(true);
-    expect(canSeeContent(null, ev({ visibility: 'inner' }), conns, places)).toBe(false);
-    expect(canSeeContent('stranger', ev({ visibility: 'inner' }), conns, places)).toBe(false);
+  it('canSeeContent: private is hidden from connections unless shared via an orbit', () => {
+    expect(canSeeContent('ed', ev({ visibility: 'private' }), conns)).toBe(false);
+    // viaOrbit grants content access even for a private event.
+    expect(canSeeContent('ed', ev({ visibility: 'private' }), conns, true)).toBe(true);
   });
-  it('canSeeContent: inner event hidden from a connection the creator placed only in orbit', () => {
-    const orbitOnly: Placement[] = [{ id: 'p', ownerId: 'maya', otherId: 'theo', tier: 'orbit' }];
-    const c: Connection[] = [
-      { id: 'c', aId: 'maya', bId: 'theo', status: 'accepted', requestedBy: 'maya', createdAt: '' },
-    ];
-    expect(canSeeContent('theo', ev({ visibility: 'inner' }), c, orbitOnly)).toBe(false);
-    expect(canSeeContent('theo', ev({ visibility: 'orbit' }), c, orbitOnly)).toBe(true);
+  it('canSeeContent: an orbit member sees a shared event even with no direct connection', () => {
+    expect(canSeeContent('stranger', ev({ visibility: 'orbit' }), conns, true)).toBe(true);
+    expect(canSeeContent('stranger', ev({ visibility: 'private' }), conns, true)).toBe(true);
   });
-  it('canSeeContent: a viewer cannot self-grant inner access by placing the creator in their own inner', () => {
-    // ed placed maya into ed's inner, but maya has NOT placed ed → ed must NOT see maya's inner content.
-    const viewerSelfPlace: Placement[] = [
-      { id: 'x', ownerId: 'ed', otherId: 'maya', tier: 'inner' },
-    ];
-    expect(canSeeContent('ed', ev({ visibility: 'inner' }), conns, viewerSelfPlace)).toBe(false);
-    expect(canSeeContent('ed', ev({ visibility: 'orbit' }), conns, viewerSelfPlace)).toBe(true); // still a connection → orbit ok
+  it('canSeeBusy: connections see busy for non-private; private stays fully hidden', () => {
+    // A connection sees content of non-private events, so busy is trivially true.
+    expect(canSeeBusy('ed', ev({ visibility: 'orbit' }), conns)).toBe(true);
+    // Private, not shared → not even busy.
+    expect(canSeeBusy('ed', ev({ visibility: 'private' }), conns)).toBe(false);
+    expect(canSeeBusy('stranger', ev({ visibility: 'orbit' }), conns)).toBe(false);
   });
-  it('canSeeBusy: a connection sees busy even when content is hidden; strangers do not', () => {
-    const orbitOnly: Placement[] = [{ id: 'p', ownerId: 'maya', otherId: 'theo', tier: 'orbit' }];
-    const c: Connection[] = [
-      { id: 'c', aId: 'maya', bId: 'theo', status: 'accepted', requestedBy: 'maya', createdAt: '' },
-    ];
-    expect(canSeeBusy('theo', ev({ visibility: 'inner' }), c, orbitOnly)).toBe(true); // content hidden, but busy visible
-    expect(canSeeBusy('stranger', ev({ visibility: 'inner' }), conns, places)).toBe(false);
+});
+
+describe('orbit sharing helpers', () => {
+  const members: OrbitMember[] = [
+    { id: 'm1', orbitId: 'o1', userId: 'ed', role: 'owner', createdAt: '' },
+    { id: 'm2', orbitId: 'o1', userId: 'theo', role: 'member', createdAt: '' },
+    { id: 'm3', orbitId: 'o2', userId: 'maya', role: 'owner', createdAt: '' },
+  ];
+  const eventOrbits: EventOrbit[] = [
+    { id: 'eo1', eventId: 'e1', orbitId: 'o1' },
+    { id: 'eo2', eventId: 'series', orbitId: 'o2' },
+  ];
+
+  it('myOrbitIds: the orbits a user belongs to', () => {
+    expect([...myOrbitIds(members, 'ed')]).toEqual(['o1']);
+    expect([...myOrbitIds(members, 'maya')]).toEqual(['o2']);
+    expect(myOrbitIds(members, 'stranger').size).toBe(0);
+    expect(myOrbitIds(members, null).size).toBe(0);
+  });
+  it('eventOrbitIds: direct shares plus inherited parent-series shares', () => {
+    expect([...eventOrbitIds(eventOrbits, 'e1')]).toEqual(['o1']);
+    // An exception row inherits its parent series' orbit placement.
+    expect([...eventOrbitIds(eventOrbits, 'exception', 'series')]).toEqual(['o2']);
+    expect(eventOrbitIds(eventOrbits, 'unknown').size).toBe(0);
+  });
+  it('sharedToViewer: true only when the viewer belongs to a shared orbit', () => {
+    expect(sharedToViewer('theo', 'e1', null, eventOrbits, members)).toBe(true); // theo ∈ o1
+    expect(sharedToViewer('maya', 'e1', null, eventOrbits, members)).toBe(false); // maya ∉ o1
+    expect(sharedToViewer('maya', 'exception', 'series', eventOrbits, members)).toBe(true); // via parent
+    expect(sharedToViewer(null, 'e1', null, eventOrbits, members)).toBe(false);
   });
 });

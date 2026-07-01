@@ -2,15 +2,22 @@
 import { revalidatePath } from 'next/cache';
 import { eq, and, gte } from 'drizzle-orm';
 import { getDb } from '../db';
-import { events, attendance } from '../db/schema';
+import { events, attendance, eventOrbits } from '../db/schema';
 import type { BarycalEvent } from '../db/schema';
 import { requireUserId } from '../auth/session';
-import { getEventById, getAllConnections, getAllPlacements } from '../db/queries';
-import { canSeeContent } from '../domain/visibility';
+import {
+  getEventById,
+  getAllConnections,
+  getAllOrbitMembers,
+  getAllEventOrbits,
+  getOrbitsForUser,
+  getEventOrbitIds,
+} from '../db/queries';
+import { canSeeContent, sharedToViewer } from '../domain/visibility';
 import { EVENT_TYPES } from '../domain/types';
 import { clampStr, oneOf, toISOOrThrow, LIMITS } from '../validate';
 
-const VIS = ['inner', 'orbit', 'public'] as const;
+const VIS = ['private', 'inner', 'orbit', 'public'] as const;
 const RSVPS = ['going', 'down', 'maybe', 'cant'] as const;
 const RECUR = ['daily', 'weekly', 'weekday', 'monthly', 'yearly'] as const;
 type Recur = (typeof RECUR)[number];
@@ -33,6 +40,7 @@ type EventPatch = {
   allDay?: boolean;
   color?: string | null;
   visibility?: string;
+  orbitIds?: string[];
 };
 
 // A recurring occurrence's client id is `<seriesId>__<YYYY-MM-DD>`.
@@ -86,6 +94,21 @@ const revalidateAll = () => {
   revalidatePath('/calendar');
 };
 
+// Replace the set of orbit calendars an event is toggled onto, keeping only
+// orbits the user actually belongs to. `undefined` means "don't touch"; an empty
+// array clears the event off every orbit calendar.
+async function syncEventOrbits(eventId: string, uid: string, orbitIds?: string[]) {
+  if (orbitIds === undefined) return;
+  await getDb().delete(eventOrbits).where(eq(eventOrbits.eventId, eventId));
+  const wanted = [...new Set(orbitIds.filter((x) => typeof x === 'string'))];
+  if (!wanted.length) return;
+  const mine = new Set((await getOrbitsForUser(uid)).map((o) => o.orbit.id));
+  const rows = wanted
+    .filter((id) => mine.has(id))
+    .map((orbitId) => ({ id: crypto.randomUUID(), eventId, orbitId }));
+  if (rows.length) await getDb().insert(eventOrbits).values(rows);
+}
+
 export async function createEvent(input: {
   type: string;
   title: string;
@@ -98,6 +121,9 @@ export async function createEvent(input: {
   color?: string | null;
   visibility: string;
   expiresAt?: string | null;
+  // Custom-orbit calendars to place this event on (in addition to the creator's
+  // personal calendar). Only orbits the creator belongs to are honored.
+  orbitIds?: string[];
 }) {
   const uid = await requireUserId();
   const title = clampStr(input.title, LIMITS.title).trim();
@@ -118,7 +144,7 @@ export async function createEvent(input: {
       recurring: normRecur(input.recurring),
       allDay: !!input.allDay,
       color: normColor(input.color),
-      visibility: oneOf(input.visibility, VIS, 'inner'),
+      visibility: oneOf(input.visibility, VIS, 'orbit'),
       expiresAt: input.expiresAt ? toISOOrThrow(input.expiresAt, 'expiry') : null,
       createdAt: nowISO,
     });
@@ -129,6 +155,7 @@ export async function createEvent(input: {
     rsvp: 'going',
     createdAt: nowISO,
   });
+  await syncEventOrbits(id, uid, input.orbitIds);
   revalidatePath('/plans');
   revalidatePath('/discover');
   revalidatePath('/calendar');
@@ -223,6 +250,13 @@ export async function updateEvent(
       rsvp: 'going',
       createdAt: nowISO,
     });
+    // The fresh series carries the edited orbit set if given, else the shares of
+    // the series it split from.
+    await syncEventOrbits(
+      id,
+      uid,
+      patch.orbitIds !== undefined ? patch.orbitIds : await getEventOrbitIds(baseId)
+    );
     revalidateAll();
     return { id };
   }
@@ -245,6 +279,7 @@ export async function updateEvent(
   if (patch.visibility !== undefined)
     set.visibility = oneOf(patch.visibility, VIS, base.visibility);
   if (Object.keys(set).length) await getDb().update(events).set(set).where(eq(events.id, baseId));
+  await syncEventOrbits(baseId, uid, patch.orbitIds);
   revalidateAll();
   return { id: baseId };
 }
@@ -255,8 +290,13 @@ export async function setRsvp(eventId: string, rsvp: 'going' | 'down' | 'maybe' 
     throw new Error('Bad request');
   const ev = await getEventById(eventId);
   if (!ev) throw new Error('Not found');
-  const [conns, places] = [await getAllConnections(), await getAllPlacements()];
-  if (!canSeeContent(uid, ev, conns, places)) throw new Error('Private');
+  const [conns, members, evOrbits] = await Promise.all([
+    getAllConnections(),
+    getAllOrbitMembers(),
+    getAllEventOrbits(),
+  ]);
+  const viaOrbit = sharedToViewer(uid, ev.id, ev.parentId, evOrbits, members);
+  if (!canSeeContent(uid, ev, conns, viaOrbit)) throw new Error('Private');
   const existing = (
     await getDb()
       .select()
@@ -351,9 +391,13 @@ export async function deleteEvent(eventId: string, opts?: { scope?: RecurScope }
     .select({ id: events.id })
     .from(events)
     .where(eq(events.parentId, baseId));
-  for (const c of children) await getDb().delete(attendance).where(eq(attendance.eventId, c.id));
+  for (const c of children) {
+    await getDb().delete(attendance).where(eq(attendance.eventId, c.id));
+    await getDb().delete(eventOrbits).where(eq(eventOrbits.eventId, c.id));
+  }
   await getDb().delete(events).where(eq(events.parentId, baseId));
   await getDb().delete(attendance).where(eq(attendance.eventId, baseId));
+  await getDb().delete(eventOrbits).where(eq(eventOrbits.eventId, baseId));
   await getDb().delete(events).where(eq(events.id, baseId));
   revalidateAll();
 }

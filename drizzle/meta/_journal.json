@@ -57,6 +57,13 @@
       "when": 1782800784883,
       "tag": "0007_futuristic_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1782900121343,
+      "tag": "0008_stormy_iron_fist",
+      "breakpoints": true
     }
   ]
 }

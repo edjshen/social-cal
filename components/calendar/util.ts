@@ -24,6 +24,8 @@ export type CalEvent = {
   proof?: { count: number; sample?: any[] };
   myRsvp?: string | null;
   attendeeCount?: number;
+  // Shared-orbit calendars this event is on (as seen by the viewer).
+  orbits?: { id: string; name: string; color: string | null }[];
   // Per-instance recurrence exception fields:
   parentId?: string | null;
   originalDate?: string | null;
