@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Barycenter — Luminous Bodies in Dark Space.
+   Saturated color lives inside the WebGL/cover layer + at motion peaks; chrome
+   stays near-monochrome on the deep-ink ground so labels + data read cleanly. */
+@theme {
+  /* Surfaces */
+  --color-ground: #0a0910; /* universal stage */
+  --color-raised: #14121c; /* raised surface / cards */
+  --color-ink: #0a0910; /* alias for ground (legacy name) */
+  --color-glass: rgba(255, 255, 255, 0.05);
+  --color-hairline: rgba(255, 255, 255, 0.1);
+
+  /* Signal gradient (primary action / gravitational warmth) */
+  --color-signal-from: #ff8a5b;
+  --color-signal-to: #ff5e87;
+
+  /* Cold counter-light (rim separation) */
+  --color-violet: #9b8cff; /* your circle */
+  --color-blue: #5b7cff; /* electric blue */
+
+  /* State-only accents */
+  --color-mint: #5fd3a6; /* free / presence */
+  --color-amber: #ffc178; /* this-week heat / scenes */
+
+  /* Text — primary + a muted that holds >= 4.5:1 on #0A0910.
+     #B7B0C2 ~ 7.1:1 contrast; safe for small/critical text. */
+  --color-text: #f4f0f2;
+  --color-muted: #b7b0c2;
+
+  /* Type — SANS-SERIF only. Geist variable grotesque + Geist Mono for the
+     wide-tracked uppercase celestial meta-labels. Never a serif. */
+  --font-display: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", "Menlo", monospace;
+}
