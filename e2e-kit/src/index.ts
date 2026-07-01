@@ -15,7 +15,9 @@ export * from './unique';
 // Auth adapters (produce a Playwright storageState).
 export { FormLoginAdapter } from './auth/form-login';
 export type { FormLoginOptions } from './auth/form-login';
-export type { AuthAdapter, Credentials } from './auth/types';
+export { LocalStorageJwtAdapter } from './auth/localstorage-jwt';
+export type { LocalStorageJwtOptions } from './auth/localstorage-jwt';
+export type { AuthAdapter, Credentials, CreateStorageStateOptions } from './auth/types';
 
 // Data adapters (provision the backing store before the server boots).
 export { D1LocalAdapter } from './data/d1-local';

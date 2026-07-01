@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import type { AuthAdapter, Credentials } from './types';
+import type { AuthAdapter, CreateStorageStateOptions, Credentials } from './types';
 
 export interface FormLoginOptions {
   loginPath?: string;
@@ -36,11 +36,10 @@ export class FormLoginAdapter implements AuthAdapter {
     await page.waitForURL(this.opts.expectUrl);
   }
 
-  async createStorageState(opts: {
-    page: Page;
-    path: string;
-    credentials: Credentials;
-  }): Promise<void> {
+  async createStorageState(opts: CreateStorageStateOptions): Promise<void> {
+    if (!opts.page || !opts.credentials) {
+      throw new Error('FormLoginAdapter.createStorageState requires { page, credentials }.');
+    }
     await this.login(opts.page, opts.credentials);
     await opts.page.context().storageState({ path: opts.path });
   }
