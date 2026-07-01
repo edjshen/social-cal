@@ -1,0 +1,20 @@
+[
+  {
+    "repo": "barycal",
+    "cycle": 0,
+    "timestamp": "2026-06-30T00:00:00Z",
+    "commit": "baseline@main-e2e",
+    "metrics": {
+      "soft_tests": 90,
+      "tests_total": 93,
+      "flows_total": 14,
+      "flows_asserted": null,
+      "negative_edge_cases": null,
+      "flake_rate": null,
+      "mutation_kill_rate": null,
+      "telemetry_signal": null
+    },
+    "delta_vs_prev": {},
+    "notes_ref": ".learned-experience/e2e-fidelity.md"
+  }
+]
