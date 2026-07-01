@@ -31,6 +31,14 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M5 20a7 7 0 0 1 14 0" />
     </>
   ),
+  organizations: (
+    <>
+      <path d="M4 21V5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v16" />
+      <path d="M13 9h6a1 1 0 0 1 1 1v11" />
+      <path d="M3 21h18" />
+      <path d="M7 8h2M7 12h2M7 16h2M16 13h1M16 17h1" />
+    </>
+  ),
   free: (
     <>
       <circle cx="12" cy="12" r="9" />

@@ -3,11 +3,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Icon, { type IconName } from './primitives/Icon';
 
+// Reworked nav: calendar (center) · organizations · regulars · profile.
+// Discover/Plans were folded — discovery now lives in Organizations (organizer-
+// focused), and RSVP'd plans surface on the Calendar.
 const TABS: { href: string; icon: IconName; label: string }[] = [
-  { href: '/discover', icon: 'discover', label: 'Discover' },
-  { href: '/plans', icon: 'plans', label: 'Plans' },
+  { href: '/organizations', icon: 'organizations', label: 'Organizations' },
   { href: '/regulars', icon: 'regulars', label: 'Regulars' },
-  { href: '/you', icon: 'you', label: 'You' },
+  { href: '/you', icon: 'you', label: 'Profile' },
 ];
 export default function TabBar() {
   const path = usePathname();

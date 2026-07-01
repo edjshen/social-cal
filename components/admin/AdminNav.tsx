@@ -6,6 +6,7 @@ export default function AdminNav() {
       <Link href="/superadmin/users">Users</Link>
       <Link href="/superadmin/moderation">Moderation</Link>
       <Link href="/superadmin/audit">Audit</Link>
+      <Link href="/superadmin/rewards">Rewards</Link>
     </nav>
   );
 }

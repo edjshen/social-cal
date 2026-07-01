@@ -131,6 +131,261 @@ export const rateLimits = sqliteTable(
   (t) => ({ uniq: unique('rate_limits_scope_k').on(t.scope, t.k) })
 );
 
+// ============================== Rewards & Loyalty ==============================
+// poisys (the organizer OS) is the source of truth for organizations, their
+// rewards events, per-org perks, and tiers; those are PROJECTED into D1 over the
+// signed bridge for display + redemption. The points ledger, check-ins, and
+// redemptions are AUTHORED here (where the partygoer acts); org-scoped rows sync
+// back to poisys. Platform perks + the global reward rules are barycal-owned.
+
+// Organizations mirrored from poisys. `id` == poisys organization_id.
+export const organizations = sqliteTable('organizations', {
+  id: text('id').primaryKey(),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  avatar: text('avatar'),
+  bio: text('bio').notNull().default(''),
+  // Opaque bridge handle for the poisys org (indirection from the raw id).
+  poisysOrgRef: text('poisys_org_ref'),
+  createdAt: text('created_at').notNull(),
+});
+
+// A partygoer following an org. Optional — does NOT gate earning (auto on check-in);
+// it only curates the feed / notifications.
+export const orgFollows = sqliteTable(
+  'org_follows',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ uniq: unique('org_follows_user_org').on(t.userId, t.orgId) })
+);
+
+// Rewards-eligible events projected from poisys. `id` == poisys event_id.
+export const rewardEvents = sqliteTable(
+  'reward_events',
+  {
+    id: text('id').primaryKey(),
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    title: text('title').notNull(),
+    venueArea: text('venue_area').notNull().default(''),
+    startsAt: text('starts_at').notNull(),
+    endsAt: text('ends_at'),
+    // Check-in window. Outside it, a scan earns nothing.
+    checkinOpensAt: text('checkin_opens_at'),
+    checkinClosesAt: text('checkin_closes_at'),
+    // Per-org grant config (org opt-in). orgBasePoints 0 => no per-org program here;
+    // the event still feeds the global pool.
+    orgBasePoints: integer('org_base_points').notNull().default(0),
+    orgBonuses: text('org_bonuses', { mode: 'json' })
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'`),
+    status: text('status', { enum: ['published', 'unpublished'] })
+      .notNull()
+      .default('published'),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ byOrgStart: index('reward_events_org_start').on(t.orgId, t.startsAt) })
+);
+
+// Server-only rotating-QR secret per event. NEVER selected into client components
+// (kept in its own table so a `select().from(rewardEvents)` can't leak it).
+export const rewardEventSecrets = sqliteTable('reward_event_secrets', {
+  eventId: text('event_id')
+    .primaryKey()
+    .references(() => rewardEvents.id),
+  rotatingSecret: text('rotating_secret').notNull(),
+  stepSeconds: integer('step_seconds').notNull().default(30),
+});
+
+// Per-org perks projected from poisys. `id` == poisys reward_perks.id.
+export const orgPerks = sqliteTable(
+  'org_perks',
+  {
+    id: text('id').primaryKey(),
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    title: text('title').notNull(),
+    description: text('description').notNull().default(''),
+    pointCost: integer('point_cost').notNull(),
+    minTier: text('min_tier'),
+    totalInventory: integer('total_inventory'),
+    perUserLimit: integer('per_user_limit'),
+    active: integer('active', { mode: 'boolean' }).notNull().default(true),
+    validFrom: text('valid_from'),
+    validTo: text('valid_to'),
+  },
+  (t) => ({ byOrg: index('org_perks_org').on(t.orgId) })
+);
+
+// Per-org tier thresholds projected from poisys.
+export const orgTiers = sqliteTable(
+  'org_tiers',
+  {
+    id: text('id').primaryKey(),
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    name: text('name').notNull(),
+    minPoints: integer('min_points').notNull(),
+    sort: integer('sort').notNull().default(0),
+  },
+  (t) => ({ byOrg: index('org_tiers_org').on(t.orgId) })
+);
+
+// Platform issuance rules (barycal-set global engine). Single active row + history.
+export const globalRewardRules = sqliteTable('global_reward_rules', {
+  id: text('id').primaryKey(),
+  basePoints: integer('base_points').notNull().default(100),
+  // e.g. { crossOrgStreak: {points, window}, sceneExplorer: {points, n} }
+  bonuses: text('bonuses', { mode: 'json' })
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default(sql`'{}'`),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  updatedAt: text('updated_at').notNull(),
+});
+
+// Platform-run perks (barycal-owned, spent with GLOBAL points). v1 = first-party
+// only; schema is sponsorship-ready (source/sponsor/placement/segment) for later.
+export const platformPerks = sqliteTable(
+  'platform_perks',
+  {
+    id: text('id').primaryKey(),
+    title: text('title').notNull(),
+    description: text('description').notNull().default(''),
+    pointCost: integer('point_cost').notNull(),
+    fulfillment: text('fulfillment', { enum: ['auto-digital', 'partner-code', 'manual'] })
+      .notNull()
+      .default('auto-digital'),
+    source: text('source', { enum: ['first-party', 'sponsor', 'partner', 'org'] })
+      .notNull()
+      .default('first-party'),
+    sponsorId: text('sponsor_id'),
+    placement: integer('placement').notNull().default(0),
+    segment: text('segment', { mode: 'json' })
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'`),
+    totalInventory: integer('total_inventory'),
+    perUserLimit: integer('per_user_limit'),
+    active: integer('active', { mode: 'boolean' }).notNull().default(true),
+    validFrom: text('valid_from'),
+    validTo: text('valid_to'),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({
+    byActive: index('platform_perks_active').on(t.active, t.validTo),
+    bySource: index('platform_perks_source').on(t.source, t.placement),
+  })
+);
+
+// Append-only points ledger. Two scopes per row so per-org AND global balances
+// derive from one table. A check-in writes an 'earned' row at scope 'platform'
+// (always) and another at scope 'org:<id>' (only if the org opted in). Tiers/rank
+// use 'earned' rows only; spendable = earned - spend.
+export const pointsLedger = sqliteTable(
+  'points_ledger',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    scope: text('scope').notNull(), // 'platform' | 'org:<orgId>'
+    delta: integer('delta').notNull(), // + earn, - spend, +/- void/refund
+    kind: text('kind', { enum: ['earned', 'spend'] }).notNull(),
+    reason: text('reason').notNull(), // checkin | bonus:* | redeem | void | refund
+    sourceRef: text('source_ref'), // event id / redemption id
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ byUserScope: index('points_ledger_user_scope').on(t.userId, t.scope) })
+);
+
+// One earning check-in per user per event (dual-grant record).
+export const checkIns = sqliteTable(
+  'check_ins',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    eventId: text('event_id')
+      .notNull()
+      .references(() => rewardEvents.id),
+    orgId: text('org_id')
+      .notNull()
+      .references(() => organizations.id),
+    globalAwarded: integer('global_awarded').notNull().default(0),
+    orgAwarded: integer('org_awarded').notNull().default(0),
+    bonusBreakdown: text('bonus_breakdown', { mode: 'json' })
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'`),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ uniq: unique('check_ins_user_event').on(t.userId, t.eventId) })
+);
+
+// One-time redemption codes for org AND platform perks. codeHash only (never raw).
+export const redemptions = sqliteTable(
+  'redemptions',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    scope: text('scope').notNull(), // 'platform' | 'org:<orgId>'
+    perkId: text('perk_id').notNull(), // org_perks.id or platform_perks.id
+    codeHash: text('code_hash').notNull(),
+    status: text('status', { enum: ['issued', 'redeemed', 'expired', 'voided'] })
+      .notNull()
+      .default('issued'),
+    fulfillment: text('fulfillment'),
+    issuedAt: text('issued_at').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    redeemedAt: text('redeemed_at'),
+  },
+  (t) => ({
+    byUser: index('redemptions_user').on(t.userId),
+    byCode: index('redemptions_code').on(t.codeHash),
+  })
+);
+
+// RSVP to a projected reward event. Optional, but RSVP'ing 'going' ≥ X hours
+// before doors unlocks the org's early-RSVP bonus (the timestamp is the commit
+// time) and feeds organizer turnout forecasting.
+export const rewardRsvps = sqliteTable(
+  'reward_rsvps',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    eventId: text('event_id')
+      .notNull()
+      .references(() => rewardEvents.id),
+    status: text('status', { enum: ['going', 'cant'] }).notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({ uniq: unique('reward_rsvps_user_event').on(t.userId, t.eventId) })
+);
+
+// ============================== Platform admin & MFA ==============================
+// Superadmin console (#37) + MFA hardening (#39). /superadmin (including the
+// rewards admin) is gated via requireSuperadmin: platform_admins records the
+// explicit grant, admin_audit_log is append-only, and the mfa_* tables back TOTP
+// + single-use recovery codes.
+
 export const platformAdmins = sqliteTable('platform_admins', {
   userId: text('user_id')
     .primaryKey()
@@ -199,6 +454,17 @@ export const pushTokens = sqliteTable(
 );
 
 export type User = typeof users.$inferSelect;
+export type RewardRsvp = typeof rewardRsvps.$inferSelect;
+export type Organization = typeof organizations.$inferSelect;
+export type OrgFollow = typeof orgFollows.$inferSelect;
+export type RewardEvent = typeof rewardEvents.$inferSelect;
+export type OrgPerk = typeof orgPerks.$inferSelect;
+export type OrgTier = typeof orgTiers.$inferSelect;
+export type PlatformPerk = typeof platformPerks.$inferSelect;
+export type GlobalRewardRules = typeof globalRewardRules.$inferSelect;
+export type PointsLedgerRow = typeof pointsLedger.$inferSelect;
+export type CheckIn = typeof checkIns.$inferSelect;
+export type Redemption = typeof redemptions.$inferSelect;
 export type Connection = typeof connections.$inferSelect;
 export type Placement = typeof placements.$inferSelect;
 // Named BarycalEvent (not Event) to avoid shadowing the global DOM/Workers `Event`.

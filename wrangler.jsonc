@@ -7,6 +7,13 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "barycal" }],
+  // Rewards cross-app bridge. POISYS_BRIDGE_URL is the poisys Worker's /bridge
+  // base (non-secret). BRIDGE_SECRET (HMAC signing key, shared with poisys) and
+  // SESSION_SECRET are set via `wrangler secret put` — never here. Locally, both
+  // live in .dev.vars (see .dev.vars.example).
+  "vars": {
+    "POISYS_BRIDGE_URL": "https://poisys-workers.example.workers.dev/bridge",
+  },
   "d1_databases": [
     {
       "binding": "DB",

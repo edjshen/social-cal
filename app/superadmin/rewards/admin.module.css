@@ -1,0 +1,123 @@
+/* Minimal platform-admin shell. Reuses global tokens (--ink, --bd, --card, etc.)
+   from globals.css; this only lays out the admin chrome + tables. */
+
+.shell {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px 18px 80px;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0 16px;
+  border-bottom: 1px solid var(--bd);
+  margin-bottom: 20px;
+}
+.nav a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dim);
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--bd);
+  text-decoration: none;
+}
+.nav a:hover {
+  color: var(--ink);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.kick {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.stat {
+  background: var(--card);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 16px;
+}
+.statNum {
+  font-size: 28px;
+  font-weight: 700;
+}
+.statLabel {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 4px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--bd);
+  vertical-align: top;
+}
+.table th {
+  color: var(--dim);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.section {
+  margin: 24px 0;
+}
+.sectionH {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--bd);
+  color: var(--dim);
+}
+.badgeOn {
+  color: var(--free);
+  border-color: rgba(95, 211, 166, 0.35);
+  background: rgba(95, 211, 166, 0.08);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--dim);
+  font-size: 13px;
+}

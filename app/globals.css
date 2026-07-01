@@ -1707,6 +1707,258 @@ select {
   }
 }
 
+/* ============================ Rewards & Loyalty ============================ */
+.pts-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text, #e9edf5);
+}
+.tier-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.06);
+  color: #9aa6bd;
+}
+.tier-badge.has {
+  background: linear-gradient(180deg, #c89b3c, #9c7322);
+  color: #1a1407;
+}
+.tier-progress {
+  margin: 8px 0;
+}
+.tier-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.tier-progress-bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #c89b3c, #e7c977);
+}
+.tier-progress-note {
+  font-size: 12px;
+  color: #9aa6bd;
+  margin-top: 4px;
+}
+
+/* org list rows */
+.org-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: inherit;
+  text-decoration: none;
+}
+.org-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.org-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.org-row .info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.org-standing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+/* org detail standing card */
+.standing-card {
+  margin: 12px 2px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.standing-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pts-big {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* perks */
+.perk {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.perk .info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.redeem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.redeem-out {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.redeem-code {
+  font-family: ui-monospace, monospace;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #e7c977;
+}
+.redeem-done {
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.hist-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 14px;
+}
+
+/* profile wallet */
+.wallet {
+  margin-top: 24px;
+}
+.wallet-global {
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(231, 201, 119, 0.12), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(231, 201, 119, 0.18);
+}
+.wallet-global-num {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+}
+.wallet-orgs {
+  margin: 12px 0;
+}
+.wallet-org {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: inherit;
+  text-decoration: none;
+}
+.wallet-org-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* scanner */
+.rw-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 16px;
+}
+.rw-sheet {
+  width: 100%;
+  max-width: 420px;
+  background: #14171f;
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.scan-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+}
+.scan-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.scan-reticle {
+  position: absolute;
+  inset: 18%;
+  border: 3px solid rgba(231, 201, 119, 0.9);
+  border-radius: 16px;
+}
+.scan-err {
+  color: #f59e9e;
+  font-size: 13px;
+  text-align: center;
+}
+.scan-manual {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+.scan-manual input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+}
+.scan-result {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.scan-big {
+  font-size: 48px;
+}
+.scan-points {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e7c977;
+}
 /* ============================================================
    Responsive base — affordances that only surface on desktop
    ============================================================ */
